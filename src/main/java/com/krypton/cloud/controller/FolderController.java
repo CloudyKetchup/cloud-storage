@@ -1,41 +1,56 @@
 package com.krypton.cloud.controller;
 
-import com.krypton.cloud.service.file.FileServiceImpl;
+import com.krypton.cloud.service.deliver.ZipService;
 import com.krypton.cloud.service.folder.FolderServiceImpl;
+import lombok.AllArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.File;
 import java.util.HashMap;
 
 @RestController
+@CrossOrigin
+@AllArgsConstructor
 @RequestMapping("/folder")
 public class FolderController {
 
-	private FolderServiceImpl folderService;
+	private final FolderServiceImpl folderService;
 
-	public FolderController(FolderServiceImpl folderService, FileServiceImpl fileService) {
-		this.folderService = folderService;
-	}
+	private final ZipService zipService;
 
 	/**
-	 * get root folders and files list
+	 * get root folders list
 	 *
-	 * @return folders and files list
+	 * @return folders list
 	 */
     @GetMapping("/root/content")
-    public String[] rootContent() {
-    	return folderService.getRootFilesList();
+    public HashMap rootContent() {
+    	return folderService.getRootData();
     }
+
+    /**
+	 * get total and free disk space in GB format
+	 *
+	 * @return hash map containing disk space info
+	 */
+    @GetMapping("/root/memory")
+	public HashMap rootMemory() {
+    	return new HashMap<String, String>(){{
+    		put("total", String.valueOf(new File("/").getTotalSpace()/1024/1024/1024));
+    		put("free", String.valueOf(new File("/").getFreeSpace()/1024/1024/1024));
+		}};
+	}
 
     /**
 	 * get folders and files list from specified folder
 	 *
-	 * @param folder 		folder path
+	 * @param folder 		folder id
 	 * @return folders and files list
 	 */
     @GetMapping("/{folder}/content")
-    public String[] folderContent(@PathVariable("folder") String folder) {
-    	return folderService.getFolderContent(folder);
+    public HashMap folderContent(@PathVariable("folder") Long folder) {
+    	return folderService.getFolderData(folder);
     }
 
     /**
@@ -50,6 +65,21 @@ public class FolderController {
     }
 
     /**
+	 * rename folder
+	 *
+	 * @param folder 		folder name
+	 * @param newName 		new name for folder
+	 * @return http status
+	 */
+    @PostMapping("/rename/{folder}/newName={newName}")
+	public HttpStatus renameFolder(
+			@PathVariable("folder") String folder,
+			@PathVariable("newName") String newName
+	) {
+    	return folderService.renameFolder(folder, newName);
+	}
+
+    /**
      * delete folder
      *
      * @param folder 		folder path
@@ -62,7 +92,7 @@ public class FolderController {
 
     @GetMapping(value = "/{folder}/get", produces="application/zip")
 	public ResponseEntity getFolder(@PathVariable("folder") String folder) {
-		folderService.createZip(folder);
+		zipService.createZip(folder);
 		return ResponseEntity.ok()
 				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + folder + ".zip")
 				.body(folderService.getFolder(folder));

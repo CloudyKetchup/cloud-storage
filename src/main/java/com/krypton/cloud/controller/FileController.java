@@ -1,6 +1,7 @@
 package com.krypton.cloud.controller;
 
 import com.krypton.cloud.service.file.FileServiceImpl;
+import lombok.AllArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.*;
@@ -10,14 +11,12 @@ import reactor.core.publisher.Mono;
 import java.util.HashMap;
 
 @RestController
+@CrossOrigin
+@AllArgsConstructor
 @RequestMapping("/files")
 public class FileController {
 
 	private FileServiceImpl fileService;
-
-	public FileController(FileServiceImpl fileService) {
-		this.fileService = fileService;
-	}
 
 	/**
 	 * upload multiple files to specified folder
