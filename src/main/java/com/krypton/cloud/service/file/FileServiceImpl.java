@@ -1,5 +1,8 @@
 package com.krypton.cloud.service.file;
 
+import com.krypton.cloud.service.file.record.FileRecordServiceImpl;
+import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpStatus;
@@ -7,29 +10,41 @@ import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.io.File;
 import java.net.MalformedURLException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @Service
+@AllArgsConstructor
 public class FileServiceImpl implements FileService {
 
-	// root folder
-	private final Path fileStorageLocation = Paths.get(System.getProperty("user.home") + "/cloud/")
-			.toAbsolutePath().normalize();
+	private final FileRecordServiceImpl fileRecordService;
 
 	@Override
 	public Mono<HttpStatus> saveFiles(Flux<FilePart> files, String folder) {
-		return files.flatMap(it -> it.transferTo(new File(folder + it.filename())))
-				.then(Mono.just(HttpStatus.OK));
+		return files.subscribeOn(Schedulers.parallel())
+				.map(it -> {
+				    var file = new File(folder + "'\'" + it.filename());
+
+				    it.transferTo(file);
+                    return fileRecordService.addFile(file);
+                })
+                .then(Mono.just(HttpStatus.OK));
 	}
 
 	@Override
-	public Mono<HttpStatus> saveFile(Mono<FilePart> file, String foler) {
-		return file.map(it -> it.transferTo(new File(foler + it.filename())))
-				.then(Mono.just(HttpStatus.OK));
+	public Mono<HttpStatus> saveFile(Mono<FilePart> filePart, String folder) {
+        // add file record to database
+        return filePart.subscribeOn(Schedulers.parallel())
+                .map(it -> {
+                    var file = new File(folder + it.filename());
+
+                    it.transferTo(file);
+                    return fileRecordService.addFile(file);
+                })
+                .then(Mono.just(HttpStatus.OK));
 	}
 
 	@Override
@@ -50,7 +65,7 @@ public class FileServiceImpl implements FileService {
 
 	@Override
 	public HttpStatus renameFile(String file, String folder, String newName) {
-		var baseFolder = fileStorageLocation + "/" + folder + "/";
+		var baseFolder = "C:\\Users\\dodon\\cloud" + "\\" + folder + "\\";
 		
 		return new File(baseFolder + file).renameTo(new File(baseFolder + newName))
 				? HttpStatus.OK
