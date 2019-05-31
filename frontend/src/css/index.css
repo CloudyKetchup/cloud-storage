@@ -1,0 +1,287 @@
+* {
+	transition: 0.2s;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html, body {
+	margin: 0;
+	padding: 0;
+	height: 100%;
+	width: 100%;
+	overflow: hidden;
+}
+
+nav {
+	line-height: unset;
+	width: 85%;
+    height: 50px;
+    background: #181818;
+    float: right;
+}
+
+a {
+	color: #fff;
+	text-decoration:none;
+}
+
+button, input {
+	border: none;
+	outline: none;
+}
+
+button > i {
+	font-size: 17px;
+}
+
+button:hover {
+	cursor: pointer;
+}
+
+button:focus {
+	background: #181818;
+}
+
+.ok-button {
+	background: #292929;
+    color: #fff;
+    padding: 5px;
+    padding-right: 10px;
+    border-radius: 5px;
+    padding-left: 10px;
+}
+
+#root {
+	height: 100%;
+}
+
+.side-panel {
+	background: #181818;
+    color: #fff;
+    top: 0;
+    height: 100%;
+    width: 15%;
+    z-index: 2;
+    position: absolute;
+    box-shadow: 10px 0px 13px -7px rgba(0,0,0,0.75);
+}
+
+.side-panel-content {
+	height: 100%;
+    padding: 10px;
+}
+
+.side-panel-content > div {
+	width: 100%;
+	text-align: center;
+    line-height: 70px;
+}
+
+.nav-wrapper {
+	float: right;
+	margin-top: 0;
+	margin-right: 10px;
+	padding: 5px;
+	height: 50px;
+	min-width: 200px;
+}
+
+.search {
+	margin-top: 5px;
+    padding: 5px;
+    float: right;
+    border-radius: 2px;
+    color: #fff;
+}
+
+.search:placeholder {
+	color: grey;
+}
+
+.main-container {
+	height: calc(100% - 50px);
+}
+
+#content-container {
+	overflow-y: auto;
+    background: #e8eaef;
+    height: calc(100% - 50px);
+    width: 85%;
+    position: absolute;
+    top: 50px;
+    right: 0;
+}
+
+.elements {
+	display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    padding: 20px;
+}
+
+.folder {
+	height: 50px;
+	width: 50px;
+}
+
+.folder:hover {
+	cursor: pointer;
+}
+
+.folder-info {
+	display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    width: 50%;
+    height: 100% !important;
+}
+
+.folder-info > div {
+	padding: 13px;
+	text-align: center;
+	color: #fff;
+}
+
+.file-info {
+	height: 90%;
+}
+
+.file:hover {
+	cursor: pointer;
+}
+
+.memory-info {
+	height: 10%;
+}
+
+.used-memory-info {
+	text-align: left;
+	margin-top: 0px;
+    margin-left: 5px;
+    height: 10%;
+}
+
+.used-memory-info > span {
+	line-height: 60px;
+}
+
+.total-memory-bar {
+	background: #fff;
+    height: 2px;
+    width: 90%;
+    bottom: 20px;
+    position: absolute;
+}
+
+.used-memory-bar {
+	height: 2px;
+	width: 0;
+    background: #F32C2C;
+}
+
+.prev-button {
+	color: #fff;
+    background: #181818;
+    border-top-right-radius: 25px;
+    border-bottom-right-radius: 25px;
+    top: 50%;
+    animation-name: slideLeft;
+    animation-duration: 0.2s;
+}
+
+.create-folder, .upload-file-button {
+	bottom: 15px;
+    height: 50px;
+    width: 50px;
+    background: #181818;
+    color: #fff;
+    border-radius: 100px;
+    box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.25);
+    position: fixed;
+}
+
+.create-folder:hover, .upload-file-button:hover {
+	background: #101010;
+}
+
+.create-folder {
+	right: 80px;
+}
+
+.dialog-header {
+	box-shadow: 0px 3px 3px 0px rgba(0,0,0,0.25);
+	padding-left: 10px;
+	padding-right: 15px;
+	color: #fff;
+	line-height: 40px;
+	height: 20%;
+    background: #181818;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.dialog-header > span {
+	width: 130px;
+    position: absolute;
+    left: 0;
+    margin: auto;
+    right: 0;
+}
+
+.dialog-header > i {
+    float: right;
+    line-height: 40px;
+}
+
+.create-folder-dialog {
+	background: #fff;
+    border-radius: 10px;
+    height: 200px;
+    width: 400px;
+    position: absolute;
+    position: absolute;
+    z-index: 99;
+    margin-left: 25%;
+    margin-right: auto;
+    top: 25%;
+    left: 0;
+    right: 0;
+    box-shadow: 0px 0px 5px 1000px rgba(0,0,0,0.35);
+
+    animation-name: slideTop;
+    animation-duration: 0.2s;
+}
+
+.upload-file-button {
+    right: 15px;
+}
+
+.input-field input:focus {
+   border-bottom: 1px solid black !important;
+   box-shadow: 0 1px 0 0 black !important
+ }
+
+@keyframes slideLeft {
+	from {
+		margin-left: -50px;
+	}
+	to {
+		margin-left: 0px;
+	}
+}
+
+@keyframes slideTop {
+	from {
+		opacity: 0;
+		top: 10%;
+	}
+	to {
+		top: 25%;
+		opacity: 1;
+	}
+}
