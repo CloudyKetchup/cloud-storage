@@ -11,6 +11,7 @@ public class CloudApplicationTests {
 
 	@Test
 	public void contextLoads() {
+
 	}
 
 }
