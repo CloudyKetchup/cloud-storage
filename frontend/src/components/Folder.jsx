@@ -1,24 +1,54 @@
-import React from 'react';
-import icon from '../images/folder.png'
+import React, { Component } from 'react';
 
-const imgStyle = {
-	height		: '40px',
-	'width' 	: '50px',
-	objectFit	: 'cover',
-}
+import icon	 		from '../images/folder.png'
+import ContextMenu 	from './ContextMenu'
 
-const Folder = props => {
+export default class Folder extends Component {
+	constructor() {
+		super();
+		this.state={ contextMenuShow : false }
+	}
 
-	return (
-		<div className="folder" onClick={props.whenClicked}>
-			<div>
-				<img src={icon} style={imgStyle} alt="???"/>	
+	componentDidMount() {
+		document.getElementById(`folder-${this.props.id}`).addEventListener('contextmenu', e => {
+			e.preventDefault();
+			this.setState({ contextMenuShow : true })	
+		});
+
+		window.addEventListener('click', () => this.setState({ contextMenuShow : false }), false);
+	}
+
+	render() {
+		return (
+			<div
+				className="folder"
+				id={`folder-${this.props.id}`}
+				onClick={this.props.whenClicked}
+				style={{ 
+				    width	: '100px',
+				    height	: '100px'
+			  	}}
+			>
+				{this.state.contextMenuShow
+					? <ContextMenu 
+						onStart={() => this.props.parent.setState({ elementSelected : undefined })}
+						parent={this.props.parent}/>
+					: undefined}
+				<div>
+					<img 
+						src={icon} 
+						style={{
+							height		: '40px',
+							width		: '50px',
+							objectFit	: 'cover'
+						}} 
+						alt="???"
+					/>	
+				</div>
+				<div>
+					<span>{this.props.name}</span>
+				</div>
 			</div>
-			<div>
-				<span>{props.name}</span>
-			</div>
-		</div>
-  	);
+		);
+	}
 }
-
-export default Folder;
