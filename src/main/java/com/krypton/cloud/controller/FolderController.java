@@ -54,14 +54,28 @@ public class FolderController {
     }
 
     /**
-	 * create new folder
+	 * create new folder to specified path
 	 *
-	 * @param request 		folder name and folder path
+	 * @param request 		new folder data
 	 * @return http status
 	 */
     @PostMapping("/create")
-    public HttpStatus createFolder(@RequestBody HashMap<String ,String> request) {
-    	return folderService.createFolder(request.get("folderName"), request.get("folderPath"));
+    public HttpStatus createFolder(@RequestBody HashMap<String, String> request) {
+    	return folderService.createFolder(request.get("name"), request.get("folderPath"));
+    }
+
+    /**
+     * move folder from one location(folder) to another
+     *
+     * @param path 			old folder path
+     * @param newPath		path of folder where to move
+     */
+    @PostMapping("/cut/{path}/to/{newPath}")
+    public HttpStatus cutFolder(
+    	@PathVariable("path") 	String path,
+    	@PathVariable("newPath") String newPath
+    ) {
+    	return folderService.cutFolder(path, newPath);
     }
 
     /**
