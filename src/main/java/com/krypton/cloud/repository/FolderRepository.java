@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface FolderRepository extends JpaRepository<Folder, Long> {
 
+    @Deprecated
     @Query(value = "select * from folder where folder.name = :name", nativeQuery = true)
     Folder getByName(@Param("name") String name);
 
