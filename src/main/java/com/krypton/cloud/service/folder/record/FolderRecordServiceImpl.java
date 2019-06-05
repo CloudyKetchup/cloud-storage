@@ -6,10 +6,9 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 @AllArgsConstructor
@@ -43,11 +42,24 @@ public class FolderRecordServiceImpl implements FolderRecordService {
 
     @Override
     public HttpStatus updateName(String oldName, String newName) {
-        var folder = folderRepository.getByName(oldName);
+        var folder = getByName(oldName);
 
         folder.setName(newName);
 
         folderRepository.save(folder);
+
+        return HttpStatus.OK;
+    }
+
+    @Override
+    public HttpStatus updatePath(java.io.File folder, String path) {
+        var dbFolder = getByPath(path);
+
+        dbFolder.setPath(path);
+
+        folderRepository.save(dbFolder);
+
+        updateChildPaths(dbFolder);
 
         return HttpStatus.OK;
     }
@@ -58,15 +70,17 @@ public class FolderRecordServiceImpl implements FolderRecordService {
         if(!folderExist(folder.getPath())) {
             folderRepository.save(new Folder(folder));
         }
+
+        var parentPath = Paths.get(folder.getPath()).getParent().toAbsolutePath();
         // newly added to database folder as parent
-        var parent = getByName(folder.getParentFile().getName());
+        var parent = getByPath(parentPath.toString());
 
         // check if parent is present and file to be added as child isn't already inside
         if (parent != null && !folderHasChildFolder(parent, getByName(folder.getName()))) {
             // add new folder as child
             addFolderChild(parent, getByName(folder.getName()));
 
-            folderRepository.save(parent);
+            updateFolderSize(parent);
         }
         return HttpStatus.OK;
     }
@@ -81,7 +95,6 @@ public class FolderRecordServiceImpl implements FolderRecordService {
             !folderHasChildFile(folder, file)
         ) {
             folder.getFiles().add(file);
-            updateFolderSize(folder);
         }
     }
 
@@ -95,7 +108,6 @@ public class FolderRecordServiceImpl implements FolderRecordService {
             !folderHasChildFolder(parent, child)
         ) {
             parent.getFolders().add(child);
-            updateFolderSize(parent);
         }
     }
 
@@ -122,8 +134,8 @@ public class FolderRecordServiceImpl implements FolderRecordService {
      * check if parent folder have specified folder inside
      *
      * @param parent    folder pretending to have child folder inside
-     * @param child     folder pretending to be inside
-     * @return boolean
+     * @param child     folder pretending to be child
+     * @return boolean depending if folder have specified folder as child
      */
     private boolean folderHasChildFolder(Folder parent, Folder child) {
         return parent.getFolders()
@@ -135,8 +147,8 @@ public class FolderRecordServiceImpl implements FolderRecordService {
      * check if folder have specified file inside
      *
      * @param parent    folder pretending to have child file inside
-     * @param child     file pretending to be inside
-     * @return boolean
+     * @param child     file pretending to be child
+     * @return boolean depending if folder have specified file as child
      */
     private boolean folderHasChildFile(Folder parent, File child) {
         return parent.getFiles()
@@ -154,11 +166,11 @@ public class FolderRecordServiceImpl implements FolderRecordService {
         float updatedSize = 0;
 
         // files sizes
-        for(var f : folder.getFiles()) {
+        for (var f : folder.getFiles()) {
             updatedSize += f.getSize();
         }
         // folders sizes
-        for(var f : folder.getFolders()) {
+        for (var f : folder.getFolders()) {
             updatedSize += f.getSize();
         }
         folder.setSize(updatedSize);
@@ -185,22 +197,56 @@ public class FolderRecordServiceImpl implements FolderRecordService {
     }
 
     /**
-     * add folder child folders and files as one to many in database
+     * add filesystem folder child elements as one to many records for folder entity in database
      *
      * @param childs        folder child's
      */
     public void addFolderChilds(List<java.io.File> childs) {
         childs.parallelStream().forEach(child -> {
-            var parent = getByName(child.getParentFile().getName());
+            var parentPath = Paths.get(child.getPath()).getParent().toAbsolutePath();
+
+            var parent = getByPath(parentPath.toString());
 
             if (parent != null) {
                 if (child.isFile()) {
+                    
                     fileRepository.getByName(child.getName())
                             .ifPresent(file -> addFileChild(parent, file));
                 } else if (child.isDirectory()) {
+                    var dbChild = getByPath(child.getPath());
+
+                    if (!folderHasChildFolder(parent, dbChild))
+                        addFolderChild(parent, dbChild);
+
                     addFolderChilds(Arrays.asList(child.listFiles()));
                 }
             }
+        });
+    }
+
+    /**
+     * if folder path was updated this method runs and update all
+     * child folders and files records path's
+     *
+     * @param parent        folder who path was updated 
+     */
+    private void updateChildPaths(Folder parent) {
+        // update child files path's
+        parent.getFiles().parallelStream().forEach(childFile -> {
+            
+            childFile.setPath(parent.getPath() + "\\" + childFile.getName());
+
+            fileRepository.save(childFile);
+        });
+        
+        // update child folders path's
+        parent.getFolders().parallelStream().forEach(childFolder -> {
+
+            childFolder.setPath(parent.getPath() + "\\" + childFolder.getName());
+
+            folderRepository.save(childFolder);
+
+            if (!childFolder.getFolders().isEmpty()) updateChildPaths(childFolder);
         });
     }
 }
