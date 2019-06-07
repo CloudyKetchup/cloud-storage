@@ -105,12 +105,11 @@ button:focus {
     margin-top: 20px;
     background: #181818;
     border-radius: 5px;
-    height: 300px;
     width: 200px;
     box-shadow: 0px 0px 5px 0px rgba(0,0,0,0.55);
     display: grid;
-    grid-column-gap: -20px;
-    padding: 10px;
+    grid-template-rows: repeat(5, 50px);
+    padding: 5px;
     z-index: 99;
     position: absolute;
     animation-name: contextMenuSlide;
@@ -124,15 +123,18 @@ button:focus {
     color: #dbd9d9;
 }
 
+.context-menu > div > div {
+    width: 40px;
+    font-size: 18px;
+    float: left;
+}
+
 .context-menu > div:hover {
     background: #101010;
 }
 
-.context-element {
-    height: 100%;
-    background: transparent;
-    color: #fff;
-    text-align: center;
+.context-menu span {
+    line-height: 25px;
 }
 
 .nav-wrapper {
@@ -288,8 +290,8 @@ button:focus {
 	line-height: 40px;
 	height: 20%;
     background: #181818;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
 }
 
 .dialog-header > span {
@@ -305,9 +307,9 @@ button:focus {
     line-height: 40px;
 }
 
-.create-folder-dialog {
+.standard-dialog {
 	background: #fff;
-    border-radius: 10px;
+    border-radius: 5px;
     height: 200px;
     width: 400px;
     position: absolute;
