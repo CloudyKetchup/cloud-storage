@@ -81,16 +81,12 @@ public class FolderController {
     /**
 	 * rename folder
 	 *
-	 * @param folder 		folder name
-	 * @param newName 		new name for folder
+	 * @param folder 		request containg folder path and new name
 	 * @return http status
 	 */
-    @PostMapping("/rename/{folder}/newName={newName}")
-	public HttpStatus renameFolder(
-			@PathVariable("folder") String folder,
-			@PathVariable("newName") String newName
-	) {
-    	return folderService.renameFolder(folder, newName);
+    @PostMapping("/rename")
+	public HttpStatus renameFolder(@RequestBody HashMap<String, String> request) {
+    	return folderService.renameFolder(request.get("folderPath"), request.get("newName"));
 	}
 
     /**
@@ -107,6 +103,7 @@ public class FolderController {
     @GetMapping(value = "/{folder}/get", produces="application/zip")
 	public ResponseEntity getFolder(@PathVariable("folder") String folder) {
 		zipService.createZip(folder);
+		
 		return ResponseEntity.ok()
 				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + folder + ".zip")
 				.body(folderService.getFolder(folder));
