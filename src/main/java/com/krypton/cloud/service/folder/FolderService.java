@@ -13,7 +13,9 @@ public interface FolderService {
 
     HttpStatus createFolder(String folderName, String folderPath);
 
-    HttpStatus renameFolder(String folder, String newName);
+    HttpStatus cutFolder(String oldPath, String newPath);
+
+    HttpStatus renameFolder(String folderPath, String newName);
 
     HttpStatus deleteFolder(String folderPath);
 

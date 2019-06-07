@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
+import java.nio.file.Paths;
 import java.net.MalformedURLException;
 import java.util.*;
 
@@ -34,7 +35,7 @@ public class FolderServiceImpl implements FolderService {
 	@Override
 	public HashMap getFolderData(Long id) {
 		var folder = folderRecordService.getById(id);
-
+		
 		return new HashMap<String, Object>(){{
 			put("folders", (Set) folder.getFolders());
 			put("files", (Set) folder.getFiles());
@@ -44,8 +45,8 @@ public class FolderServiceImpl implements FolderService {
 
 	@Override
 	public HttpStatus createFolder(String folderName, String folderPath) {
-        var folder = new File(folderPath + "/" + folderName);
-
+		var folder = new File(folderPath + "/" + folderName);
+		
 	    // make folder locally on file system
 		return folder.mkdir()
                 // then add record of folder to database
@@ -55,22 +56,36 @@ public class FolderServiceImpl implements FolderService {
 	}
 
 	@Override
-	public HttpStatus renameFolder(String folder, String newName) {
-	    var dir = new File(folder);
+	public HttpStatus cutFolder(String oldPath, String newPath) {
+		var folder = new File(oldPath);
+		var updatedPath = newPath + "\\" + folder.getName();
+		
+		return folder.renameTo(new File(updatedPath))
+				? folderRecordService.updatePath(folder, updatedPath)
+				: HttpStatus.INTERNAL_SERVER_ERROR;
+	}
+
+	@Override
+	public HttpStatus renameFolder(String folderPath, String newName) {
+	    var folder = new File(folderPath);
+		var parentPath = Paths.get(folderPath).getParent().toFile().getAbsolutePath().toString();
 
 	    // rename folder locally on file system
-	    return dir.renameTo(new File(dir.getParent() + "/" + newName))
-	    		// then rename in database
-				? folderRecordService.updateName(folder, newName)
-	    		// if fail return error http status
-				: HttpStatus.INTERNAL_SERVER_ERROR;
+	    if (folder.renameTo(new File(parentPath + "\\" + newName))) {
+			// update folder name in database
+			folderRecordService.updateName(folderPath, newName);
+			// uddate folder path in database because it contains name
+			return folderRecordService.updatePath(folder, parentPath + "\\" + newName);
+		}
+		// if fail return error http status
+		return HttpStatus.INTERNAL_SERVER_ERROR;
 	}
 
 	@Override
 	public HttpStatus deleteFolder(String folderPath) {
         var folder = new File(folderPath);
-        
-        // delete files first
+
+        // first delete inside content
         for (var file : Objects.requireNonNull(folder.listFiles())) {
             // if file is directory call function recursive to all files from inside
 			if (file.isDirectory()) {

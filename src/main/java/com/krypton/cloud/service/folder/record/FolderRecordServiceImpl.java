@@ -41,8 +41,8 @@ public class FolderRecordServiceImpl implements FolderRecordService {
     }
 
     @Override
-    public HttpStatus updateName(String oldName, String newName) {
-        var folder = getByName(oldName);
+    public HttpStatus updateName(String path, String newName) {
+        var folder = getByPath(path);
 
         folder.setName(newName);
 
@@ -52,10 +52,10 @@ public class FolderRecordServiceImpl implements FolderRecordService {
     }
 
     @Override
-    public HttpStatus updatePath(java.io.File folder, String path) {
-        var dbFolder = getByPath(path);
+    public HttpStatus updatePath(java.io.File folder, String newPath) {
+        var dbFolder = getByPath(folder.getPath());
 
-        dbFolder.setPath(path);
+        dbFolder.setPath(newPath);
 
         folderRepository.save(dbFolder);
 
@@ -233,7 +233,6 @@ public class FolderRecordServiceImpl implements FolderRecordService {
     private void updateChildPaths(Folder parent) {
         // update child files path's
         parent.getFiles().parallelStream().forEach(childFile -> {
-            
             childFile.setPath(parent.getPath() + "\\" + childFile.getName());
 
             fileRepository.save(childFile);
