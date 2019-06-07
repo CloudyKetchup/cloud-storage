@@ -30,7 +30,8 @@ export default class Folder extends Component {
 			  	}}
 			>
 				{this.state.contextMenuShow
-					? <ContextMenu 
+					? <ContextMenu
+						action={action => this.props.handleAction(action)}
 						onStart={() => this.props.parent.setState({ elementSelected : undefined })}
 						parent={this.props.parent}/>
 					: undefined}
