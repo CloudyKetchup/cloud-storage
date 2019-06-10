@@ -92,12 +92,14 @@ public class FolderController {
     /**
      * delete folder
      *
-     * @param folder 		folder path
+     * @param request 		request containing folder path
 	 * @return http status
 	 */
-    @PostMapping("/{folder}/delete")
-    public HttpStatus deleteFolder(@PathVariable("folder") String folder) {
-    	return folderService.deleteFolder(folder);
+    @PostMapping("/delete")
+    public HttpStatus deleteFolder(@RequestBody HashMap<String, String> request) {
+    	return request.get("folderPath") != null
+			? folderService.deleteFolder(request.get("folderPath"))
+			: HttpStatus.INTERNAL_SERVER_ERROR; 	
     }
 
     @GetMapping(value = "/{folder}/get", produces="application/zip")
