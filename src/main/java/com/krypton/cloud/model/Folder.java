@@ -6,6 +6,8 @@ import lombok.Data;
 
 import javax.persistence.*;
 
+import java.time.LocalDateTime;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -17,20 +19,20 @@ public class Folder {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column
+	@Column(unique = false)
 	private String name;
 
 	@Column
 	private String path;
 
 	@Column
+	private String location;
+
+	@Column
 	private EntityType type = EntityType.FOLDER;
 
 	@Column
-	private long timeUploaded;
-
-	@Column
-	private long lastTimeAccessed;
+	private String timeCreated;
 
 	@Column
 	private float size = 0;
@@ -46,7 +48,11 @@ public class Folder {
 	public Folder() {}
 
 	public Folder(java.io.File folder) {
-		this.path = folder.getPath();
+		var time = LocalDateTime.now();
+
 		this.name = folder.getName();
+		this.path = folder.getPath();
+		this.location = Paths.get(folder.getPath()).getParent().toFile().getName();
+		this.timeCreated = time.getDayOfMonth() + "-" + time.getMonthValue() + "-" + time.getYear();
 	}
 }
