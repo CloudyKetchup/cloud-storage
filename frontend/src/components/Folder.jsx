@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 
-import icon	 		from '../images/folder.png'
 import ContextMenu 	from './ContextMenu'
 
 export default class Folder extends Component {
@@ -10,44 +9,39 @@ export default class Folder extends Component {
 	}
 
 	componentDidMount() {
-		document.getElementById(`folder-${this.props.id}`).addEventListener('contextmenu', e => {
+		document.getElementById(`folder-${this.props.data.id}`).addEventListener('contextmenu', e => {
 			e.preventDefault();
-			this.setState({ contextMenuShow : true })	
+			this.setState({ contextMenuShow : true });
+
+			this.props.parent.setState({ disableContextMenu : true });
 		});
 
-		window.addEventListener('click', () => this.setState({ contextMenuShow : false }), false);
+		window.addEventListener('click', () => {
+			this.setState({ contextMenuShow : false });
+
+			this.props.parent.setState({ disableContextMenu : false });
+		}, false);
 	}
 
 	render() {
 		return (
 			<div
 				className="folder"
-				id={`folder-${this.props.id}`}
+				key={this.props.data.id}
+				id={`folder-${this.props.data.id}`}
 				onClick={this.props.whenClicked}
-				style={{ 
-				    width	: '100px',
-				    height	: '100px'
-			  	}}
 			>
 				{this.state.contextMenuShow
 					? <ContextMenu
 						action={action => this.props.handleAction(action)}
-						onStart={() => this.props.parent.setState({ elementSelected : undefined })}
-						parent={this.props.parent}/>
+						onStart={() => this.props.mainParent.setState({ elementSelected : undefined })}
+						/>
 					: undefined}
-				<div>
-					<img 
-						src={icon} 
-						style={{
-							height		: '40px',
-							width		: '50px',
-							objectFit	: 'cover'
-						}} 
-						alt="???"
-					/>	
+				<div className="folder-icon">
+					<i className="fas fa-folder"/>
 				</div>
-				<div>
-					<span>{this.props.name}</span>
+				<div className="folder-name">
+					<span>{this.props.data.name}</span>
 				</div>
 			</div>
 		);

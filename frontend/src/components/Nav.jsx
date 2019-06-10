@@ -1,11 +1,15 @@
 import React from 'react'
 
-const Nav = props => {
-	return (
-		<nav>
-			<div></div>
-		</nav>
-	);	
-};
+const Nav = props => (
+	
+	<nav>
+		<div>
+			
+		</div>
+		<div className="nav-right-content">
+			{props.children}
+		</div>
+	</nav>
+);	
 
 export default Nav;

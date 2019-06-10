@@ -6,11 +6,11 @@ const CreateFolderDialog = props => (
 		<div className="dialog-header">
 			<button
 				className="prev-button"
-				onClick={props.closeDialog}
+				onClick={() => props.parent.setState({ createFolderDialog : false })}
 			>
-				<i className="fas fa-chevron-left"></i>
+				<i className="fas fa-chevron-left"/>
 			</button>
-			<i className="fas fa-folder"></i>
+			<i className="fas fa-folder"/>
 			<span>Create new Folder</span>
 		</div>
 		<div 
@@ -22,7 +22,7 @@ const CreateFolderDialog = props => (
 					placeholder="Name"
 					id="folder-name"
 					type="text"
-				></input>
+				/>
 			</div>
 			<button 
 				className="ok-button"
