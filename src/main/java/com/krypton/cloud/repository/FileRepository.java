@@ -11,6 +11,10 @@ import java.util.Optional;
 @Repository
 public interface FileRepository extends JpaRepository<File, Long> {
 
+    @Deprecated
     @Query(value = "select * from file where file.name = :name", nativeQuery = true)
     Optional<File> getByName(@Param("name") String name);
+
+    @Query(value = "select * from file where file.path = :path", nativeQuery = true)
+    File getByPath(@Param("path") String path);
 }
