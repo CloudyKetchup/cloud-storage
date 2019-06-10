@@ -36,8 +36,12 @@ public class FolderRecordServiceImpl implements FolderRecordService {
     }
 
     @Override
-    public void deleteFolderRecord(String folder) {
-        folderRepository.delete(getByName(folder));
+    public void deleteFolderRecord(String folderPath) {
+        var folder = getByPath(folderPath);
+
+        removeAllFolderChilds(folder);
+
+        folderRepository.delete(folder);
     }
 
     @Override
@@ -76,9 +80,9 @@ public class FolderRecordServiceImpl implements FolderRecordService {
         var parent = getByPath(parentPath.toString());
 
         // check if parent is present and file to be added as child isn't already inside
-        if (parent != null && !folderHasChildFolder(parent, getByName(folder.getName()))) {
+        if (parent != null && !folderHasChildFolder(parent, getByPath(folder.getPath()))) {
             // add new folder as child
-            addFolderChild(parent, getByName(folder.getName()));
+            addFolderChild(parent, getByPath(folder.getPath()));
 
             updateFolderSize(parent);
         }
@@ -209,9 +213,10 @@ public class FolderRecordServiceImpl implements FolderRecordService {
 
             if (parent != null) {
                 if (child.isFile()) {
-                    
-                    fileRepository.getByName(child.getName())
-                            .ifPresent(file -> addFileChild(parent, file));
+                    // get child file record
+                    var file = fileRepository.getByPath(child.getPath());
+
+                    if (file != null) addFileChild(parent, file);
                 } else if (child.isDirectory()) {
                     var dbChild = getByPath(child.getPath());
 
@@ -247,5 +252,46 @@ public class FolderRecordServiceImpl implements FolderRecordService {
 
             if (!childFolder.getFolders().isEmpty()) updateChildPaths(childFolder);
         });
+    }
+
+    /**
+     * remove all folder childs records from database
+     *
+     * @param folder        parent folder
+     */
+    private void removeAllFolderChilds(Folder folder) {
+        folder.getFolders().parallelStream().forEach(childFolder -> {
+            // remove all child folders from current iterated folder
+            removeFolderChildFolders(childFolder);
+            // remove all child files from current iterated folder
+            removeFolderChildFiles(childFolder);
+
+            folderRepository.delete(childFolder);
+        });
+
+        removeFolderChildFiles(folder);
+    }
+
+    /**
+     * remove all folders records inside folder,
+     * will run recursive for all folders inside
+     *
+     * @param folder        parent folder
+     */
+    private void removeFolderChildFolders(Folder folder) {
+        folder.getFolders()
+                .parallelStream()
+                .forEach(childFolder -> removeAllFolderChilds(childFolder));
+    }
+
+    /**
+     * remove all files records inside folder
+     *
+     * @param folder        parent folder
+     */
+    private void removeFolderChildFiles(Folder folder) {
+        folder.getFiles()
+                .parallelStream()
+                .forEach(childFile -> fileRepository.delete(childFile));
     }
 }

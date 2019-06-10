@@ -47,11 +47,11 @@ public class FolderServiceImpl implements FolderService {
 	public HttpStatus createFolder(String folderName, String folderPath) {
 		var folder = new File(folderPath + "/" + folderName);
 		
-	    // make folder locally on file system
+		// make folder locally on file system
 		return folder.mkdir()
-                // then add record of folder to database
+				// then add record of folder to database
 				? folderRecordService.addFolder(folder)
-                // if fail return error http status
+				// if fail return error http status
 				: HttpStatus.INTERNAL_SERVER_ERROR;
 	}
 
@@ -91,11 +91,9 @@ public class FolderServiceImpl implements FolderService {
 			if (file.isDirectory()) {
 				deleteFolder(file.getAbsolutePath());
 			}
-			file.delete();
-
-			removeRecords(folder.getName(), file.getName());			
+			file.delete();	
         }
-        folderRecordService.deleteFolderRecord(folder.getName());
+        folderRecordService.deleteFolderRecord(folder.getPath());
         return folder.delete() ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR;
 	}
 
@@ -111,18 +109,5 @@ public class FolderServiceImpl implements FolderService {
 		assert resource != null;
 
 		return resource;
-	}
-
-	/**
-	 * Remove file record from folder record
-	 *
-	 * @param folder 	folder name
-	 * @param file 		file name
-	 */
-	private void removeRecords(String folder, String file) {
-		folderRecordService.removeFile(
-				folderRecordService.getByName(folder),	// get folder record by name
-				fileRecordService.getByName(file)		// get file record by name
-		);
 	}
 }
