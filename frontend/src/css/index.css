@@ -77,7 +77,7 @@ button:focus {
     width: 15%;
     z-index: 2;
     position: absolute;
-    box-shadow: 10px 0 13px -7px rgba(0,0,0,0.75);
+    box-shadow: 1px 2px 5px 2px rgba(0,0,0,0.55);
 }
 
 .side-panel-content {
@@ -100,15 +100,29 @@ button:focus {
 	word-break: break-all;
 }
 
+.element-info-container {
+    box-shadow: 0px 0px 21px 10000px rgba(0,0,0,0.50);
+    border-radius: 5px;
+    background: #e8eaef;
+    margin-left: 23%;
+    left: 0;
+    right: 0;
+    top: 5%;
+    width: 400px;
+    height: 500px;
+    padding: 10px;
+    z-index: 99;
+    position: absolute;
+}
+
 .context-menu {
-    margin-left: 20px;
+    margin-left: 70px;
     margin-top: 20px;
     background: #181818;
     border-radius: 5px;
     width: 200px;
     box-shadow: 0px 0px 5px 0px rgba(0,0,0,0.55);
     display: grid;
-    grid-template-rows: repeat(5, 50px);
     padding: 5px;
     z-index: 99;
     position: absolute;
@@ -130,6 +144,7 @@ button:focus {
 }
 
 .context-menu > div:hover {
+    cursor : pointer;
     background: #101010;
 }
 
@@ -137,13 +152,11 @@ button:focus {
     line-height: 25px;
 }
 
-.nav-wrapper {
-	float: right;
-	margin-top: 0;
-	margin-right: 10px;
-	padding: 5px;
-	height: 50px;
-	min-width: 200px;
+.nav-right-content {
+    padding: 5px;
+    float: right;
+    height: 100%;
+    width: 200px;
 }
 
 .search {
@@ -173,14 +186,45 @@ button:focus {
 }
 
 .elements {
-	display: grid;
+    display: grid;
+    grid-column-gap: 10px;
     grid-template-columns: repeat(12, 1fr);
     padding: 20px;
 }
 
 .folder {
-	height: 50px;
-	width: 50px;
+    height: 50px;
+    width: 150px;
+    border-radius: 5px;
+    border: 1px solid gray;
+}
+
+.folder:hover {
+    box-shadow: 0 5px 5px 0 rgba(0, 0, 0, 0.25);
+}
+
+.folder-icon {
+    float: left;
+    height: 100%;
+    width: 50px;
+    color: #292929;
+}
+
+.folder-icon > i {
+    font-size: 25px;
+    margin-left: 10px;
+    line-height: 45px;
+}
+
+.folder-name {
+    height: 100%;
+    width: calc(100% - 50px);
+    float: right;
+}
+
+.folder-name > span {
+    line-height: 45px;
+    margin-left: 10px;
 }
 
 .folder:hover {
@@ -253,6 +297,32 @@ button:focus {
     background: #F32C2C;
 }
 
+.buffer-element {
+    padding: 0px 10px 0px 10px;
+    background: #232323;
+    border-radius: 5px;
+    height: 100%;
+    width: 100%;
+    display: inline-flex;
+}
+
+.buffer-element-indicator {
+    width: 20%;
+}
+
+.buffer-element-indicator > i {
+    line-height: 40px;
+    font-size: 20px;
+}
+
+.buffer-element-name {
+    width: 80%;
+}
+
+.buffer-element-name > span {
+    line-height: 40px;
+}
+
 .prev-button {
 	color: #fff;
     background: #181818;
@@ -295,6 +365,7 @@ button:focus {
 }
 
 .dialog-header > span {
+    text-align: center;
 	width: 130px;
     position: absolute;
     left: 0;
@@ -332,15 +403,15 @@ button:focus {
 .input-field input:focus {
    border-bottom: 1px solid black !important;
    box-shadow: 0 1px 0 0 black !important
- }
+}
 
 @keyframes contextMenuSlide {
     from {
         opacity: 0;
-        margin-left: 0px;
+        margin-left: 50px;
     }
     to {
-        margin-left: 20px;
+        margin-left: 70px;
         opacity: 1;
     }
 }
