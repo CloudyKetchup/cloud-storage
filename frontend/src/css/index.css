@@ -409,6 +409,7 @@ button:focus {
     from {
         opacity: 0;
         margin-left: 50px;
+
     }
     to {
         margin-left: 70px;
