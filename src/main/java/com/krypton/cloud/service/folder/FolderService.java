@@ -13,6 +13,8 @@ public interface FolderService {
 
     HttpStatus createFolder(String folderName, String folderPath);
 
+    HttpStatus copyFolder(String folderPath, String copyPath);
+
     HttpStatus cutFolder(String oldPath, String newPath);
 
     HttpStatus renameFolder(String folderPath, String newName);

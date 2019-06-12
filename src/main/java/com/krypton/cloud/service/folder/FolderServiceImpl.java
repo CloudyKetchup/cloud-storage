@@ -1,6 +1,5 @@
 package com.krypton.cloud.service.folder;
 
-import com.krypton.cloud.service.file.record.FileRecordServiceImpl;
 import com.krypton.cloud.service.folder.record.FolderRecordServiceImpl;
 import lombok.AllArgsConstructor;
 import org.springframework.core.io.Resource;
@@ -13,11 +12,11 @@ import java.nio.file.Paths;
 import java.net.MalformedURLException;
 import java.util.*;
 
+import org.apache.commons.io.FileUtils;
+
 @Service
 @AllArgsConstructor
 public class FolderServiceImpl implements FolderService {
-
-	private final FileRecordServiceImpl fileRecordService;
 
 	private final FolderRecordServiceImpl folderRecordService;
 
@@ -56,13 +55,38 @@ public class FolderServiceImpl implements FolderService {
 	}
 
 	@Override
+	public HttpStatus copyFolder(String folderPath, String copyPath) {
+		var folder = new File(folderPath);
+		var folderCopy = new File(copyPath + "\\" + folder.getName());
+
+		// copy folder to new path
+		try {
+			FileUtils.copyDirectory(folder, folderCopy);
+		}catch (IOException e) {
+			e.printStackTrace();
+		}
+		// parent directory of copied folder
+		var parentFolder = Paths.get(copyPath).getParent().toFile().getPath();
+		// check if file was copied successful
+		if (folderCopy.exists()) {
+			// add copied folder record
+			return folderRecordService.copyFolder(folderCopy);
+		}
+		return HttpStatus.INTERNAL_SERVER_ERROR;
+	}
+
+	@Override
 	public HttpStatus cutFolder(String oldPath, String newPath) {
+		// get filesytem folder by path
 		var folder = new File(oldPath);
+		// old folder parent path
+		var oldParent = Paths.get(oldPath).getParent().toFile().getPath();
+		// new folder path
 		var updatedPath = newPath + "\\" + folder.getName();
 		
 		return folder.renameTo(new File(updatedPath))
-				? folderRecordService.updatePath(folder, updatedPath)
-				: HttpStatus.INTERNAL_SERVER_ERROR;
+			? folderRecordService.updatePath(folder, updatedPath, oldParent)
+			: HttpStatus.INTERNAL_SERVER_ERROR;
 	}
 
 	@Override
@@ -74,7 +98,7 @@ public class FolderServiceImpl implements FolderService {
 	    if (folder.renameTo(new File(parentPath + "\\" + newName))) {
 			// update folder name in database
 			folderRecordService.updateName(folderPath, newName);
-			// uddate folder path in database because it contains name
+			// update folder path in database because it contains name
 			return folderRecordService.updatePath(folder, parentPath + "\\" + newName);
 		}
 		// if fail return error http status
