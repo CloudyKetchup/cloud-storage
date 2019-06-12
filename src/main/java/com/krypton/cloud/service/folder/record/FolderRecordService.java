@@ -15,6 +15,8 @@ interface FolderRecordService {
 
     HttpStatus updateName(String folder, String newName);
 
+    HttpStatus updatePath(java.io.File folder, String path, String oldParentPath);
+   
     HttpStatus updatePath(java.io.File folder, String path);
 
     HttpStatus addFolder(java.io.File folder);
@@ -23,9 +25,9 @@ interface FolderRecordService {
 
     void addFolderChild(Folder parent, Folder child);
 
-    void removeFile(Folder folder, File file);
+    void removeFileChild(Folder folder, File file);
 
-    void removeFolder(Folder parent, Folder child);
+    void removeFolderChild(Folder parent, Folder child);
 
     boolean folderExist(String path);
 }

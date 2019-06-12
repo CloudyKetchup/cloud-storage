@@ -56,13 +56,28 @@ public class FolderRecordServiceImpl implements FolderRecordService {
     }
 
     @Override
+    public HttpStatus updatePath(java.io.File folder, String newPath, String oldParentPath) {
+        var dbFolder = getByPath(folder.getPath());
+
+        dbFolder.setPath(newPath);
+
+        folderRepository.save(dbFolder);
+        // update folder childs path
+        updateChildPaths(dbFolder);
+        // new folder parent path
+        var newParentPath = Paths.get(dbFolder.getPath()).getParent().toFile().getPath();
+
+        return folderMoveProcedure(getByPath(newParentPath), getByPath(oldParentPath), dbFolder);
+    }
+
+    @Override
     public HttpStatus updatePath(java.io.File folder, String newPath) {
         var dbFolder = getByPath(folder.getPath());
 
         dbFolder.setPath(newPath);
 
         folderRepository.save(dbFolder);
-
+        // update folder childs path
         updateChildPaths(dbFolder);
 
         return HttpStatus.OK;
@@ -84,21 +99,21 @@ public class FolderRecordServiceImpl implements FolderRecordService {
             // add new folder as child
             addFolderChild(parent, getByPath(folder.getPath()));
 
-            updateFolderSize(parent);
+            // updateFolderSize(parent);
         }
         return HttpStatus.OK;
     }
 
     @Override
-    public void addFileChild(Folder folder, File file) {
+    public void addFileChild(Folder parent, File child) {
         if (
-            folder  != null 
+            parent  != null 
             && 
-            file    != null 
+            child   != null 
             && 
-            !folderHasChildFile(folder, file)
+            !folderHasChildFile(parent, child)
         ) {
-            folder.getFiles().add(file);
+            parent.getFiles().add(child);
         }
     }
 
@@ -112,26 +127,77 @@ public class FolderRecordServiceImpl implements FolderRecordService {
             !folderHasChildFolder(parent, child)
         ) {
             parent.getFolders().add(child);
+
+            folderRepository.save(parent);
         }
     }
 
     @Override
-    public void removeFile(Folder folder, File file) {
-        folder.getFiles().remove(file);
-
-        folderRepository.save(folder);
+    public void removeFileChild(Folder folder, File child) {
+        if (
+            folder  != null
+            &&
+            child   != null
+            &&
+            folderHasChildFile(folder, child)
+        ) {
+            folder.getFiles().removeIf(file -> file.getId().equals(child.getId()));
+        }
     }
 
     @Override
-    public void removeFolder(Folder parent, Folder child) {
-        parent.getFolders().remove(child);
+    public void removeFolderChild(Folder parent, Folder child) {
+        if (
+            parent  != null
+            &&
+            child   != null
+            &&
+            folderHasChildFolder(parent, child)
+        ) {
+            parent.getFolders().removeIf(folder -> folder.getId().equals(child.getId()));
 
-        folderRepository.save(parent);
+            folderRepository.save(parent);
+        }
     }
 
     @Override
     public boolean folderExist(String path) {
         return folderRepository.getByPath(path) != null;
+    }
+
+    /**
+     * add record of folder that was copied to another directory and
+     * child's inside it
+     *
+     * @param copiedFolder  copied folder from filesystem
+     * @return Http Status
+     */
+    public HttpStatus copyFolder(java.io.File copiedFolder) {
+        addFolder(copiedFolder);
+
+        addAllFoldersToDatabase(Arrays.asList(copiedFolder.listFiles()));
+
+        return HttpStatus.OK;
+    }
+
+    /**
+     * when move folder to another directory,update parent child relations
+     *
+     * @param newParent     new folder parent
+     * @param oldParent     old folder parent 
+     * @param child         child folder witch was moved from old parent to new
+     * @return Http Status if parent/child relation was updated succesfull
+     */
+    private HttpStatus folderMoveProcedure(Folder newParent, Folder oldParent, Folder child) {
+        // remove folder from old parent
+        removeFolderChild(oldParent, child);
+
+        addFolderChild(newParent, child);
+
+        if (folderHasChildFolder(newParent, child) && !folderHasChildFolder(oldParent, child)) {
+            return HttpStatus.OK;
+        }
+        return HttpStatus.INTERNAL_SERVER_ERROR;
     }
 
     /**
@@ -144,7 +210,7 @@ public class FolderRecordServiceImpl implements FolderRecordService {
     private boolean folderHasChildFolder(Folder parent, Folder child) {
         return parent.getFolders()
                 .parallelStream()
-                .anyMatch(insideFolder -> insideFolder.getId().equals(child.getId()));
+                .anyMatch(folderInside -> folderInside.getId().equals(child.getId()));
     }
 
     /**
@@ -157,7 +223,7 @@ public class FolderRecordServiceImpl implements FolderRecordService {
     private boolean folderHasChildFile(Folder parent, File child) {
         return parent.getFiles()
                 .parallelStream()
-                .anyMatch(insideFile -> insideFile.getId().equals(child.getId()));
+                .anyMatch(fileInside -> fileInside.getId().equals(child.getId()));
     }
 
     /**
@@ -207,9 +273,9 @@ public class FolderRecordServiceImpl implements FolderRecordService {
      */
     public void addFolderChilds(List<java.io.File> childs) {
         childs.parallelStream().forEach(child -> {
-            var parentPath = Paths.get(child.getPath()).getParent().toAbsolutePath();
+            var parentPath = Paths.get(child.getPath()).getParent().toFile().getPath();
 
-            var parent = getByPath(parentPath.toString());
+            var parent = getByPath(parentPath);
 
             if (parent != null) {
                 if (child.isFile()) {
@@ -281,7 +347,7 @@ public class FolderRecordServiceImpl implements FolderRecordService {
     private void removeFolderChildFolders(Folder folder) {
         folder.getFolders()
                 .parallelStream()
-                .forEach(childFolder -> removeAllFolderChilds(childFolder));
+                .forEach(this::removeAllFolderChilds);
     }
 
     /**
@@ -292,6 +358,6 @@ public class FolderRecordServiceImpl implements FolderRecordService {
     private void removeFolderChildFiles(Folder folder) {
         folder.getFiles()
                 .parallelStream()
-                .forEach(childFile -> fileRepository.delete(childFile));
+                .forEach(fileRepository::delete);
     }
 }
