@@ -3,10 +3,7 @@ import React, { Component } from 'react';
 import ContextMenu 	from './ContextMenu'
 
 export default class Folder extends Component {
-	constructor() {
-		super();
-		this.state={ contextMenuShow : false }
-	}
+	state={ contextMenuShow : false }
 
 	componentDidMount() {
 		document.getElementById(`folder-${this.props.data.id}`).addEventListener('contextmenu', e => {
@@ -23,6 +20,15 @@ export default class Folder extends Component {
 		}, false);
 	}
 
+	contextMenu() {
+		if (this.state.contextMenuShow) {
+			return 	<ContextMenu
+					action={action => this.props.handleAction(action)}
+					onStart={() => this.props.mainParent.setState({ elementSelected : undefined })}
+					/>
+		}
+	}
+
 	render() {
 		return (
 			<div
@@ -31,12 +37,7 @@ export default class Folder extends Component {
 				id={`folder-${this.props.data.id}`}
 				onClick={this.props.whenClicked}
 			>
-				{this.state.contextMenuShow
-					? <ContextMenu
-						action={action => this.props.handleAction(action)}
-						onStart={() => this.props.mainParent.setState({ elementSelected : undefined })}
-						/>
-					: undefined}
+				{this.contextMenu()}
 				<div className="folder-icon">
 					<i className="fas fa-folder"/>
 				</div>

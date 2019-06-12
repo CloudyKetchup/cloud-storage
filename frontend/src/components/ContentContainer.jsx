@@ -8,20 +8,17 @@ import Folder 				from './Folder';
 import File 				from './File';
 
 export default class ContentContainer extends Component {
-	constructor() {
-		super();
-		this.state={
-			disableContextMenu : false,
-			contextMenuShow : false,
-			contextMenuStyle : {
-				top : '',
-				left : ''
-			}
+	state={
+		disableContextMenu : false,
+		contextMenuShow : false,
+		contextMenuStyle : {
+			top : '',
+			left : ''
 		}
 	}
 
 	componentDidMount() {
-		document.getElementById(`content-container`).addEventListener('contextmenu', e => {
+		document.getElementById('content-container').addEventListener('contextmenu', e => {
 			e.preventDefault();
 			this.setState({ 
 				contextMenuShow : true,
@@ -58,25 +55,29 @@ export default class ContentContainer extends Component {
 				}/>
 	}
 
+	customDialog() {
+		if (this.props.parent.state.uploadFileDialog) {
+			return <UploadFileDialog
+					parent = {this.props.parent}
+					folderPath  = {this.props.parent.state.folderInfo.path}
+					/>
+		}else if (this.props.parent.state.createFolderDialog) {
+			return <CreateFolderDialog
+					parent = {this.props.parent}
+					sendFolder  = {folder => this.props.parent.sendNewFolder(folder)}
+					/>
+		}else if (this.props.parent.state.renameElementDialog) {
+			return  <RenameElementDialog
+					parent  = {this.props.parent}
+					onRename= {newName => this.props.parent.sendRenameRequest(newName)}
+					/>
+		}
+	}
+
 	render() {
 		return (
 			<div id='content-container'>
-				{this.props.parent.state.uploadFileDialog
-					? <UploadFileDialog
-						parent = {this.props.parent}
-						folderPath  = {this.props.parent.state.folderInfo.path}
-						/>
-					: this.props.parent.state.createFolderDialog
-						? <CreateFolderDialog
-							parent = {this.props.parent}
-							sendFolder  = {folder => this.props.parent.sendNewFolder(folder)}
-							/>
-						: this.props.parent.state.renameElementDialog
-							? <RenameElementDialog
-								parent  = {this.props.parent}
-								onRename= {newName => this.props.parent.sendRenameRequest(newName)}
-								/>
-							: undefined}
+				{this.customDialog()}
 				{this.props.children}
 				<div className="elements">
 					{this.props.elementsData.map(element => this.createElement(element))}
@@ -85,7 +86,7 @@ export default class ContentContainer extends Component {
 					? <DefaultContextMenu
 						style={this.state.contextMenuStyle}
 						parent= {this.props.parent}
-						action= {action => this.props.parent.handleContainerContextMenu(action)}
+						action= {action => this.props.parent.handleContextMenuAction(action)}
 						/>
 					: undefined}
 			</div>

@@ -12,7 +12,7 @@ const ElementInfoContainer = props => (
 		}}>
 			<button
 				className="prev-button"
-				onClick={() => props.parent.setState({ elementInfo : undefined })}
+				onClick={() => props.parent.setState({ elementInfoContainer : false })}
 			>
 				<i className="fas fa-chevron-left"/>
 			</button>
@@ -38,10 +38,6 @@ const ElementInfoContainer = props => (
 			<div>
 				<span className="description-text">Time created</span>
 				<span className="element-info-text">{props.data.timeCreated}</span>
-			</div>
-			<div>
-				<span className="description-text">Location</span>
-				<span className="element-info-text">{props.data.location}</span>
 			</div>
 			<div>
 				<span className="description-text">Size</span>

@@ -29,7 +29,7 @@ export default class ContextMenu extends Component {
                 </div>
                 <div onClick={() => this.props.action("delete")}>
                     <div>
-                        <i className="fas fa-trash"/>
+                        <i className="far fa-trash-alt"/>
                     </div>
                     <span>Delete</span>
                 </div>
