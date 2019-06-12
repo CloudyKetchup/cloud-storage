@@ -19,6 +19,19 @@ public class FolderController {
 
 	private final ZipService zipService;
 
+    /**
+     * get total and free disk space in GB format
+     *
+     * @return hash map containing disk space info
+     */
+    @GetMapping("/root/memory")
+    public HashMap rootMemory() {
+        return new HashMap<String, String>(){{
+            put("total", String.valueOf(new File("/").getTotalSpace()/1024/1024/1024));
+            put("free", String.valueOf(new File("/").getFreeSpace()/1024/1024/1024));
+        }};
+    }
+
 	/**
 	 * get root folders list
 	 *
@@ -28,19 +41,6 @@ public class FolderController {
     public HashMap rootContent() {
     	return folderService.getRootData();
     }
-
-    /**
-	 * get total and free disk space in GB format
-	 *
-	 * @return hash map containing disk space info
-	 */
-    @GetMapping("/root/memory")
-	public HashMap rootMemory() {
-    	return new HashMap<String, String>(){{
-    		put("total", String.valueOf(new File("/").getTotalSpace()/1024/1024/1024));
-    		put("free", String.valueOf(new File("/").getFreeSpace()/1024/1024/1024));
-		}};
-	}
 
     /**
 	 * get folders and files list from specified folder
@@ -67,15 +67,23 @@ public class FolderController {
     /**
      * move folder from one location(folder) to another
      *
-     * @param path 			old folder path
-     * @param newPath		path of folder where to move
+     * @param request       containing folder old and new path
+     * @return http status
      */
-    @PostMapping("/cut/{path}/to/{newPath}")
-    public HttpStatus cutFolder(
-    	@PathVariable("path") 	String path,
-    	@PathVariable("newPath") String newPath
-    ) {
-    	return folderService.cutFolder(path, newPath);
+    @PostMapping("/cut")
+    public HttpStatus cutFolder(@RequestBody HashMap<String, String> request) {
+    	return folderService.cutFolder(request.get("oldPath"), request.get("newPath"));
+    }
+
+    /**
+     * copy folder to new path
+     *
+     * @param request       request containing  original folder path and path for folder copy
+     * @return http status
+     */
+    @PostMapping("/copy")
+    public HttpStatus copyFolder(@RequestBody HashMap<String, String> request) {
+        return folderService.copyFolder(request.get("oldPath"), request.get("newPath"));
     }
 
     /**
