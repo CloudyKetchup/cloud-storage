@@ -37,11 +37,19 @@ public class Folder {
 	@Column
 	private Float size = 0f;
 
+	@Column
+	private Integer parentId;
+
+	@Column
+	private Boolean root = false;
+
 	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JoinColumn(name= "parentId")
 	@JsonIgnore
 	private Set<Folder> folders = new HashSet<>();
 	
 	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JoinColumn(name= "parentId")
 	@JsonIgnore
 	private Set<File> files = new HashSet<>();
 
@@ -54,5 +62,9 @@ public class Folder {
 		this.path = folder.getPath();
 		this.location = Paths.get(folder.getPath()).getParent().toFile().getName();
 		this.timeCreated = time.getDayOfMonth() + "-" + time.getMonthValue() + "-" + time.getYear();
+
+		if(this.path.equals("C:\\Users\\dodon\\cloud")) {
+			root = true;
+		}
 	}
 }
