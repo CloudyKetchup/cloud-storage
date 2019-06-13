@@ -52,6 +52,9 @@ public class FolderRecordServiceImpl implements FolderRecordService {
 
         folderRepository.save(folder);
 
+        // folder name is updated so we udpate childs location name
+        updateChildsLocation(folder);
+
         return HttpStatus.OK;
     }
 
@@ -63,7 +66,7 @@ public class FolderRecordServiceImpl implements FolderRecordService {
 
         folderRepository.save(dbFolder);
         // update folder childs path
-        updateChildPaths(dbFolder);
+        updateChildsPaths(dbFolder);
         // new folder parent path
         var newParentPath = Paths.get(dbFolder.getPath()).getParent().toFile().getPath();
 
@@ -78,7 +81,7 @@ public class FolderRecordServiceImpl implements FolderRecordService {
 
         folderRepository.save(dbFolder);
         // update folder childs path
-        updateChildPaths(dbFolder);
+        updateChildsPaths(dbFolder);
 
         return HttpStatus.OK;
     }
@@ -166,8 +169,7 @@ public class FolderRecordServiceImpl implements FolderRecordService {
     }
 
     /**
-     * add record of folder that was copied to another directory and
-     * child's inside it
+     * add record of folder that was copied to another directory
      *
      * @param copiedFolder  copied folder from filesystem
      * @return Http Status
@@ -280,19 +282,62 @@ public class FolderRecordServiceImpl implements FolderRecordService {
             if (parent != null) {
                 if (child.isFile()) {
                     // get child file record
-                    var file = fileRepository.getByPath(child.getPath());
+                    var dbFile = fileRepository.getByPath(child.getPath());
 
-                    if (file != null) addFileChild(parent, file);
+                    if (dbFile != null) addFileChild(parent, dbFile);
                 } else if (child.isDirectory()) {
+                    // get child folder record
                     var dbChild = getByPath(child.getPath());
 
                     if (!folderHasChildFolder(parent, dbChild))
                         addFolderChild(parent, dbChild);
 
+                    // run recursive for folders inside child folder
                     addFolderChilds(Arrays.asList(child.listFiles()));
                 }
             }
         });
+    }
+
+    /**
+     * when folder is renamed,folders and files inside location need to be updated to new folder name
+     *
+     * @param parent        folder who child folders and files need update
+     */
+    private void updateChildsLocation(Folder parent) {
+        var updatedParentName = parent.getName();
+
+        parent.getFiles()
+                .parallelStream()
+                .forEach(childFile -> updateFileLocation(childFile, updatedParentName));
+
+        parent.getFolders()
+                .parallelStream()
+                .forEach(childFolder -> updateFolderLocation(childFolder, updatedParentName));
+    }
+
+    /**
+     * set new location name for folder
+     *
+     * @param folder            folder who need location name update
+     * @param newLocation       new folder location name
+     */
+    private void updateFolderLocation(Folder folder, String newLocation) {
+        folder.setLocation(newLocation);
+
+        folderRepository.save(folder);
+    }
+
+    /**
+     * set new location name for file
+     *
+     * @param file              file who need location name update
+     * @param newLocation       new file location name
+     */
+    private void updateFileLocation(File file, String newLocation) {
+        file.setLocation(newLocation);
+
+        fileRepository.save(file);
     }
 
     /**
@@ -301,7 +346,7 @@ public class FolderRecordServiceImpl implements FolderRecordService {
      *
      * @param parent        folder who path was updated 
      */
-    private void updateChildPaths(Folder parent) {
+    private void updateChildsPaths(Folder parent) {
         // update child files path's
         parent.getFiles().parallelStream().forEach(childFile -> {
             childFile.setPath(parent.getPath() + "\\" + childFile.getName());
@@ -315,8 +360,8 @@ public class FolderRecordServiceImpl implements FolderRecordService {
             childFolder.setPath(parent.getPath() + "\\" + childFolder.getName());
 
             folderRepository.save(childFolder);
-
-            if (!childFolder.getFolders().isEmpty()) updateChildPaths(childFolder);
+            // run recursive for content inside child folder
+            updateChildsPaths(childFolder);
         });
     }
 
@@ -327,15 +372,14 @@ public class FolderRecordServiceImpl implements FolderRecordService {
      */
     private void removeAllFolderChilds(Folder folder) {
         folder.getFolders().parallelStream().forEach(childFolder -> {
-            // remove all child folders from current iterated folder
-            removeFolderChildFolders(childFolder);
-            // remove all child files from current iterated folder
-            removeFolderChildFiles(childFolder);
+            removeChildFolders(childFolder);
+
+            removeChildFiles(childFolder);
 
             folderRepository.delete(childFolder);
         });
 
-        removeFolderChildFiles(folder);
+        removeChildFiles(folder);
     }
 
     /**
@@ -344,7 +388,7 @@ public class FolderRecordServiceImpl implements FolderRecordService {
      *
      * @param folder        parent folder
      */
-    private void removeFolderChildFolders(Folder folder) {
+    private void removeChildFolders(Folder folder) {
         folder.getFolders()
                 .parallelStream()
                 .forEach(this::removeAllFolderChilds);
@@ -355,7 +399,7 @@ public class FolderRecordServiceImpl implements FolderRecordService {
      *
      * @param folder        parent folder
      */
-    private void removeFolderChildFiles(Folder folder) {
+    private void removeChildFiles(Folder folder) {
         folder.getFiles()
                 .parallelStream()
                 .forEach(fileRepository::delete);
