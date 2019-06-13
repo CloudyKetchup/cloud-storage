@@ -9,7 +9,8 @@ import ElementInfoContainer 	from './components/ElementInfoContainer';
 
 const axios = require('axios');
 
-const API_URL = 'http://localhost:8080'
+const API_URL 	= 'http://localhost:8080';
+const root 		= 'cloud';
 
 export default class App extends Component {
 	constructor() {
@@ -19,10 +20,9 @@ export default class App extends Component {
 			folders 	: [],
 			files 		: [],
 			bufferElement   : undefined,
-			elementInfo : undefined,
+			elementInfoContainer : false,
 			elementSelected : undefined,
 			folderInfo 	: this.folderInfo,
-			prevState 	: this.prevState,
 			rootOpened 	: true,
 			rootMemory	: {},
 			renameElementDialog : false,
@@ -31,14 +31,12 @@ export default class App extends Component {
 		};
 
 		window.onkeyup = e => {
-			var key = e.keyCode ? e.keyCode : e.which;
+			const key = e.keyCode ? e.keyCode : e.which;
 
-			if (key === 27)
-				this.setState({
-					elementSelected : undefined,
-					createFolderDialog : false,
-					uploadFileDialog : false
-				})
+			if (key === 27) {
+				this.toggleDialogs();
+				this.toggleElementInfo();
+			}
 		}
 	}
 
@@ -49,14 +47,12 @@ export default class App extends Component {
 
 	getRootContent() {
 		axios.get(`${API_URL}/folder/root/content`)
-			.then(root =>
-				this.setState({
+			.then(root => this.setState({
 					folders 	: root.data.folders,
 					files 		: root.data.files,
 					elements 	: this.sortElements(root.data.folders.concat(root.data.files)),
 					folderInfo 	: root.data.rootFolder
-				})
-			)
+				}))
 			.catch(error => console.log(error));
 	}
 
@@ -76,19 +72,16 @@ export default class App extends Component {
 
 		axios.get(`${API_URL}/folder/${folderId}/content`)
 			.then(content => 
-				this.setState(prevState => {
-					return {
-						folders 	: content.data.folders,
-						files 		: content.data.files,
-						elements 	: content.data.folders.concat(content.data.files),
-						folderInfo 	: content.data.folderInfo,
-						prevState	: prevState,
-						rootOpened 	: false
-					}
+				this.setState({
+					folders 	: content.data.folders,
+					files 		: content.data.files,
+					elements 	: this.sortElements(content.data.folders.concat(content.data.files)),
+					folderInfo 	: content.data.folderInfo,
+					rootOpened 	: content.data.folderInfo.root
 				})
 			)
 			.catch(error => console.log(error));
-	}	
+	};
 
 	handleContextMenuAction(action, element) {
 		switch(action) {
@@ -111,30 +104,26 @@ export default class App extends Component {
 			case 'rename':
 				this.toggleDialogs(true, false, false);
 				break;
+			case 'upload-files':
+				this.toggleDialogs(false, false, true);
+				break;
+			case 'create-folder':
+				this.toggleDialogs(false, true, false);
+				break;
+			case 'delete-all':
+				console.log(action)
+				break;
+			case 'paste':
+				this.sendPasteAction(element, action);
+				break;
 			case 'delete':
 				this.sendDeleteRequest(element);
 				break;
 			case 'info':
-				this.toggleElementInfo(element);
+				this.toggleElementInfo(true);
 				break;
 			default: break;
 		}
-	}
-
-	handleContainerContextMenu(action, folder) {
-		switch(action) {
-			case 'delete-all':
-				break;
-			case 'paste':
-				break;
-			default: break;
-		}
-	}
-
-	sendContextMenuAction(URL) {
-		axios.post(URL)
-			.then(response => console.log(response.data))
-			.catch(error => console.log(error));
 	}
 
 	toggleDialogs(
@@ -158,11 +147,25 @@ export default class App extends Component {
 			.then(response => {
 				if (response.data === 'OK') {
 					
-					this.folderInfo.name !== 'cloud' ? this.updateElementsData() : this.getRootContent();
-
 					this.setState({ createFolderDialog : false });
+
+					this.state.folderInfo.name === root ? this.getRootContent() : this.updateElementsData();
 				}
 			})
+			.catch(error => console.log(error));
+	}
+
+	sendPasteAction(
+		element = this.state.bufferElement, 
+		action, 
+		path 	= this.state.folderInfo.path
+	) {
+		axios.post(`${API_URL}/${element.data.type.toLowerCase()}/${element.action}`,
+			{
+				oldPath : element.data.path,
+				newPath : path
+			})
+			.then(response => this.state.folderInfo.name === root ? this.getRootContent() : this.updateElementsData())
 			.catch(error => console.log(error));
 	}
 
@@ -176,27 +179,43 @@ export default class App extends Component {
 				'newName' : newName
 			})
 			.then(response => {
-				if(response.data === 'OK') {
+				if (response.data === 'OK') {
 					this.setState({ renameElementDialog : false });
 					
-					this.state.folderInfo.name === 'cloud' ? this.getRootContent() : this.updateElementsData();
+					this.state.folderInfo.name === root ? this.getRootContent() : this.updateElementsData();
 				}
 			})
 			.catch(error => console.log(error));
 	}
 
 	sendDeleteRequest(element) {
-
 		axios.post(`${API_URL}/folder/delete`,
 			{
 				[`${element.type.toLowerCase()}Path`] : element.path
 			})
-			.then(response => console.log(response.data))
+			.then(response => response.data === 'OK'
+					? this.state.folderInfo.name === root
+						? this.getRootContent()
+						: this.updateElementsData(this.state.folderInfo.id)
+					: console.log(response.data))
 			.catch(error => console.log(error));
 	}
 
-	toggleElementInfo(element)  {
-		this.setState({ elementInfo : !this.state.elementInfo });
+	sendDeleteAllFolderContent() {
+		axios.post(`${API_URL}/folder/deleteAllContent`,
+			{	
+				'folderPath' : this.state.folderInfo.path
+			})
+			.then(response => response.data === 'OK'
+				? this.state.folderInfo.name === root
+					? this.getRootContent()
+					: this.updateElementsData(this.state.folderInfo.id)
+				: undefined)
+			.catch(error => console.log(error));
+	}
+
+	toggleElementInfo(toggle = false)  {
+		this.setState({ elementInfoContainer : toggle });
 	}
 
 	sortElements(elements) {
@@ -212,15 +231,28 @@ export default class App extends Component {
 		return elements;
 	}
 
+	bufferElementIndicator() {
+		if (this.state.bufferElement !== undefined) {
+			return <BufferElementIndicator
+				element={this.state.bufferElement}
+			/>
+		}
+	}
+
+	elementInfoContainer() {
+		if (this.state.elementSelected !== undefined && this.state.elementInfoContainer) {
+			 return <ElementInfoContainer
+					parent={this}
+					data={this.state.elementSelected}
+					/>
+		}
+	}
+
 	render() {
 		return (
 			<main style={{height : '100%'}}>
 				<Nav>
-					{this.state.bufferElement !== undefined
-						? <BufferElementIndicator
-							element={this.state.bufferElement}
-							/>
-						: undefined}
+					{this.bufferElementIndicator()}
 				</Nav>
 				<SideBar
 					memory 		= {this.state.rootMemory} 
@@ -233,26 +265,21 @@ export default class App extends Component {
 					elementsData={this.state.elements}
 					>
 					<PrevFolderButton
-						whenClicked = {() => this.setState(this.state.prevState)}
+						whenClicked = {() => this.updateElementsData(this.state.folderInfo.parentId)}
 						rootOpened  = {this.state.rootOpened}
 					/>
-					{this.state.elementInfo !== undefined
-						? <ElementInfoContainer
-							parent={this}
-							data={this.state.elementSelected}
-							/>
-						: undefined}
+					{this.elementInfoContainer()}
 					<button 
 						className = 'create-folder' 
 						onClick   = {() => this.toggleDialogs(false, true, false)}
 					>
-						<i className='fas fa-folder-plus'></i>
+						<i className='fas fa-folder-plus'/>
 					</button>
 					<button 
 						className = 'upload-file-button'
 						onClick   = {() => this.toggleDialogs(false, false, true)}
 					>
-						<i className='fas fa-cloud-upload-alt'></i>
+						<i className='fas fa-file-upload'/>
 					</button>
 				</ContentContainer>
 			</main>
