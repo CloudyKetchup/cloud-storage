@@ -1,0 +1,17 @@
+bin/
+build/
+.gradle/
+gradle/
+Backend/.gradle/
+Backend/.idea/
+Backend/.settings/
+Backend/.vscode/
+Backend/bin/
+Backend/build/
+Backend/gradle/
+Backend/out/
+Frontend/.gradle
+Frontend/build
+Frontend/build_packageFrontend
+Frontend/node_modules/
+Frontend/gradle
