@@ -6,18 +6,19 @@ wrapper {
 
 // Run backend of Cloud Storage service build with Spring
 task bootRun(type: GradleBuild) {
-	dir = "CloudStorage"
+	dir = "Backend"
 	tasks = ["bootRun"]
 }
 
 // Run frontend with Node js
 task npm_start(type: GradleBuild) {
-	dir = "frontend"
-
+	dir = "Frontend"
 	tasks = ["npm_start"]
 }
 
 task start() {
 	dependsOn bootRun
 	dependsOn npm_start
+
+	npm_start.shouldRunAfter bootRun
 }

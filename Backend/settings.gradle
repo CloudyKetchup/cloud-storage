@@ -12,6 +12,5 @@ pluginManagement {
 		}
 	}
 }
-rootProject.name = 'cloud'
 
-include 'frontend'
+include 'Frontend'

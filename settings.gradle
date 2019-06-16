@@ -1,4 +1,4 @@
-rootProject.name = 'CloudDev'
+rootProject.name = 'CloudStorage'
 
-include 'CloudStorage'
-include 'frontend'
+include 'Backend'
+include 'Frontend'
