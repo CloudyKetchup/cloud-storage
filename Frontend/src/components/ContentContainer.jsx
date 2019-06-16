@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 
 import RenameElementDialog  from './RenameElementDialog';
-import UploadFileDialog 	from './UploadFileDialog';
 import CreateFolderDialog 	from './CreateFolderDialog';
 import DefaultContextMenu	from './DefaultContextMenu';
 import Folder 				from './Folder';
@@ -56,12 +55,7 @@ export default class ContentContainer extends Component {
 	}
 
 	customDialog() {
-		if (this.props.parent.state.uploadFileDialog) {
-			return <UploadFileDialog
-					parent = {this.props.parent}
-					folderPath  = {this.props.parent.state.folderInfo.path}
-					/>
-		}else if (this.props.parent.state.createFolderDialog) {
+		if (this.props.parent.state.createFolderDialog) {
 			return <CreateFolderDialog
 					parent = {this.props.parent}
 					sendFolder  = {folder => this.props.parent.sendNewFolder(folder)}
