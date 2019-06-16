@@ -1,32 +1,23 @@
-plugins {
-	id 'org.springframework.boot' version '2.2.0.M3'
-	id 'java'
+wrapper {
+    description "Regenerates the Gradle Wrapper files"
+    gradleVersion = '5.0'
+    distributionUrl = "http://services.gradle.org/distributions/gradle-${gradleVersion}-all.zip"
 }
 
-apply plugin: 'io.spring.dependency-management'
-
-group = 'com.krypton'
-version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '12'
-
-repositories {
-	mavenCentral()
-	maven { url 'https://repo.spring.io/snapshot' }
-	maven { url 'https://repo.spring.io/milestone' }
+// Run backend of Cloud Storage service build with Spring
+task bootRun(type: GradleBuild) {
+	dir = "CloudStorage"
+	tasks = ["bootRun"]
 }
 
-dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-webflux'
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'commons-io:commons-io:2.6'
-	compile 'mysql:mysql-connector-java:8.0.16'
-	compileOnly 'org.projectlombok:lombok:1.18.8'
-	annotationProcessor 'org.projectlombok:lombok:1.18.8'
-	runtimeOnly 'org.springframework.boot:spring-boot-devtools'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'io.projectreactor:reactor-test'
+// Run frontend with Node js
+task npm_start(type: GradleBuild) {
+	dir = "frontend"
+
+	tasks = ["npm_start"]
 }
 
-test {
-	useJUnitPlatform()
+task start() {
+	dependsOn bootRun
+	dependsOn npm_start
 }
