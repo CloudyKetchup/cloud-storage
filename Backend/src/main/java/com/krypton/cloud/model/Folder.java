@@ -19,7 +19,7 @@ public class Folder {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(unique = false)
+	@Column
 	private String name;
 
 	@Column
