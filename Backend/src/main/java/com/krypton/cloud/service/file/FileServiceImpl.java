@@ -2,7 +2,6 @@ package com.krypton.cloud.service.file;
 
 import com.krypton.cloud.service.file.record.FileRecordServiceImpl;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpStatus;
@@ -10,9 +9,9 @@ import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Paths;
 
@@ -23,59 +22,75 @@ public class FileServiceImpl implements FileService {
 	private final FileRecordServiceImpl fileRecordService;
 
 	@Override
-	public Mono<HttpStatus> saveFiles(Flux<FilePart> files, String folder) {
-		return files.subscribeOn(Schedulers.parallel())
-				.map(it -> {
-				    var file = new File(folder + "\\" + it.filename());
-
-				    it.transferTo(file);
-                    return fileRecordService.addFile(file);
-                })
-                .then(Mono.just(HttpStatus.OK));
+	public Flux<HttpStatus> saveFiles(Flux<FilePart> files, String path) {
+		return files.flatMap(file -> Flux.just(writeFilePart(file, path) ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR));
 	}
 
 	@Override
-	public Mono<HttpStatus> saveFile(Mono<FilePart> filePart, String folder) {
-        // add file record to database
-        return filePart.subscribeOn(Schedulers.parallel())
-                .map(it -> {
-                    var file = new File(folder + "\\"  + it.filename());
-
-                    it.transferTo(file);
-                    return fileRecordService.addFile(file);
-                })
-                .then(Mono.just(HttpStatus.OK));
+	public Mono<HttpStatus> saveFile(Mono<FilePart> filePart, String path) {
+		return filePart.flatMap(file -> Mono.just(writeFilePart(file, path) ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR));
 	}
 
 	@Override
-	public Resource getFile(String file, String folder) {
+	public Resource getFile(String path) {
 		Resource resource = null;
 
-		var filePath = Paths.get(folder).resolve(file).normalize().toUri();
-
 		try {
-			resource = new UrlResource(filePath);
+			resource = new UrlResource(path);
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		}
-		assert resource != null;
 
 		return resource;
 	}
 
 	@Override
-	public HttpStatus renameFile(String file, String folder, String newName) {
-		var baseFolder = "C:\\Users\\dodon\\cloud" + "\\" + folder + "\\";
-		
-		return new File(baseFolder + file).renameTo(new File(baseFolder + newName))
-				? HttpStatus.OK
+	public HttpStatus renameFile(String path, String newName) {
+		var file = new File(path);
+		var parentFolder = Paths.get(path).getParent().toFile().getPath();
+
+		return file.renameTo(new File(parentFolder + "\\" + newName))
+				? fileRecordService.renameFile(path, newName)
 				: HttpStatus.INTERNAL_SERVER_ERROR;
 	}
 
 	@Override
-    public HttpStatus deleteFile(String file, String folder) {
-    	return new File(folder + "/" + file).delete()
-    			? HttpStatus.OK
+    public HttpStatus deleteFile(String path) {
+    	var file = new File(path);
+
+		return file.delete()
+    			? fileRecordService.deleteFileRecord(path)
     			: HttpStatus.INTERNAL_SERVER_ERROR;
     }
+
+    /**
+	 * Save {@link FilePart} to disk then add record to database
+	 *
+	 * @param filePart	{@link FilePart} from request
+	 * @param path 		path to folder where to save file
+	 */
+	private boolean writeFilePart(FilePart filePart, String path) {
+		var file = new File(path + "\\" + filePart.filename());
+
+		try {
+			// create file locally on disk
+			if (file.createNewFile()) {
+				// transfer incoming file data to local file
+                filePart.transferTo(file).subscribe();
+            }
+			return saveFileRecord(file);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+        return false;
+	}
+
+	/**
+	 * add record of file from filesystem to database
+	 *
+	 * @param file 		file for database record
+	 */
+	private boolean saveFileRecord(File file) {
+		return fileRecordService.addFileRecord(file) != null;
+	}
 }

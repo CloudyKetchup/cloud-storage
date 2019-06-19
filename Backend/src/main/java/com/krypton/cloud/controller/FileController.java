@@ -2,19 +2,20 @@ package com.krypton.cloud.controller;
 
 import com.krypton.cloud.service.file.FileServiceImpl;
 import lombok.AllArgsConstructor;
+import org.jetbrains.annotations.TestOnly;
 import org.springframework.core.io.Resource;
 import org.springframework.http.*;
 import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.http.codec.multipart.FormFieldPart;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 import java.util.HashMap;
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/files")
+@RequestMapping("/file")
 public class FileController {
 
 	private FileServiceImpl fileService;
@@ -26,74 +27,61 @@ public class FileController {
 	 * @param folder 			folder path where to save files
 	 * @return http status
 	 */
+	@TestOnly
 	@PostMapping("/upload/many")
-	public Mono<HttpStatus> uploadFiles(
+	public Flux<HttpStatus> uploadFiles(
 			@RequestPart("files") Flux<FilePart> files,
-			@RequestPart("folder") String folder
+			@RequestPart("path") FormFieldPart folder
 	) {
-		return fileService.saveFiles(files, folder);
+		return fileService.saveFiles(files, folder.value());
 	}
 
 	/**
-	 * upload one file to specified
+	 * upload one file to specified folder path
 	 *
 	 * @param file 			file for save
-	 * @param path          path where to save file
+	 * @param path          path to folder where to save file
 	 * @return  http status
 	 */
 	@PostMapping("/upload/one")
 	public Mono<HttpStatus> uploadFile(
 			@RequestPart("file") Mono<FilePart> file,
-			@RequestParam("path") String path
-    ) {
-		System.out.println(path);
-
-		return Mono.just(HttpStatus.OK);
-//		return fileService.saveFile(file, folder);
+			@RequestPart("path") FormFieldPart path
+	) {
+		return fileService.saveFile(file, path.value());
 	}
 
 	/**
-	 * download file
-	 *
-	 * @param file 		file name
-	 * @param folder 	file path directory
+	 * @param path 		file path
+	 * @param name 		file name
 	 * @return file
 	 */
-	@GetMapping("/{folder}/{file}/get")
-	public ResponseEntity<Resource> getFile(
-			@PathVariable("file") String file,
-			@PathVariable("folder") String folder
+	@GetMapping("/{path}/{name}/download")
+	public ResponseEntity<Resource> downloadFile(
+			@PathVariable String path,
+			@PathVariable String name
 	) {
 		return ResponseEntity
 					.ok()
-					.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file + "\"")
-					.body(fileService.getFile(file, folder));
+					.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + name + "\"")
+					.body(fileService.getFile(path));
 	}
 
 	/**
-	 * rename file
-	 *
-	 * @param request 	file name, path and new name
+	 * @param request 	file path and new name
 	 * @return http status
 	 */
-	@PostMapping("/file/rename")
+	@PostMapping("/rename")
 	public HttpStatus renameFile(@RequestBody HashMap<String, String> request) {
-		
-		return fileService.renameFile(request.get("file"), request.get("folder"), request.get("newName"));
+		return fileService.renameFile(request.get("path"), request.get("newName"));
 	}
 
 	/**
-	 * delete file from folder
-	 *
-	 * @param file 		file for delete
-	 * @param folder 	file path directory
+	 * @param request 	file path
 	 * @return http status
 	 */
-	@PostMapping("{folder}/{file}/remove")
-	public HttpStatus deleteFile(
-		@PathVariable("file") String file,
-		@PathVariable("folder") String folder
-	) {
-		return fileService.deleteFile(file, folder);
+	@PostMapping("/delete")
+	public HttpStatus deleteFile(@RequestBody HashMap<String, String> request) {
+		return fileService.deleteFile(request.get("path"));
 	}
 }
