@@ -7,14 +7,14 @@ import Folder 				from './Folder';
 import File 				from './File';
 
 export default class ContentContainer extends Component {
-	state={
+	state = {
 		disableContextMenu : false,
 		contextMenuShow : false,
 		contextMenuStyle : {
 			top : '',
 			left : ''
 		}
-	}
+	};
 
 	componentDidMount() {
 		document.getElementById('content-container').addEventListener('contextmenu', e => {
@@ -25,45 +25,60 @@ export default class ContentContainer extends Component {
 					top : e.y - 70,
 					left : e.x - 275
 				}
-			})	
+			})
 		});
 
 		window.addEventListener('click', () => this.setState({ contextMenuShow : false }), false);
 	}
 	
-	createElement(element) {
+	createFile = data => {
 		const mainParent = this.props.parent;
 
-		return element.type === 'FILE' 
-			? <File 
-				key={element.id}
-				name={element.name}
-				/>
-			: <Folder
-				data={element}
-				key={element.id}
+		return (
+			<File 
+				key={data.path}
+				data={data}
 				mainParent={mainParent}
 				parent={this}
-				handleAction={action => this.props.parent.handleContextMenuAction(action, element)}
+				handleAction={action => {
+					mainParent.setState({ elementSelected : data });
+
+					mainParent.handleContextMenuAction(action, data);
+				}}
+			/>
+		);
+	}
+
+	createFolder = data => {
+		const mainParent = this.props.parent;
+
+		return (
+			<Folder
+				key={data.path}
+				data={data}
+				mainParent={mainParent}
+				parent={this}
+				handleAction={action => mainParent.handleContextMenuAction(action, data)}
 				whenClicked={() => 
 					mainParent.state.elementSelected !== undefined
 					&&
-					mainParent.state.elementSelected.id === element.id
-							? mainParent.updateElementsData(element.id)
-							: mainParent.setState({ elementSelected : element})
+					mainParent.state.elementSelected.id === data.id
+							? mainParent.updateFolderInfo(data.id)
+							: mainParent.setState({ elementSelected : data})
 				}/>
-	}
+		);
+	};
 
 	customDialog() {
 		if (this.props.parent.state.createFolderDialog) {
 			return <CreateFolderDialog
-					parent = {this.props.parent}
-					sendFolder  = {folder => this.props.parent.sendNewFolder(folder)}
+						parent 	   = {this.props.parent}
+						sendFolder = {folder => this.props.parent.sendNewFolder(folder)}
 					/>
 		}else if (this.props.parent.state.renameElementDialog) {
 			return  <RenameElementDialog
-					parent  = {this.props.parent}
-					onRename= {newName => this.props.parent.sendRenameRequest(newName)}
+						parent   = {this.props.parent}
+						onRename = {newName => this.props.parent.sendRenameRequest(newName)}
 					/>
 		}
 	}
@@ -74,7 +89,8 @@ export default class ContentContainer extends Component {
 				{this.customDialog()}
 				{this.props.children}
 				<div className="elements">
-					{this.props.elementsData.map(element => this.createElement(element))}
+					{this.props.folders.map(folder => this.createFolder(folder))}
+					{this.props.files.map(file => this.createFile(file))}
 				</div>
 				{this.state.contextMenuShow && !this.state.disableContextMenu
 					? <DefaultContextMenu
