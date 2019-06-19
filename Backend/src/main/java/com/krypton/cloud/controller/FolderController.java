@@ -1,21 +1,25 @@
 package com.krypton.cloud.controller;
 
+import com.krypton.cloud.model.Folder;
 import com.krypton.cloud.service.deliver.ZipService;
 import com.krypton.cloud.service.folder.FolderServiceImpl;
+import com.krypton.cloud.service.folder.record.FolderRecordServiceImpl;
 import lombok.AllArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 
 import java.io.File;
 import java.util.HashMap;
 
 @RestController
-@CrossOrigin
 @AllArgsConstructor
 @RequestMapping("/folder")
 public class FolderController {
 
 	private final FolderServiceImpl folderService;
+
+	private final FolderRecordServiceImpl folderRecordService;
 
 	private final ZipService zipService;
 
@@ -32,25 +36,37 @@ public class FolderController {
         }};
     }
 
-	/**
-	 * get root folders list
+    /**
+	 * get {@link Folder} entity data
 	 *
-	 * @return folders list
+	 * @param folder 		folder id
+	 * @return {@link Folder}
 	 */
-    @GetMapping("/root/content")
-    public HashMap rootContent() {
-    	return folderService.getRootData();
+    @GetMapping("/{folder}/data")
+    public Folder getFolderData(@PathVariable("folder") Long folder) {
+    	return folderService.getFolderData(folder);
     }
 
     /**
-	 * get folders and files list from specified folder
-	 *
-	 * @param folder 		folder id
-	 * @return folders and files list
-	 */
-    @GetMapping("/{folder}/content")
-    public HashMap folderContent(@PathVariable("folder") Long folder) {
-    	return folderService.getFolderData(folder);
+     * get list of {@link Folder}'s inside a {@link Folder}
+     *
+     * @param id        parent folder id
+     * @return {@link Folder}'s list
+     */
+    @GetMapping("/{folder}/folders")
+	public Flux<Folder> getFolderFolders(@PathVariable("folder") Long id) {
+    	return folderRecordService.getFolderFolders(id);
+	}
+
+    /**
+     * get list of {@link com.krypton.cloud.model.File}'s inside a {@link Folder}
+     *
+     * @param id        parent folder id
+     * @return {@link com.krypton.cloud.model.File}'s list
+     */
+	@GetMapping("/{folder}/files")
+    public Flux<com.krypton.cloud.model.File> getFolderFiles(@PathVariable("folder") Long id) {
+        return folderRecordService.getFolderFiles(id);
     }
 
     /**
@@ -65,7 +81,7 @@ public class FolderController {
     }
 
     /**
-     * move folder from one location(folder) to another
+     * move folder from one location to another
      *
      * @param request       containing folder old and new path
      * @return http status
@@ -89,12 +105,12 @@ public class FolderController {
     /**
 	 * rename folder
 	 *
-	 * @param folder 		request containg folder path and new name
+	 * @param request 		request containing folder path and new name
 	 * @return http status
 	 */
     @PostMapping("/rename")
 	public HttpStatus renameFolder(@RequestBody HashMap<String, String> request) {
-    	return folderService.renameFolder(request.get("folderPath"), request.get("newName"));
+    	return folderService.renameFolder(request.get("path"), request.get("newName"));
 	}
 
     /**
@@ -105,13 +121,11 @@ public class FolderController {
 	 */
     @PostMapping("/delete")
     public HttpStatus deleteFolder(@RequestBody HashMap<String, String> request) {
-    	return request.get("folderPath") != null
-			? folderService.deleteFolder(request.get("folderPath"))
-			: HttpStatus.INTERNAL_SERVER_ERROR; 	
+    	return folderService.deleteFolder(request.get("path"));
     }
 
     @GetMapping(value = "/{folder}/get", produces="application/zip")
-	public ResponseEntity getFolder(@PathVariable("folder") String folder) {
+	public ResponseEntity downloadFolder(@PathVariable("folder") String folder) {
 		zipService.createZip(folder);
 		
 		return ResponseEntity.ok()

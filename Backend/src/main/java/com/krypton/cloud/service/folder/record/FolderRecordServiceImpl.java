@@ -5,6 +5,7 @@ import com.krypton.cloud.repository.*;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -33,6 +34,22 @@ public class FolderRecordServiceImpl implements FolderRecordService {
     @Override
     public Folder getByPath(String path) {
         return folderRepository.getByPath(path);
+    }
+
+    @Override
+    public Flux<Folder> getFolderFolders(Long id) {
+        return Flux.fromStream(getById(id)
+                .getFolders()
+                .stream()
+                .sorted((folder1, folder2) -> (int) (folder1.getId() - folder2.getId())));
+    }
+
+    @Override
+    public Flux<File> getFolderFiles(Long id) {
+        return Flux.fromStream(getById(id)
+                .getFiles()
+                .stream()
+                .sorted((folder1, folder2) -> (int) (folder1.getId() - folder2.getId())));
     }
 
     @Override
@@ -65,7 +82,7 @@ public class FolderRecordServiceImpl implements FolderRecordService {
         dbFolder.setPath(newPath);
 
         folderRepository.save(dbFolder);
-        // update folder childs path
+        // update folder child's path
         updateChildsPaths(dbFolder);
         // new folder parent path
         var newParentPath = Paths.get(dbFolder.getPath()).getParent().toFile().getPath();
@@ -87,7 +104,7 @@ public class FolderRecordServiceImpl implements FolderRecordService {
     }
 
     @Override
-    public HttpStatus addFolder(java.io.File folder) {
+    public HttpStatus addFolderRecord(java.io.File folder) {
         // check if folder with same path exist
         if(!folderExist(folder.getPath())) {
             folderRepository.save(new Folder(folder));
@@ -117,6 +134,8 @@ public class FolderRecordServiceImpl implements FolderRecordService {
             !folderHasChildFile(parent, child)
         ) {
             parent.getFiles().add(child);
+
+            folderRepository.save(parent);
         }
     }
 
@@ -175,7 +194,7 @@ public class FolderRecordServiceImpl implements FolderRecordService {
      * @return Http Status
      */
     public HttpStatus copyFolder(java.io.File copiedFolder) {
-        addFolder(copiedFolder);
+        addFolderRecord(copiedFolder);
 
         addAllFoldersToDatabase(Arrays.asList(copiedFolder.listFiles()));
 
@@ -259,11 +278,11 @@ public class FolderRecordServiceImpl implements FolderRecordService {
         content.parallelStream().forEach(file -> {
             // if file is directory missing not present in database
             if (!folderExist(file.getPath()) && file.isDirectory()) {
-                addFolder(file);
+                addFolderRecord(file);
 
                 var insideContent = Arrays.asList(file.listFiles());
 
-                if (!insideContent.isEmpty()) addAllFoldersToDatabase(insideContent);
+                addAllFoldersToDatabase(insideContent);
             }
         });
     }
