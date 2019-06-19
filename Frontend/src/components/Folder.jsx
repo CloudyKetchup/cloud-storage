@@ -2,22 +2,32 @@ import React, { Component } from 'react';
 
 import ContextMenu 	from './ContextMenu'
 
+async function contextMenuListener(e, obj) {
+	e.preventDefault();
+	obj.setState({ contextMenuShow : true });
+
+	obj.props.parent.setState({ disableContextMenu : true });
+
+	window.addEventListener('click',() => windowClickListener(obj), false);
+}
+
+async function windowClickListener(obj) {
+	obj.setState({ contextMenuShow : false });
+
+	obj.props.parent.setState({ disableContextMenu : false });
+}
+
 export default class Folder extends Component {
-	state={ contextMenuShow : false }
+	state = { contextMenuShow : false };
 
 	componentDidMount() {
-		document.getElementById(`folder-${this.props.data.id}`).addEventListener('contextmenu', e => {
-			e.preventDefault();
-			this.setState({ contextMenuShow : true });
+		document.getElementById(`folder-${this.props.data.id}`)
+			.addEventListener('contextmenu', e => contextMenuListener(e, this), false);
+	}
 
-			this.props.parent.setState({ disableContextMenu : true });
-		});
-
-		window.addEventListener('click', () => {
-			this.setState({ contextMenuShow : false });
-
-			this.props.parent.setState({ disableContextMenu : false });
-		}, false);
+	componentWillUnmount() {
+		document.getElementById(`folder-${this.props.data.id}`)
+			.removeEventListener('contextmenu', e => contextMenuListener(e, this), false);
 	}
 
 	contextMenu() {
@@ -29,20 +39,26 @@ export default class Folder extends Component {
 		}
 	}
 
+	name() {
+		const name = this.props.data.name;
+
+		return name.length > 19 ? name.substring(0, 18) : name;
+	}
+
 	render() {
 		return (
 			<div
-				className="folder"
-				key={this.props.data.id}
+				className="entity"
+				key={this.props.data.path}
 				id={`folder-${this.props.data.id}`}
 				onClick={this.props.whenClicked}
 			>
 				{this.contextMenu()}
-				<div className="folder-icon">
+				<div className="entity-icon">
 					<i className="fas fa-folder"/>
 				</div>
-				<div className="folder-name">
-					<span>{this.props.data.name}</span>
+				<div className="entity-name">
+					<span>{this.name()}</span>
 				</div>
 			</div>
 		);
