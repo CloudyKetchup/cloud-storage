@@ -1,5 +1,6 @@
 package com.krypton.cloud.service.folder;
 
+import com.krypton.cloud.model.Folder;
 import com.krypton.cloud.service.folder.record.FolderRecordServiceImpl;
 import lombok.AllArgsConstructor;
 import org.springframework.core.io.Resource;
@@ -21,25 +22,8 @@ public class FolderServiceImpl implements FolderService {
 	private final FolderRecordServiceImpl folderRecordService;
 
 	@Override
-	public HashMap getRootData() {
-		var root = folderRecordService.getByName("cloud");
-
-		return new HashMap<String, Object>(){{
-			put("folders", (Set) root.getFolders());
-			put("files", (Set) root.getFiles());
-			put("rootFolder", root);
-		}};
-	}
-
-	@Override
-	public HashMap getFolderData(Long id) {
-		var folder = folderRecordService.getById(id);
-		
-		return new HashMap<String, Object>(){{
-			put("folders", (Set) folder.getFolders());
-			put("files", (Set) folder.getFiles());
-			put("folderInfo", folder);
-		}};
+	public Folder getFolderData(Long id) {
+		return folderRecordService.getById(id);
 	}
 
 	@Override
@@ -49,7 +33,7 @@ public class FolderServiceImpl implements FolderService {
 		// make folder locally on file system
 		return folder.mkdir()
 				// then add record of folder to database
-				? folderRecordService.addFolder(folder)
+				? folderRecordService.addFolderRecord(folder)
 				// if fail return error http status
 				: HttpStatus.INTERNAL_SERVER_ERROR;
 	}
@@ -65,8 +49,6 @@ public class FolderServiceImpl implements FolderService {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		// parent directory of copied folder
-		var parentFolder = Paths.get(copyPath).getParent().toFile().getPath();
 		// check if file was copied successful
 		if (folderCopy.exists()) {
 			// add copied folder record
@@ -77,7 +59,7 @@ public class FolderServiceImpl implements FolderService {
 
 	@Override
 	public HttpStatus cutFolder(String oldPath, String newPath) {
-		// get filesytem folder by path
+		// get filesystem folder by path
 		var folder = new File(oldPath);
 		// old folder parent path
 		var oldParent = Paths.get(oldPath).getParent().toFile().getPath();
@@ -92,7 +74,7 @@ public class FolderServiceImpl implements FolderService {
 	@Override
 	public HttpStatus renameFolder(String folderPath, String newName) {
 	    var folder = new File(folderPath);
-		var parentPath = Paths.get(folderPath).getParent().toFile().getAbsolutePath().toString();
+		var parentPath = Paths.get(folderPath).getParent().toFile().getPath();
 
 	    // rename folder locally on file system
 	    if (folder.renameTo(new File(parentPath + "\\" + newName))) {
