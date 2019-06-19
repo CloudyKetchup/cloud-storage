@@ -2,6 +2,15 @@
 	transition: 0.2s;
 }
 
+*::selection
+{
+    background-color: transparent;
+}
+*::-moz-selection
+{
+    background-color: transparent;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
@@ -101,7 +110,7 @@ button:focus {
 }
 
 .element-info-container {
-    box-shadow: 0px 0px 21px 10000px rgba(0,0,0,0.50);
+    box-shadow: 0 0 21px 10000px rgba(0,0,0,0.50);
     border-radius: 5px;
     background: #e8eaef;
     margin-left: 23%;
@@ -121,7 +130,7 @@ button:focus {
     background: #181818;
     border-radius: 5px;
     width: 200px;
-    box-shadow: 0px 0px 5px 0px rgba(0,0,0,0.55);
+    box-shadow: 0 0 5px 0 rgba(0,0,0,0.55);
     display: grid;
     padding: 5px;
     z-index: 99;
@@ -132,7 +141,7 @@ button:focus {
 
 .context-menu > div {
     padding: 10px;
-    grid-column: 10px;
+    grid-column-gap: 10px;
     border-radius: 5px;
     color: #dbd9d9;
 }
@@ -187,58 +196,58 @@ button:focus {
 
 .elements {
     display: grid;
-    grid-column-gap: 10px;
-    grid-template-columns: repeat(12, 1fr);
+    grid-gap: 10px;
+    grid-auto-rows: 50px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     padding: 20px;
 }
 
-.folder {
+.entity {
     height: 50px;
-    width: 150px;
+    width: 100%;
     border-radius: 5px;
     border: 1px solid gray;
 }
 
-.folder:hover {
-    box-shadow: 0 5px 5px 0 rgba(0, 0, 0, 0.25);
+.entity:hover {
+    box-shadow: 0px 0px 8px -3px rgba(0,0,0,0.75);
 }
 
-.folder-icon {
+.entity-icon {
     float: left;
     height: 100%;
     width: 50px;
     color: #292929;
 }
 
-.folder-icon > i {
+.entity-icon > i {
     font-size: 25px;
     margin-left: 10px;
-    line-height: 45px;
+    line-height: 50px;
 }
 
-.folder-name {
+.entity-name {
     height: 100%;
     width: calc(100% - 50px);
     float: right;
 }
 
-.folder-name > span {
-    line-height: 45px;
-    margin-left: 10px;
+.entity-name > span {
+    line-height: 47px;
 }
 
-.folder:hover {
+.entity:hover {
 	cursor: pointer;
 }
 
-.folder-info {
+.entity-info {
 	display: grid;
     grid-template-columns: repeat(4, 1fr);
     width: 50%;
     height: 100% !important;
 }
 
-.folder-info > div {
+.entity-info > div {
 	padding: 13px;
 	text-align: center;
 	color: #fff;
@@ -260,10 +269,6 @@ button:focus {
     display: grid;
 }
 
-.file:hover {
-	cursor: pointer;
-}
-
 .memory-info {
 	height: 10%;
     bottom: 0;
@@ -283,7 +288,7 @@ button:focus {
 	line-height: 60px;
 }
 
-.total-memory-bar {
+.progress-bar {
 	background: #fff;
     height: 2px;
     width: 90%;
@@ -291,14 +296,14 @@ button:focus {
     position: absolute;
 }
 
-.used-memory-bar {
+.progress-bar-line {
 	height: 2px;
 	width: 0;
     background: #F32C2C;
 }
 
 .buffer-element {
-    padding: 0px 10px 0px 10px;
+    padding: 0 10px 0 10px;
     background: #232323;
     border-radius: 5px;
     height: 100%;
@@ -403,6 +408,89 @@ button:focus {
 .input-field input:focus {
    border-bottom: 1px solid black !important;
    box-shadow: 0 1px 0 0 black !important
+}
+
+.drag-and-drop {
+    background-color: rgba(214, 214, 214, 0.8);
+    position: absolute;
+    top: 50px;
+    right: 0;
+    width: 85%;
+    height: calc(100% - 50px);
+    z-index: 9999;
+    animation-name: fade;
+    animation-duration: 0.2s;
+}
+
+.drag-and-drop-text {
+    position: absolute;
+    top: 40%;
+    right: 0;
+    left: 0;
+    text-align: center;
+    color: grey;
+    font-size: 36px;
+}
+
+.upload-monitor {
+    display: block;
+    background: #080808;
+    border-radius: 5px;
+    max-height: 220px;
+    width: 330px;
+    bottom: 5px;
+    left: calc(15% + 10px);
+    z-index: 99;
+    position: fixed;
+}
+
+.upload-monitor-header {
+    height: 40px;
+    border-top-right-radius: 5px;
+    border-top-left-radius: 5px;
+    background: #080808;
+}
+
+.upload-monitor-content {
+    max-height: 180px;
+    display: grid;
+    grid-row-gap: 5px;
+    padding: 5px;
+    border-radius: 5px;
+    background: #181818;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.upload-file {
+    background: #080808;
+    border-radius: 5px;
+    padding: 5px;
+}
+
+.upload-file span {
+    color: white;
+}
+
+.upload-file-icon {
+    text-align: center;
+    height: 40px;
+    width: 45px;
+    float: left;
+}
+
+.upload-file-info > div {
+    float: right;
+    width: calc(100% - 50px);
+}
+
+@keyframes fade {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 @keyframes contextMenuSlide {
