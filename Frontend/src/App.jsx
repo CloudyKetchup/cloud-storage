@@ -6,283 +6,305 @@ import ContentContainer 		from './components/ContentContainer';
 import PrevFolderButton 		from './components/PrevFolderButton';
 import BufferElementIndicator 	from './components/BufferElementIndicator';
 import ElementInfoContainer 	from './components/ElementInfoContainer';
+import DragAndDrop              from './components/DragAndDrop';
+import FileUploadManager         from './components/FileUploadManager';
+import { UploadFile }           from './components/FileUploadManager';
 
-const axios = require('axios');
+import axios from 'axios';
 
 const API_URL 	= 'http://localhost:8080';
 const root 		= 'cloud';
 
 export default class App extends Component {
-	constructor() {
-		super();
-		this.state = {
-			elements 	: [],
-			folders 	: [],
-			files 		: [],
-			bufferElement   : undefined,
-			elementInfoContainer : false,
-			elementSelected : undefined,
-			folderInfo 	: this.folderInfo,
-			rootOpened 	: true,
-			rootMemory	: {},
-			renameElementDialog : false,
-			createFolderDialog 	: false,
-			uploadFileDialog 	: false
-		};
+    constructor() {
+        super();
+        this.state = {
+            folders 	            : [],
+            files 		            : [],
+            bufferElement           : undefined,
+            elementInfoContainer    : false,
+            elementSelected         : undefined,
+            folderInfo 	            : this.folderInfo,
+            rootOpened 	            : true,
+            rootMemory	            : {},
+            renameElementDialog     : false,
+            createFolderDialog 	    : false,
+            uploadingFiles          : []
+        };
 
-		window.onkeyup = e => {
-			const key = e.keyCode ? e.keyCode : e.which;
+        window.onkeyup = e => {
+            const key = e.keyCode ? e.keyCode : e.which;
 
-			if (key === 27) {
-				this.toggleDialogs();
-				this.toggleElementInfo();
-			}
-		}
-	}
+            if (key === 27) {
+                this.toggleDialogs();
+                this.toggleElementInfo();
+            }
+        }
+    }
 
-	componentDidMount() {
-		this.getRootContent();
-		this.getRootMemory();		
-	}
+    componentDidMount() {
+        this.updateFolderInfo(1)
+        this.getRootMemory();
+    }
 
-	getRootContent() {
-		axios.get(`${API_URL}/folder/root/content`)
-			.then(root => this.setState({
-					folders 	: root.data.folders,
-					files 		: root.data.files,
-					elements 	: this.sortElements(root.data.folders.concat(root.data.files)),
-					folderInfo 	: root.data.rootFolder
-				}))
-			.catch(error => console.log(error));
-	}
 
-	getRootMemory() {
-		axios.get(`${API_URL}/folder/root/memory`)
-			.then(memory => 
-				this.setState({
-					rootMemory : memory.data,
-					rootOpened : true
-				})
-			)
-			.catch(error => console.log(error));
-	}
+    getRootMemory() {
+        axios.get(`${API_URL}/folder/root/memory`)
+            .then(memory =>
+                this.setState({
+                    rootMemory : memory.data,
+                    rootOpened : true
+                })
+            )
+            .catch(error => console.log(error));
+    }
 
-	updateElementsData = (folderId = this.state.folderInfo.id) => {
-		this.setState({ elementSelected : undefined });
+    updateFolderInfo = (folderId = this.state.folderInfo.id) => {
+        this.getFolderData(folderId);
+        this.getFolderContent(folderId, 'files');
+        this.getFolderContent(folderId, 'folders');
+    };
 
-		axios.get(`${API_URL}/folder/${folderId}/content`)
-			.then(content => 
-				this.setState({
-					folders 	: content.data.folders,
-					files 		: content.data.files,
-					elements 	: this.sortElements(content.data.folders.concat(content.data.files)),
-					folderInfo 	: content.data.folderInfo,
-					rootOpened 	: content.data.folderInfo.root
-				})
-			)
-			.catch(error => console.log(error));
-	};
+    getFolderData = folderId => {
+        this.setState({ elementSelected : undefined });
 
-	handleContextMenuAction(action, element) {
-		switch(action) {
-			case 'cut':
-				this.setState({
-					bufferElement : {
-						action  : 'cut',
-						data 	: element
-					}
-				});
-				break;
-			case 'copy':
-				this.setState({
-					bufferElement : {
-						action  : 'copy',
-						data 	: element
-					}
-				});
-				break;
-			case 'rename':
-				this.toggleDialogs(true, false, false);
-				break;
-			case 'upload-files':
-				this.toggleDialogs(false, false, true);
-				break;
-			case 'create-folder':
-				this.toggleDialogs(false, true, false);
-				break;
-			case 'delete-all':
-				console.log(action)
-				break;
-			case 'paste':
-				this.sendPasteAction(element, action);
-				break;
-			case 'delete':
-				this.sendDeleteRequest(element);
-				break;
-			case 'info':
-				this.toggleElementInfo(true);
-				break;
-			default: break;
-		}
-	}
+        axios.get(`${API_URL}/folder/${folderId}/data`)
+            .then(response => {
+                this.setState({
+                    folderInfo : response.data,
+                    rootOpened : response.data.root
+                })
+            })
+            .catch(error => console.log(error));
+    };
 
-	toggleDialogs(
-		renameElementDialog = false, 
-		createFolderDialog 	= false,
-		uploadFileDialog 	= false
-	) {
-		this.setState({
-			'renameElementDialog' : renameElementDialog,
-			'createFolderDialog'  : createFolderDialog,
-			'uploadFileDialog' 	  : uploadFileDialog
-		});
-	}
+    getFolderContent = (folderId = this.state.folderInfo.id, element) => {
+        this.setState({ elementSelected : undefined });
 
-	sendNewFolder(folder) {
-		axios.post(`${API_URL}/folder/create/`,
-			{
-				'name' 		: folder,
-				'folderPath': this.state.folderInfo.path
-			})
-			.then(response => {
-				if (response.data === 'OK') {
-					
-					this.setState({ createFolderDialog : false });
+        axios.get(`${API_URL}/folder/${folderId}/${element}`)
+            .then(response => {
+                this.setState({ [`${element}`] : response.data }
+            )})
+            .catch(error => console.log(error));
+    };
 
-					this.state.folderInfo.name === root ? this.getRootContent() : this.updateElementsData();
-				}
-			})
-			.catch(error => console.log(error));
-	}
+    handleContextMenuAction = (action, element) => {
+        switch(action) {
+            case 'cut':
+                this.setState({bufferElement : {
+                        action  : 'cut',
+                        data 	: element
+                }});
+                break;
+            case 'copy':
+                this.setState({bufferElement : {
+                        action  : 'copy',
+                        data 	: element
+                }});
+                break;
+            case 'rename':
+                this.toggleDialogs(true, false, false);
+                break;
+            case 'upload-files':
+                document.getElementById("select-upload-files").click();
+                break;
+            case 'create-folder':
+                this.toggleDialogs(false, true, false);
+                break;
+            case 'delete-all':
+                console.log(action);
+                break;
+            case 'paste':
+                this.sendPasteAction(element, action);
+                break;
+            case 'delete':
+                this.sendDeleteRequest(element);
+                break;
+            case 'info':
+                this.toggleElementInfo(true);
+                break;
+            default: break;
+        }
+    };
 
-	sendPasteAction(
-		element = this.state.bufferElement, 
-		action, 
-		path 	= this.state.folderInfo.path
-	) {
-		axios.post(`${API_URL}/${element.data.type.toLowerCase()}/${element.action}`,
-			{
-				oldPath : element.data.path,
-				newPath : path
-			})
-			.then(response => this.state.folderInfo.name === root ? this.getRootContent() : this.updateElementsData())
-			.catch(error => console.log(error));
-	}
+    toggleDialogs(
+        renameElementDialog = false,
+        createFolderDialog 	= false,
+        uploadFileDialog 	= false
+    ) {
+        this.setState({
+            'renameElementDialog' : renameElementDialog,
+            'createFolderDialog'  : createFolderDialog,
+            'uploadFileDialog' 	  : uploadFileDialog
+        });
+    }
 
-	sendRenameRequest(newName) {
-		const renameTarget 	= this.state.elementSelected;
-		const targetType   	= renameTarget.type.toLowerCase();
+    sendNewFolder = folder =>{
+        axios.post(`${API_URL}/folder/create/`,
+            {
+                'name' 		: folder,
+                'folderPath': this.state.folderInfo.path
+            })
+            .then(response => 
+                response.data === 'OK'
+                    ? this.updateFolderInfo()
+                    : console.log(response.data)
+            )
+            .catch(error => console.log(error));
+    };
 
-		axios.post(`${API_URL}/${targetType}/rename`,
-			{
-				[`${targetType}Path`] : renameTarget.path,
-				'newName' : newName
-			})
-			.then(response => {
-				if (response.data === 'OK') {
-					this.setState({ renameElementDialog : false });
-					
-					this.state.folderInfo.name === root ? this.getRootContent() : this.updateElementsData();
-				}
-			})
-			.catch(error => console.log(error));
-	}
+    sendPasteAction(
+        element = this.state.bufferElement,
+        action,
+        path 	= this.state.folderInfo.path
+    ) {
+        axios.post(`${API_URL}/${element.data.type.toLowerCase()}/${element.action}`,
+            {
+                oldPath : element.data.path,
+                newPath : path
+            })
+            .then(response => 
+                response.data === 'OK'
+                    ? this.updateFolderInfo()
+                    : console.log(response.data)
+            )
+            .catch(error => console.log(error));
+    }
 
-	sendDeleteRequest(element) {
-		axios.post(`${API_URL}/folder/delete`,
-			{
-				[`${element.type.toLowerCase()}Path`] : element.path
-			})
-			.then(response => response.data === 'OK'
-					? this.state.folderInfo.name === root
-						? this.getRootContent()
-						: this.updateElementsData(this.state.folderInfo.id)
-					: console.log(response.data))
-			.catch(error => console.log(error));
-	}
+    sendRenameRequest = newName => {
+        const renameTarget 	= this.state.elementSelected;
+        const targetType   	= renameTarget.type.toLowerCase();
 
-	sendDeleteAllFolderContent() {
-		axios.post(`${API_URL}/folder/deleteAllContent`,
-			{	
-				'folderPath' : this.state.folderInfo.path
-			})
-			.then(response => response.data === 'OK'
-				? this.state.folderInfo.name === root
-					? this.getRootContent()
-					: this.updateElementsData(this.state.folderInfo.id)
-				: undefined)
-			.catch(error => console.log(error));
-	}
+        axios.post(`${API_URL}/${targetType}/rename`,{
+                'path' : renameTarget.path,
+                'newName' : newName
+            })
+            .then(response => {
+                if (response.data === 'OK') {
+                    this.setState({ renameElementDialog : false });
 
-	toggleElementInfo(toggle = false)  {
-		this.setState({ elementInfoContainer : toggle });
-	}
+                    this.updateFolderInfo()
+                }
+            })
+            .catch(error => console.log(error));
+    };
 
-	sortElements(elements) {
-		for(let i = 0; i < elements.length; i++) {
-			for(let j = 0; j < elements.length; j++) {
-				if (elements[i].id < elements[j].id) {
-					const temp  = elements[i];
-					elements[i] = elements[j];
-					elements[j] = temp;
-				}
-			}
-		}
-		return elements;
-	}
+    sendDeleteRequest = target => {
+        axios.post(`${API_URL}/${target.type.toLowerCase()}/delete`,{
+                'path' : target.path
+            })
+            .then(response => response.data === 'OK'
+                ? this.updateFolderInfo()
+                : console.log(response.data))
+            .catch(error => console.log(error));
+    };
 
-	bufferElementIndicator() {
-		if (this.state.bufferElement !== undefined) {
-			return <BufferElementIndicator
-				element={this.state.bufferElement}
-			/>
-		}
-	}
+    sendDeleteAllFolderContent() {
+        axios.post(`${API_URL}/folder/deleteAllContent`,
+            {
+                'folderPath' : this.state.folderInfo.path
+            })
+            .then(response => response.data === 'OK'
+                ? this.updateFolderInfo()
+                : undefined)
+            .catch(error => console.log(error));
+    }
 
-	elementInfoContainer() {
-		if (this.state.elementSelected !== undefined && this.state.elementInfoContainer) {
-			 return <ElementInfoContainer
-					parent={this}
-					data={this.state.elementSelected}
-					/>
-		}
-	}
+    toggleElementInfo(toggle = false) {
+        this.setState({ elementInfoContainer : toggle });
+    }
 
-	render() {
-		return (
-			<main style={{height : '100%'}}>
-				<Nav>
-					{this.bufferElementIndicator()}
-				</Nav>
-				<SideBar
-					memory 		= {this.state.rootMemory} 
-					folderInfo 	= {this.state.folderInfo}
-					folders 	= {this.state.folders.length}
-					files 		= {this.state.files.length}
-				/>
-				<ContentContainer
-					parent={this}
-					elementsData={this.state.elements}
-					>
-					<PrevFolderButton
-						whenClicked = {() => this.updateElementsData(this.state.folderInfo.parentId)}
-						rootOpened  = {this.state.rootOpened}
-					/>
-					{this.elementInfoContainer()}
-					<button 
-						className = 'create-folder' 
-						onClick   = {() => this.toggleDialogs(false, true, false)}
-					>
-						<i className='fas fa-folder-plus'/>
-					</button>
-					<button 
-						className = 'upload-file-button'
-						onClick   = {() => this.toggleDialogs(false, false, true)}
-					>
-						<i className='fas fa-file-upload'/>
-					</button>
-				</ContentContainer>
-			</main>
-		);
-	}
+    uploadFiles = files => {
+        for(let file of files) {
+           this.uploadFile(file);
+        }
+    };
+
+    uploadFile = file => {
+        const URL = `${API_URL}/file/upload/one`;
+
+        const formData = new FormData();
+
+        formData.append('file', file);
+        formData.append('path', this.state.folderInfo.path);
+
+        const uploadingFiles = this.state.uploadingFiles;
+
+        uploadingFiles.push(file);
+
+        this.setState({ uploadingFiles : uploadingFiles });
+
+        axios.request({
+                url     : URL,
+                method  : 'POST',
+                data    : formData,
+                onUploadProgress : p => this.setState({
+                        [`uploadingFile${file.name}progress`] : (p.total - (p.total - p.loaded)) / p.total * 100
+                })
+            })
+            .then(response => response.data === 'OK' ? this.updateFolderInfo() : console.log(response.data))
+            .catch(error => console.log(error));
+    };
+
+    render() {
+        return (
+            <main style={{height : '100%'}}>
+                <Nav>
+                    {this.state.bufferElement !== undefined
+                    &&
+                    <BufferElementIndicator element={this.state.bufferElement}/>}
+                </Nav>
+                <SideBar
+                    memory 		= {this.state.rootMemory}
+                    folderInfo 	= {this.state.folderInfo}
+                    folders 	= {this.state.folders.length}
+                    files 		= {this.state.files.length}
+                />
+                <DragAndDrop className="drag-and-drop" handleDrop={this.uploadFiles}>
+                    <ContentContainer
+                        parent={this}
+                        files={this.state.files}
+                        folders={this.state.folders}
+                    >
+                        <PrevFolderButton
+                            whenClicked = {() => this.updateFolderInfo(this.state.folderInfo.parentId)}
+                            rootOpened  = {this.state.rootOpened}
+                        />
+                        {this.state.elementSelected !== undefined
+                        &&
+                        this.state.elementInfoContainer
+                        &&
+                        <ElementInfoContainer parent={this} data={this.state.elementSelected}/>}
+                        <button
+                            className = 'create-folder'
+                            onClick   = {() => this.toggleDialogs(false, true, false)}
+                        >
+                            <i className='fas fa-folder-plus'/>
+                        </button>
+                        <button
+                            className = 'upload-file-button'
+                            onClick   = {() => document.getElementById('select-upload-files').click()}
+                        >
+                            <i className='fas fa-file-upload'/>
+                        </button>
+                        {this.state.uploadingFiles.length > 0
+                        &&
+                        <FileUploadManager parent={this}>
+                            {this.state.uploadingFiles.map(file => <UploadFile key={file.name} name={file.name} data={file} parent={this}/>)}
+                        </FileUploadManager>}
+                    </ContentContainer>
+                </DragAndDrop>
+                <input
+                    id      = "select-upload-files"
+                    type    = "file"
+                    onChange= {() => {
+                        const files = document.getElementById("select-upload-files").files;
+
+                        files.length > 1 ? this.uploadFiles(files) : this.uploadFile(files[0]);
+                    }}
+                    style={{ display : 'none' }}
+                    multiple/>
+            </main>
+        );
+    }
 }
