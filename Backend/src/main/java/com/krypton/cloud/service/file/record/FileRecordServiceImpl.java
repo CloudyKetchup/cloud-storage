@@ -1,13 +1,13 @@
 package com.krypton.cloud.service.file.record;
 
 import com.krypton.cloud.model.File;
-import com.krypton.cloud.model.Folder;
 import com.krypton.cloud.repository.FileRepository;
 import com.krypton.cloud.service.folder.record.FolderRecordServiceImpl;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
@@ -26,37 +26,62 @@ public class FileRecordServiceImpl implements FileRecordService {
 
     @Override
     public File getByName(String name) {
-        var file = fileRepository.getByName(name);
-
-        assert file.isPresent();
-
-        return file.get();
+        return fileRepository.getByName(name).get();
     }
 
     @Override
-    public File addFile(java.io.File file) {
-        return fileRepository.save(new File(file));
+    public File getByPath(String path) {
+        return fileRepository.getByPath(path);
     }
 
     @Override
-    public void deleteFileRecord(File file) {
+    public File addFileRecord(java.io.File file) {
+        // file saved to database
+        var dbFile          = fileRepository.save(new File(file));
+        // filesystem folder where file is located
+        var parentFolder    = Paths.get(file.getPath()).getParent().toFile();
+        // folder record where file need to be added as child
+        var dbParentFolder  = folderRecordService.getByPath(parentFolder.getPath());
+
+        folderRecordService.addFileChild(dbParentFolder, dbFile);
+
+        return dbFile;
+    }
+
+    @Override
+    public HttpStatus deleteFileRecord(String path) {
+        var file = getByPath(path);
+
         fileRepository.delete(file);
+
+        return !fileExist(file.getPath()) ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR;
     }
 
     @Override
-    public HttpStatus updateName(String oldName, String newName) {
-        var file = getByName(oldName);
+    public HttpStatus renameFile(String path, String newName) {
+        var file = getByPath(path);
 
         file.setName(newName);
 
         fileRepository.save(file);
 
-        return HttpStatus.OK;
+        return getByPath(path).getName().equals(newName) ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR;
     }
 
     @Override
-    public boolean fileExist(String name) {
-        return fileRepository.getByName(name).isPresent();
+    public HttpStatus updatePath(String path, String newPath) {
+        var file = getByPath(path);
+
+        file.setPath(newPath);
+
+        fileRepository.save(file);
+
+        return getByPath(path).getPath().equals(newPath) ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR;
+    }
+
+    @Override
+    public boolean fileExist(String path) {
+        return fileRepository.getByPath(path) != null;
     }
 
     /**
@@ -66,25 +91,12 @@ public class FileRecordServiceImpl implements FileRecordService {
      */
     public void addAllFilesToDatabase(List<java.io.File> files) {
         files.parallelStream().forEach(file -> {
-            // if file is folder
-            if (file.isDirectory()) {
-                // call this function recursively for all files inside
-                addAllFilesToDatabase(Arrays.asList(file.listFiles()));
-            // if file does not exist in database
-            } else if (!fileExist(file.getName())) {
-                // add file to database
-                var dbFile = addFile(file);
+            if (file.isFile() && !fileExist(file.getPath())) {
+                addFileRecord(file);
+            }else if (file.isDirectory()) {
+                var insideContent = Arrays.asList(file.listFiles());
 
-                // parent folder from database
-                Folder parent;
-
-                if (file.getParentFile().getPath().equals("C:\\Users\\dodon\\cloud")) {
-                    parent = folderRecordService.getByPath("C:\\Users\\dodon\\cloud");
-                } else {
-                    parent = folderRecordService.getByPath(file.getParentFile().getPath());
-                }
-
-                folderRecordService.addFileChild(parent, dbFile);
+                addAllFilesToDatabase(insideContent);
             }
         });
     }

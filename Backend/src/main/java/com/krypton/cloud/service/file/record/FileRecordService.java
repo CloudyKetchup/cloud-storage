@@ -1,7 +1,6 @@
 package com.krypton.cloud.service.file.record;
 
 import com.krypton.cloud.model.File;
-import com.krypton.cloud.model.Folder;
 import org.springframework.http.HttpStatus;
 
 public interface FileRecordService {
@@ -10,11 +9,15 @@ public interface FileRecordService {
 
     File getByName(String name);
 
-    File addFile(java.io.File file);
+    File getByPath(String path);
 
-    void deleteFileRecord(File file);
+    HttpStatus updatePath(String path, String newPath);
 
-    HttpStatus updateName(String oldName, String newName);
+    File addFileRecord(java.io.File file);
 
-    boolean fileExist(String name);
+    HttpStatus deleteFileRecord(String path);
+
+    HttpStatus renameFile(String path, String newName);
+
+    boolean fileExist(String path);
 }
