@@ -11,5 +11,6 @@ open class WebConfig : WebFluxConfigurationSupport() {
         registry.addMapping("/**")
                 .allowedMethods("HEAD", "GET", "PUT", "POST", "DELETE", "PATCH")
                 .allowedOrigins("*")
+                .allowedHeaders("*")
     }
 }
