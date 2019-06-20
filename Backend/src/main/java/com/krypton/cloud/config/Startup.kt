@@ -1,7 +1,9 @@
 package com.krypton.cloud.config
 
 import com.krypton.cloud.service.file.record.FileRecordServiceImpl
+import com.krypton.cloud.service.folder.record.FolderPersistenceHelper
 import com.krypton.cloud.service.folder.record.FolderRecordServiceImpl
+import com.krypton.cloud.service.folder.record.FolderRecordUtils
 import lombok.AllArgsConstructor
 import org.springframework.boot.CommandLineRunner
 import org.springframework.stereotype.Service
@@ -13,7 +15,8 @@ import java.util.Arrays
 @AllArgsConstructor
 class Startup(
         private val fileRecordService: FileRecordServiceImpl,
-        private val folderRecordService: FolderRecordServiceImpl
+        private val folderRecordService: FolderRecordServiceImpl,
+        private val folderRecordUtils: FolderRecordUtils
 ) : CommandLineRunner {
 
     override fun run(vararg args: String) {
@@ -26,12 +29,10 @@ class Startup(
 
         val rootContent = Arrays.asList(*rootFolder.listFiles()!!)
 
-        folderRecordService.addFolderRecord(rootFolder)
+        folderRecordService.save(rootFolder)
 
-        folderRecordService.addAllFoldersToDatabase(rootContent)
+        folderRecordUtils.addAllFoldersToDatabase(rootContent)
 
         fileRecordService.addAllFilesToDatabase(rootContent)
-
-        folderRecordService.addFolderChilds(rootContent)
     }
 }
