@@ -1,7 +1,9 @@
 package com.krypton.cloud.service.folder;
 
 import com.krypton.cloud.model.Folder;
+import com.krypton.cloud.service.folder.record.updater.FolderRecordUpdaterImpl;
 import com.krypton.cloud.service.folder.record.FolderRecordServiceImpl;
+import com.krypton.cloud.service.folder.record.FolderRecordUtils;
 import lombok.AllArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -21,6 +23,10 @@ public class FolderServiceImpl implements FolderService {
 
 	private final FolderRecordServiceImpl folderRecordService;
 
+	private final FolderRecordUtils folderRecordUtils;
+
+	private final FolderRecordUpdaterImpl folderRecordUpdater;
+
 	@Override
 	public Folder getFolderData(Long id) {
 		return folderRecordService.getById(id);
@@ -33,7 +39,7 @@ public class FolderServiceImpl implements FolderService {
 		// make folder locally on file system
 		return folder.mkdir()
 				// then add record of folder to database
-				? folderRecordService.addFolderRecord(folder)
+				? folderRecordService.save(folder)
 				// if fail return error http status
 				: HttpStatus.INTERNAL_SERVER_ERROR;
 	}
@@ -47,28 +53,25 @@ public class FolderServiceImpl implements FolderService {
 		try {
 			FileUtils.copyDirectory(folder, folderCopy);
 		} catch (IOException e) {
-			e.printStackTrace();
+			return HttpStatus.INTERNAL_SERVER_ERROR;
 		}
 		// check if file was copied successful
 		if (folderCopy.exists()) {
 			// add copied folder record
-			return folderRecordService.copyFolder(folderCopy);
+			return folderRecordUtils.copyFolder(folderCopy);
 		}
 		return HttpStatus.INTERNAL_SERVER_ERROR;
 	}
 
 	@Override
 	public HttpStatus cutFolder(String oldPath, String newPath) {
-		// get filesystem folder by path
 		var folder = new File(oldPath);
-		// old folder parent path
-		var oldParent = Paths.get(oldPath).getParent().toFile().getPath();
-		// new folder path
-		var updatedPath = newPath + "\\" + folder.getName();
+		var folderCopy = new File(newPath + "\\" + folder.getName());
 		
-		return folder.renameTo(new File(updatedPath))
-			? folderRecordService.updatePath(folder, updatedPath, oldParent)
-			: HttpStatus.INTERNAL_SERVER_ERROR;
+		if (folder.renameTo(folderCopy)) {
+			return folderRecordUtils.moveFolder(oldPath, folderCopy);
+		}
+		return HttpStatus.INTERNAL_SERVER_ERROR;
 	}
 
 	@Override
@@ -79,9 +82,9 @@ public class FolderServiceImpl implements FolderService {
 	    // rename folder locally on file system
 	    if (folder.renameTo(new File(parentPath + "\\" + newName))) {
 			// update folder name in database
-			folderRecordService.updateName(folderPath, newName);
+			folderRecordUpdater.updateName(folderPath, newName);
 			// update folder path in database because it contains name
-			return folderRecordService.updatePath(folder, parentPath + "\\" + newName);
+			return folderRecordUpdater.updatePath(folder, parentPath + "\\" + newName);
 		}
 		// if fail return error http status
 		return HttpStatus.INTERNAL_SERVER_ERROR;
@@ -99,7 +102,7 @@ public class FolderServiceImpl implements FolderService {
 			}
 			file.delete();	
         }
-        folderRecordService.deleteFolderRecord(folder.getPath());
+        folderRecordService.delete(folder.getPath());
         return folder.delete() ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR;
 	}
 

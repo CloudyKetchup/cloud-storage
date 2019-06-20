@@ -1,38 +1,28 @@
 package com.krypton.cloud.service.folder.record;
 
-import com.krypton.cloud.model.*;
+import com.krypton.cloud.model.Folder;
+import com.krypton.cloud.service.record.RecordService;
 import org.springframework.http.HttpStatus;
-import reactor.core.publisher.Flux;
 
-interface FolderRecordService {
+import java.io.File;
 
+/**
+ * Standard folder record service that manages folder records
+ */
+public interface FolderRecordService extends RecordService {
+
+    @Override
     Folder getById(Long id);
 
-    Folder getByName(String name);
-
+    @Override
     Folder getByPath(String path);
 
-    HttpStatus updateName(String folder, String newName);
+    @Override
+    HttpStatus save(File entity);
 
-    HttpStatus updatePath(java.io.File folder, String path, String oldParentPath);
+    @Override
+    HttpStatus delete(String path);
 
-    HttpStatus updatePath(java.io.File folder, String path);
-
-    HttpStatus addFolderRecord(java.io.File folder);
-
-    void deleteFolderRecord(String folder);
-
-    Flux<Folder> getFolderFolders(Long id);
-
-    Flux<File> getFolderFiles(Long id);
-
-    void addFileChild(Folder folder, File file);
-
-    void addFolderChild(Folder parent, Folder child);
-
-    void removeFileChild(Folder folder, File file);
-
-    void removeFolderChild(Folder parent, Folder child);
-
-    boolean folderExist(String path);
+    @Override
+    boolean exists(String path);
 }
