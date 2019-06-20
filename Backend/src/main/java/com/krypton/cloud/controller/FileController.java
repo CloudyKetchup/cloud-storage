@@ -52,19 +52,25 @@ public class FileController {
 	}
 
 	/**
-	 * @param path 		file path
-	 * @param name 		file name
-	 * @return file
+	 * move folder from one location to another
+	 *
+	 * @param request       containing folder old and new path
+	 * @return http status
 	 */
-	@GetMapping("/{path}/{name}/download")
-	public ResponseEntity<Resource> downloadFile(
-			@PathVariable String path,
-			@PathVariable String name
-	) {
-		return ResponseEntity
-					.ok()
-					.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + name + "\"")
-					.body(fileService.getFile(path));
+	@PostMapping("/cut")
+	public HttpStatus cutFolder(@RequestBody HashMap<String, String> request) {
+		return fileService.cutFile(request.get("oldPath"), request.get("newPath"));
+	}
+
+	/**
+	 * copy folder to new path
+	 *
+	 * @param request       request containing  original folder path and path for folder copy
+	 * @return http status
+	 */
+	@PostMapping("/copy")
+	public HttpStatus copyFolder(@RequestBody HashMap<String, String> request) {
+		return fileService.copyFile(request.get("oldPath"), request.get("newPath"));
 	}
 
 	/**
@@ -83,5 +89,21 @@ public class FileController {
 	@PostMapping("/delete")
 	public HttpStatus deleteFile(@RequestBody HashMap<String, String> request) {
 		return fileService.deleteFile(request.get("path"));
+	}
+
+	/**
+	 * @param path 		file path
+	 * @param name 		file name
+	 * @return file
+	 */
+	@GetMapping("/{path}/{name}/download")
+	public ResponseEntity<Resource> downloadFile(
+			@PathVariable String path,
+			@PathVariable String name
+	) {
+		return ResponseEntity
+				.ok()
+				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + name + "\"")
+				.body(fileService.downloadFile(path));
 	}
 }
