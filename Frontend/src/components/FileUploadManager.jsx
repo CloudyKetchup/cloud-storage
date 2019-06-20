@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Component } from 'react';
 
 export const UploadFile = props => (
 
@@ -35,16 +35,27 @@ export const UploadFile = props => (
 	</div>
 );
 
-const FileUploadManager = props =>(
+export default class FileUploadManager extends Component {
+	state = { hide : false }
 
-	<div className="upload-monitor">
-		<div className="upload-monitor-header">
-
-		</div>
-		<div className="upload-monitor-content">
-			{props.children}
-		</div>
-	</div>
-);
-
-export default FileUploadManager;
+	render() {
+		return (
+			<div className="upload-monitor">
+				<div className="upload-monitor-header">
+					<div className="upload-monitor-title">
+						<span>Files Upload</span>
+					</div>
+					<div className="upload-monitor-control" onClick={this.props.onClose}>
+						<i className="fas fa-times"/>
+					</div>
+					<div className="upload-monitor-control" onClick={() => this.setState({ hide : !this.state.hide })}>
+						<i className={this.state.hide ? "fas fa-sort-up" : "fas fa-sort-down"}/>
+					</div>
+				</div>
+				<div className="upload-monitor-content" style={{ display : this.state.hide ? 'none' : 'grid' }}>
+					{this.props.children}
+				</div>
+			</div>
+		);
+	}
+}

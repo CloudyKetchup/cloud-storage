@@ -30,7 +30,7 @@ html, body {
 
 nav {
 	line-height: unset;
-	width: 85%;
+	width: calc(100% - 200px);
     height: 50px;
     background: #181818;
     float: right;
@@ -83,7 +83,7 @@ button:focus {
     color: #fff;
     top: 0;
     height: 100%;
-    width: 15%;
+    width: 200px;
     z-index: 2;
     position: absolute;
     box-shadow: 1px 2px 5px 2px rgba(0,0,0,0.55);
@@ -106,13 +106,14 @@ button:focus {
 }
 
 .element-info-text {
+    color: #fff;
 	word-break: break-all;
 }
 
 .element-info-container {
     box-shadow: 0 0 21px 10000px rgba(0,0,0,0.50);
+    background: #202020;
     border-radius: 5px;
-    background: #e8eaef;
     margin-left: 23%;
     left: 0;
     right: 0;
@@ -120,7 +121,7 @@ button:focus {
     width: 400px;
     height: 500px;
     padding: 10px;
-    z-index: 99;
+    z-index: 9999;
     position: absolute;
 }
 
@@ -186,9 +187,8 @@ button:focus {
 
 #content-container {
 	overflow-y: auto;
-    background: #e8eaef;
     height: calc(100% - 50px);
-    width: 85%;
+    width: calc(100% - 200px);
     position: absolute;
     top: 50px;
     right: 0;
@@ -303,21 +303,28 @@ button:focus {
 }
 
 .buffer-element {
-    padding: 0 10px 0 10px;
-    background: #232323;
-    border-radius: 5px;
-    height: 100%;
-    width: 100%;
-    display: inline-flex;
+    background: #23232385;
+    border-radius: 100px;
+    padding: 5px;
+    height: 50px;
+    width: 50px;
+    bottom: 10px;
+    right: 10px;
+    z-index: 99;
+    position: fixed;
+    animation: fade;
+    animation-duration: 0.2s;
+    transition: 0.3s;
 }
 
-.buffer-element-indicator {
-    width: 20%;
+.buffer-element:hover {
+    cursor: pointer;
+    background: #181818;
 }
 
 .buffer-element-indicator > i {
     line-height: 40px;
-    font-size: 20px;
+    margin-left: 9px;
 }
 
 .buffer-element-name {
@@ -339,7 +346,7 @@ button:focus {
 }
 
 .create-folder, .upload-file-button {
-	bottom: 15px;
+	bottom: 10px;
     height: 50px;
     width: 50px;
     background: #181818;
@@ -354,7 +361,11 @@ button:focus {
 }
 
 .create-folder {
-	right: 80px;
+	left: 210px;
+}
+
+.upload-file-button {
+    left: 275px;
 }
 
 .dialog-header {
@@ -401,10 +412,6 @@ button:focus {
     animation-duration: 0.2s;
 }
 
-.upload-file-button {
-    right: 15px;
-}
-
 .input-field input:focus {
    border-bottom: 1px solid black !important;
    box-shadow: 0 1px 0 0 black !important
@@ -435,37 +442,65 @@ button:focus {
 .upload-monitor {
     display: block;
     background: #080808;
+    box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.55);
     border-radius: 5px;
     max-height: 220px;
     width: 330px;
     bottom: 5px;
-    left: calc(15% + 10px);
+    right: 10px;
     z-index: 99;
     position: fixed;
 }
 
 .upload-monitor-header {
     height: 40px;
-    border-top-right-radius: 5px;
-    border-top-left-radius: 5px;
+    border-radius: 5px;
+    color: #fff;
     background: #080808;
+}
+
+.upload-monitor-title {
+    float: left;
+    height: 100%;
+    width: calc(100% - 80px);
+}
+
+.upload-monitor-title > span {
+    line-height: 40px;
+    margin-left: 10px;
+}
+
+.upload-monitor-control {
+    padding: 10px;
+    text-align: center;
+    float: right;
+    height: 100%;
+    width: 40px;
+}
+
+.upload-monitor-control:hover {
+    cursor: pointer;
 }
 
 .upload-monitor-content {
     max-height: 180px;
-    display: grid;
     grid-row-gap: 5px;
     padding: 5px;
     border-radius: 5px;
     background: #181818;
     overflow-y: auto;
     overflow-x: hidden;
+    animation-name: slideUp;
+    animation-duration: 0.2s;
+    transition: 0.2s;
 }
 
 .upload-file {
     background: #080808;
     border-radius: 5px;
     padding: 5px;
+    animation-name: fade;
+    animation-duration: 0.2s;
 }
 
 .upload-file span {
@@ -524,4 +559,13 @@ button:focus {
 		top: 25%;
 		opacity: 1;
 	}
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
