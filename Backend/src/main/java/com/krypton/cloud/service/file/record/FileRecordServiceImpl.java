@@ -2,6 +2,7 @@ package com.krypton.cloud.service.file.record;
 
 import com.krypton.cloud.model.File;
 import com.krypton.cloud.repository.FileRepository;
+import com.krypton.cloud.service.folder.record.FolderPersistenceHelper;
 import com.krypton.cloud.service.folder.record.FolderRecordServiceImpl;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,14 +20,11 @@ public class FileRecordServiceImpl implements FileRecordService {
 
     private final FolderRecordServiceImpl folderRecordService;
 
+    private final FolderPersistenceHelper folderPersistenceHelper;
+
     @Override
     public File getById(Long id) {
         return fileRepository.getOne(id);
-    }
-
-    @Override
-    public File getByName(String name) {
-        return fileRepository.getByName(name).get();
     }
 
     @Override
@@ -35,7 +33,7 @@ public class FileRecordServiceImpl implements FileRecordService {
     }
 
     @Override
-    public File addFileRecord(java.io.File file) {
+    public File save(java.io.File file) {
         // file saved to database
         var dbFile          = fileRepository.save(new File(file));
         // filesystem folder where file is located
@@ -43,44 +41,22 @@ public class FileRecordServiceImpl implements FileRecordService {
         // folder record where file need to be added as child
         var dbParentFolder  = folderRecordService.getByPath(parentFolder.getPath());
 
-        folderRecordService.addFileChild(dbParentFolder, dbFile);
+        folderPersistenceHelper.addFileChild(dbParentFolder, dbFile);
 
         return dbFile;
     }
 
     @Override
-    public HttpStatus deleteFileRecord(String path) {
+    public HttpStatus delete(String path) {
         var file = getByPath(path);
 
         fileRepository.delete(file);
 
-        return !fileExist(file.getPath()) ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR;
+        return !exists(file.getPath()) ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR;
     }
 
     @Override
-    public HttpStatus renameFile(String path, String newName) {
-        var file = getByPath(path);
-
-        file.setName(newName);
-
-        fileRepository.save(file);
-
-        return getByPath(path).getName().equals(newName) ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR;
-    }
-
-    @Override
-    public HttpStatus updatePath(String path, String newPath) {
-        var file = getByPath(path);
-
-        file.setPath(newPath);
-
-        fileRepository.save(file);
-
-        return getByPath(path).getPath().equals(newPath) ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR;
-    }
-
-    @Override
-    public boolean fileExist(String path) {
+    public boolean exists(String path) {
         return fileRepository.getByPath(path) != null;
     }
 
@@ -91,8 +67,8 @@ public class FileRecordServiceImpl implements FileRecordService {
      */
     public void addAllFilesToDatabase(List<java.io.File> files) {
         files.parallelStream().forEach(file -> {
-            if (file.isFile() && !fileExist(file.getPath())) {
-                addFileRecord(file);
+            if (file.isFile() && !exists(file.getPath())) {
+                save(file);
             }else if (file.isDirectory()) {
                 var insideContent = Arrays.asList(file.listFiles());
 

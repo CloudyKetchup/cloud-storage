@@ -13,9 +13,13 @@ public interface FileService {
 
     Mono<HttpStatus> saveFile(Mono<FilePart> file, String folder);
 
-    Resource getFile(String path);
+    HttpStatus cutFile(String oldPath, String newPath);
+
+    HttpStatus copyFile(String oldPath, String newPath);
 
     HttpStatus renameFile(String path, String newName);
 
     HttpStatus deleteFile(String path);
+
+    Resource downloadFile(String path);
 }

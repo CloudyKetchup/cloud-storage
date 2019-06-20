@@ -1,23 +1,23 @@
 package com.krypton.cloud.service.file.record;
 
 import com.krypton.cloud.model.File;
+import com.krypton.cloud.service.record.RecordService;
 import org.springframework.http.HttpStatus;
 
-public interface FileRecordService {
+public interface FileRecordService extends RecordService {
 
+    @Override
     File getById(Long id);
 
-    File getByName(String name);
-
+    @Override
     File getByPath(String path);
 
-    HttpStatus updatePath(String path, String newPath);
+    @Override
+    File save(java.io.File file);
 
-    File addFileRecord(java.io.File file);
+    @Override
+    HttpStatus delete(String path);
 
-    HttpStatus deleteFileRecord(String path);
-
-    HttpStatus renameFile(String path, String newName);
-
-    boolean fileExist(String path);
+    @Override
+    boolean exists(String path);
 }
