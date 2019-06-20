@@ -13,7 +13,6 @@ import { UploadFile }           from './components/FileUploadManager';
 import axios from 'axios';
 
 const API_URL 	= 'http://localhost:8080';
-const root 		= 'cloud';
 
 export default class App extends Component {
     constructor() {
@@ -145,11 +144,14 @@ export default class App extends Component {
                 'name' 		: folder,
                 'folderPath': this.state.folderInfo.path
             })
-            .then(response => 
-                response.data === 'OK'
-                    ? this.updateFolderInfo()
-                    : console.log(response.data)
-            )
+            .then(response => {
+                if (response.data === 'OK') {
+                    this.updateFolderInfo();
+                    this.toggleDialogs();
+                } else {
+                    console.log(response.data);
+                }
+            })
             .catch(error => console.log(error));
     };
 
@@ -210,7 +212,7 @@ export default class App extends Component {
             .catch(error => console.log(error));
     }
 
-    toggleElementInfo(toggle = false) {
+    toggleElementInfo = (toggle = false) => {
         this.setState({ elementInfoContainer : toggle });
     }
 
@@ -255,10 +257,10 @@ export default class App extends Component {
                     <BufferElementIndicator element={this.state.bufferElement}/>}
                 </Nav>
                 <SideBar
-                    memory 		= {this.state.rootMemory}
-                    folderInfo 	= {this.state.folderInfo}
-                    folders 	= {this.state.folders.length}
-                    files 		= {this.state.files.length}
+                    memory={this.state.rootMemory}
+                    folderInfo={this.state.folderInfo}
+                    folders={this.state.folders.length}
+                    files={this.state.files.length}
                 />
                 <DragAndDrop className="drag-and-drop" handleDrop={this.uploadFiles}>
                     <ContentContainer
@@ -267,8 +269,8 @@ export default class App extends Component {
                         folders={this.state.folders}
                     >
                         <PrevFolderButton
-                            whenClicked = {() => this.updateFolderInfo(this.state.folderInfo.parentId)}
-                            rootOpened  = {this.state.rootOpened}
+                            whenClicked={() => this.updateFolderInfo(this.state.folderInfo.parentId)}
+                            rootOpened={this.state.rootOpened}
                         />
                         {this.state.elementSelected !== undefined
                         &&
@@ -276,28 +278,28 @@ export default class App extends Component {
                         &&
                         <ElementInfoContainer parent={this} data={this.state.elementSelected}/>}
                         <button
-                            className = 'create-folder'
-                            onClick   = {() => this.toggleDialogs(false, true, false)}
+                            className='create-folder'
+                            onClick={() => this.toggleDialogs(false, true, false)}
                         >
                             <i className='fas fa-folder-plus'/>
                         </button>
                         <button
-                            className = 'upload-file-button'
-                            onClick   = {() => document.getElementById('select-upload-files').click()}
+                            className='upload-file-button'
+                            onClick={() => document.getElementById('select-upload-files').click()}
                         >
                             <i className='fas fa-file-upload'/>
                         </button>
                         {this.state.uploadingFiles.length > 0
                         &&
-                        <FileUploadManager parent={this}>
+                        <FileUploadManager onClose={() => this.setState({ uploadingFiles : [] })}>
                             {this.state.uploadingFiles.map(file => <UploadFile key={file.name} name={file.name} data={file} parent={this}/>)}
                         </FileUploadManager>}
                     </ContentContainer>
                 </DragAndDrop>
                 <input
-                    id      = "select-upload-files"
-                    type    = "file"
-                    onChange= {() => {
+                    id="select-upload-files"
+                    type="file"
+                    onChange={() => {
                         const files = document.getElementById("select-upload-files").files;
 
                         files.length > 1 ? this.uploadFiles(files) : this.uploadFile(files[0]);
