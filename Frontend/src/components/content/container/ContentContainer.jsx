@@ -1,10 +1,8 @@
 import React, { Component } from 'react';
 
-import RenameElementDialog  from './RenameElementDialog';
-import CreateFolderDialog 	from './CreateFolderDialog';
-import DefaultContextMenu	from './DefaultContextMenu';
-import Folder 				from './Folder';
-import File 				from './File';
+import DefaultContextMenu	from './contextmenu/DefaultContextMenu';
+import Folder 				from '../elements/folder/Folder';
+import File 				from '../elements/file/File';
 
 export default class ContentContainer extends Component {
 	state = {
@@ -69,24 +67,9 @@ export default class ContentContainer extends Component {
 		);
 	};
 
-	customDialog() {
-		if (this.props.parent.state.createFolderDialog) {
-			return <CreateFolderDialog
-						parent 	   = {this.props.parent}
-						sendFolder = {folder => this.props.parent.sendNewFolder(folder)}
-					/>
-		}else if (this.props.parent.state.renameElementDialog) {
-			return  <RenameElementDialog
-						parent   = {this.props.parent}
-						onRename = {newName => this.props.parent.sendRenameRequest(newName)}
-					/>
-		}
-	}
-
 	render() {
 		return (
-			<div id='content-container'>
-				{this.customDialog()}
+			<div id="content-container">
 				{this.props.children}
 				<div className="elements">
 					{this.props.folders.map(folder => this.createFolder(folder))}
@@ -99,7 +82,7 @@ export default class ContentContainer extends Component {
 						action= {action => this.props.parent.handleContextMenuAction(action)}
 						/>
 					: undefined}
-			</div>
+			</div>	
 		);
 	}
 }

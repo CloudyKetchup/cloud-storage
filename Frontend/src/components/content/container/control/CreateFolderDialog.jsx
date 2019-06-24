@@ -1,15 +1,18 @@
 import React from 'react'
 
+import { Link } from 'react-router-dom'; 
+
 const CreateFolderDialog = props => (
 
 	<div className="standard-dialog">
 		<div className="dialog-header">
-			<button
-				className="prev-button"
-				onClick={() => props.parent.setState({ createFolderDialog : false })}
-			>
-				<i className="fas fa-chevron-left"/>
-			</button>
+			<Link to="">
+				<button
+					className="prev-button"
+				>
+					<i className="fas fa-chevron-left"/>
+				</button>
+			</Link>
 			<i className="fas fa-folder"/>
 			<span>Create new Folder</span>
 		</div>

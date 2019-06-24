@@ -5,7 +5,7 @@ const DefaultContextMenu = props => {
     const pasteButton = () => {
         if (props.parent.state.bufferElement !== undefined) {
             return  <div onClick={() => props.action("paste")}>
-                        <div>
+                        <div className="context-menu-icon">
                             <i className="fas fa-clipboard"/>
                         </div>
                         <span>Paste</span>
@@ -23,19 +23,19 @@ const DefaultContextMenu = props => {
             }}
             >
             <div onClick={() => props.action("upload-files")}>
-                <div>
+                <div className="context-menu-icon">
                     <i className="fas fa-file-upload"/>
                 </div>
                 <span>Upload files</span>
             </div>
             <div onClick={() => props.action("create-folder")}>
-                <div>
+                <div className="context-menu-icon">
                     <i className="fas fa-folder-plus"/>
                 </div>
                 <span>Create folder</span>
             </div>
             <div onClick={() => props.action("delete")}>
-                <div>
+                <div className="context-menu-icon">
                     <i className="far fa-trash-alt"/>
                 </div>
                 <span>Delete All</span>

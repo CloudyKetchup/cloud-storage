@@ -1,6 +1,6 @@
 import React from 'react'
 
-const SideBar = props => (
+const LeftPanel = props => (
 
 	<div className="side-panel">
 		<div className="side-panel-content">
@@ -8,11 +8,7 @@ const SideBar = props => (
 			&&
 			<div className="element-info">
 				<div>
-					<span className="description-text">Path</span>
-					<span className="element-info-text">{props.folderInfo.path}</span>
-				</div>
-				<div>
-					<span className="description-text">Name</span>
+					<span className="description-text">Location</span>
 					<span className="element-info-text">{props.folderInfo.name}</span>
 				</div>
 				<div>
@@ -45,4 +41,4 @@ const SideBar = props => (
 	</div>
 );
 
-export default SideBar;
+export default LeftPanel;

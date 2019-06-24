@@ -27,7 +27,7 @@ export const UploadFile = props => (
 				}}>
 					<div
 						className="progress-bar-line"
-						style={{ width: `${props.parent.state[`uploadingFile${props.name}progress`]}%` }}>
+						style={{ width: `${props.parent.state[`uploadingFile${props.data.name}progress`]}%` }}>
 					</div>
 				</div>
 			</div>
@@ -45,10 +45,10 @@ export default class FileUploadManager extends Component {
 					<div className="upload-monitor-title">
 						<span>Files Upload</span>
 					</div>
-					<div className="upload-monitor-control" onClick={this.props.onClose}>
+					<div className="upload-monitor-control" onClick={this.props.onClose} style={{ right : 0 }}>
 						<i className="fas fa-times"/>
 					</div>
-					<div className="upload-monitor-control" onClick={() => this.setState({ hide : !this.state.hide })}>
+					<div className="upload-monitor-control" onClick={() => this.setState({ hide : !this.state.hide })} style={{ right : '40px' }}>
 						<i className={this.state.hide ? "fas fa-sort-up" : "fas fa-sort-down"}/>
 					</div>
 				</div>

@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 
-import ContextMenu 	from './ContextMenu'
+import ContextMenu 	from '../contextmenu/ContextMenu'
 
-async function contextMenuListener(e, obj) {
+const contextMenuListener = async (e, obj) => {
 	e.preventDefault();
 	obj.setState({ contextMenuShow : true });
 
@@ -11,7 +11,7 @@ async function contextMenuListener(e, obj) {
 	window.addEventListener('click', () => windowClickListener(obj), false);
 }
 
-async function windowClickListener(obj) {
+const windowClickListener = async (obj) => {
 	obj.setState({ contextMenuShow : false });
 
 	obj.props.parent.setState({ disableContextMenu : false });
@@ -33,9 +33,9 @@ export default class File extends Component {
 	contextMenu() {
 		if (this.state.contextMenuShow) {
 			return 	<ContextMenu
-				action={action => this.props.handleAction(action)}
-				onStart={() => this.props.mainParent.setState({ elementSelected : undefined })}
-			/>
+					action={action => this.props.handleAction(action)}
+					onStart={() => this.props.mainParent.setState({ elementSelected : this.props.data })}
+					/>
 		}
 	}
 

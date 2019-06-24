@@ -1,17 +1,17 @@
 import React, { Component } from 'react';
 
-import ContextMenu 	from './ContextMenu'
+import ContextMenu 	from '../contextmenu/ContextMenu'
 
-async function contextMenuListener(e, obj) {
+const contextMenuListener = async (e, obj) => {
 	e.preventDefault();
 	obj.setState({ contextMenuShow : true });
 
 	obj.props.parent.setState({ disableContextMenu : true });
 
-	window.addEventListener('click',() => windowClickListener(obj), false);
+	window.addEventListener('click', () => windowClickListener(obj), false);
 }
 
-async function windowClickListener(obj) {
+const windowClickListener = async (obj) => {
 	obj.setState({ contextMenuShow : false });
 
 	obj.props.parent.setState({ disableContextMenu : false });
@@ -34,7 +34,7 @@ export default class Folder extends Component {
 		if (this.state.contextMenuShow) {
 			return 	<ContextMenu
 					action={action => this.props.handleAction(action)}
-					onStart={() => this.props.mainParent.setState({ elementSelected : undefined })}
+					onStart={() => this.props.mainParent.setState({ elementSelected : this.props.data })}
 					/>
 		}
 	}
@@ -42,7 +42,7 @@ export default class Folder extends Component {
 	name() {
 		const name = this.props.data.name;
 
-		return name.length > 19 ? name.substring(0, 18) : name;
+		return name.length > 19 ? `${name.substring(0, 18)}...` : name;
 	}
 
 	render() {
@@ -51,14 +51,15 @@ export default class Folder extends Component {
 				className="entity"
 				key={this.props.data.path}
 				id={`folder-${this.props.data.id}`}
-				onClick={this.props.whenClicked}
 			>
 				{this.contextMenu()}
-				<div className="entity-icon">
-					<i className="fas fa-folder"/>
-				</div>
-				<div className="entity-name">
-					<span>{this.name()}</span>
+				<div onClick={this.props.whenClicked}>
+					<div className="entity-icon">
+						<i className="fas fa-folder"/>
+					</div>
+					<div className="entity-name">
+						<span>{this.name()}</span>
+					</div>
 				</div>
 			</div>
 		);
