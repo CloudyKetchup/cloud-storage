@@ -58,7 +58,12 @@ button:focus {
 	background: #181818;
 }
 
+input:focus {
+    border-bottom: solid 2px black !important;
+}
+
 .ok-button {
+    margin-top: 10px;
 	background: #292929;
     color: #fff;
     border-radius: 5px;
@@ -95,7 +100,7 @@ button:focus {
 }
 
 .side-panel-content > div {
-	width: 100%;
+	width: 90%;
 	text-align: center;
 }
 
@@ -140,6 +145,10 @@ button:focus {
     animation-duration: 0.1s;
 }
 
+.context-menu-link {
+    padding: 10px;
+}
+
 .context-menu > div {
     padding: 10px;
     grid-column-gap: 10px;
@@ -147,13 +156,13 @@ button:focus {
     color: #dbd9d9;
 }
 
-.context-menu > div > div {
+.context-menu-icon {
     width: 40px;
     font-size: 18px;
     float: left;
 }
 
-.context-menu > div:hover {
+.context-menu > div:hover, .context-menu-link:hover {
     cursor : pointer;
     background: #101010;
 }
@@ -165,8 +174,20 @@ button:focus {
 .nav-right-content {
     padding: 5px;
     float: right;
-    height: 100%;
+    height: 40px;
     width: 200px;
+}
+
+.nav-menu-button {
+    height: 100%;
+    width: 40px;
+    text-align: center;
+    color: #fff;
+    float: right;
+}
+
+.nav-menu-button:hover {
+    cursor: pointer;
 }
 
 .search {
@@ -323,16 +344,10 @@ button:focus {
 }
 
 .buffer-element-indicator > i {
-    line-height: 40px;
-    margin-left: 9px;
-}
-
-.buffer-element-name {
-    width: 80%;
-}
-
-.buffer-element-name > span {
-    line-height: 40px;
+    color: #fff;
+    margin-top: 5px;
+    margin-left: 7px;
+    font-size: 22px;
 }
 
 .prev-button {
@@ -382,7 +397,7 @@ button:focus {
 
 .dialog-header > span {
     text-align: center;
-	width: 130px;
+    width: 80%;
     position: absolute;
     left: 0;
     margin: auto;
@@ -404,12 +419,11 @@ button:focus {
     margin-left: 25%;
     margin-right: auto;
     top: 25%;
-    left: 0;
-    right: 0;
     box-shadow: 0 0 5px 1000px rgba(0,0,0,0.35);
-
     animation-name: slideTop;
     animation-duration: 0.2s;
+    z-index: 9999;
+    position: absolute;
 }
 
 .input-field input:focus {
@@ -473,9 +487,9 @@ button:focus {
 .upload-monitor-control {
     padding: 10px;
     text-align: center;
-    float: right;
-    height: 100%;
-    width: 40px;
+    height: 20px;
+    width: 20px;
+    position: absolute;   
 }
 
 .upload-monitor-control:hover {
@@ -483,7 +497,7 @@ button:focus {
 }
 
 .upload-monitor-content {
-    max-height: 180px;
+    max-height: 170px;
     grid-row-gap: 5px;
     padding: 5px;
     border-radius: 5px;
@@ -492,7 +506,7 @@ button:focus {
     overflow-x: hidden;
     animation-name: slideUp;
     animation-duration: 0.2s;
-    transition: 0.2s;
+    transition: 0.2s; 
 }
 
 .upload-file {
@@ -517,6 +531,52 @@ button:focus {
 .upload-file-info > div {
     float: right;
     width: calc(100% - 50px);
+}
+
+.right-panel {
+    right: -300px;
+    padding: 5px;
+    width: 280px;
+    height: 100%;
+    background: #181818;
+    box-shadow: -1px 0px 5px 0px rgba(0,0,0,0.75);
+    color: #fff;
+    z-index: 99;
+    position: absolute; 
+}
+
+.right-panel-header {
+    width: 100%;
+    height: 50px;
+    top: 0;
+    left: 0;
+    text-align: center;
+    position: absolute;
+}
+
+.right-panel-close {
+    left: 0;
+    font-size: 40px;
+    top: 45%;
+    border-radius: 100px;
+    height: 30px;
+    width: 30px;
+    position: absolute;
+    z-index: 99;
+}
+
+.right-panel-close:hover {
+    cursor: pointer;
+}
+
+.right-panel-close > i {
+    line-height: 30px;
+}
+
+.notification {
+    width: 100%;
+    height: 60px;
+    box-shadow: 0px 5px 5px -3px rgba(0,0,0,0.50);
 }
 
 @keyframes fade {
