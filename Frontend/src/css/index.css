@@ -579,6 +579,29 @@ input:focus {
     box-shadow: 0px 5px 5px -3px rgba(0,0,0,0.50);
 }
 
+.notification-content {
+    display: flex;
+    float: right;
+    width: calc(-90px + 100%);
+    height: calc(-20px + 100%);
+    padding: 10px;
+}
+
+.circular-progress {
+    margin-top: 5px;
+    margin-right : 5px;
+    width: 30px;
+    float: right;
+    height: 30px;
+}
+
+.check-button {
+    background: transparent;
+    color: rgb(43, 206, 54);
+    font-size: 20px;
+    height: 100%;
+}
+
 @keyframes fade {
     from {
         opacity: 0;
