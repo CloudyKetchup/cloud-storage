@@ -1,10 +1,5 @@
 import React, { Component } from 'react';
 
-export interface NotificationProps {
-	title: string;
-	message: string;
-}
-
 export enum NotificationType {
 	processing,
 	error
