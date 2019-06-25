@@ -3,8 +3,17 @@ import React, { Component } from 'react';
 import DefaultContextMenu	from './contextmenu/DefaultContextMenu';
 import Folder 				from '../elements/folder/Folder';
 import File 				from '../elements/file/File';
+import App					from '../../../App';
+import {FileEntity} 		from '../../../model/entity/FileEntity';
+import {FolderEntity} 		from '../../../model/entity/FolderEntity';
 
-export default class ContentContainer extends Component {
+type ContentContainerProps =  {
+	parent: App,
+	files: FileEntity[],
+	folders: FolderEntity[]
+}
+
+export default class ContentContainer extends Component<ContentContainerProps> {
 	state = {
 		disableContextMenu : false,
 		contextMenuShow : false,
@@ -15,39 +24,43 @@ export default class ContentContainer extends Component {
 	};
 
 	componentDidMount() {
-		document.getElementById('content-container').addEventListener('contextmenu', e => {
-			e.preventDefault();
-			this.setState({ 
-				contextMenuShow : true,
-				contextMenuStyle : {
-					top : e.y - 70,
-					left : e.x - 275
-				}
-			})
-		});
+		const div = document.getElementById('content-container');
+
+		if (div !== null) {
+			div.addEventListener('contextmenu', e => {
+				e.preventDefault();
+				this.setState({
+					contextMenuShow: true,
+					contextMenuStyle: {
+						top: e.y - 70,
+						left: e.x - 275
+					}
+				})
+			});
+		}
 
 		window.addEventListener('click', () => this.setState({ contextMenuShow : false }), false);
 	}
 	
-	createFile = data => {
+	createFile = (data: FileEntity) => {
 		const mainParent = this.props.parent;
 
 		return (
-			<File 
+			<File
 				key={data.path}
 				data={data}
 				mainParent={mainParent}
 				parent={this}
-				handleAction={action => {
-					mainParent.setState({ elementSelected : data });
+				handleAction={(action: string) => {
+					mainParent.setState({elementSelected: data});
 
 					mainParent.handleContextMenuAction(action, data);
 				}}
 			/>
 		);
-	}
+	};
 
-	createFolder = data => {
+	createFolder = (data: FolderEntity) => {
 		const mainParent = this.props.parent;
 
 		return (
@@ -56,7 +69,7 @@ export default class ContentContainer extends Component {
 				data={data}
 				mainParent={mainParent}
 				parent={this}
-				handleAction={action => mainParent.handleContextMenuAction(action, data)}
+				handleAction={(action: string) => mainParent.handleContextMenuAction(action, data)}
 				whenClicked={() => 
 					mainParent.state.elementSelected !== undefined
 					&&
@@ -79,7 +92,11 @@ export default class ContentContainer extends Component {
 					? <DefaultContextMenu
 						style={this.state.contextMenuStyle}
 						parent= {this.props.parent}
-						action= {action => this.props.parent.handleContextMenuAction(action)}
+						action= {(action: string) => {
+							if (this.props.parent.state.elementSelected !== undefined) {
+								this.props.parent.handleContextMenuAction(action, this.props.parent.state.elementSelected)
+							}
+						}}
 						/>
 					: undefined}
 			</div>	
