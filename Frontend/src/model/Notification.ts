@@ -7,5 +7,6 @@ export type Notification = {
     message: string,
     targetType: EntityType,
     folderName: string,
-    processing: boolean
+    processing: boolean,
+    error: boolean
 }
