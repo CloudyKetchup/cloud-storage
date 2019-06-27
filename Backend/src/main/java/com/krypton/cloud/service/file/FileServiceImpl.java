@@ -4,8 +4,6 @@ import com.krypton.cloud.service.file.record.FileRecordServiceImpl;
 import com.krypton.cloud.service.file.record.updater.FileRecordUpdaterImpl;
 import lombok.AllArgsConstructor;
 import org.apache.commons.io.FileUtils;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
@@ -14,7 +12,7 @@ import reactor.core.publisher.Mono;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 
 @Service
@@ -24,6 +22,20 @@ public class FileServiceImpl implements FileService {
 	private final FileRecordServiceImpl fileRecordService;
 
 	private final FileRecordUpdaterImpl fileRecordUpdater;
+
+	@Override
+	public byte[] getFile(String path) {
+		var file = new File(path);
+
+		byte[] bytes = null;
+
+		try {
+			bytes = Files.readAllBytes(file.toPath());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return bytes; 
+	}
 
 	@Override
 	public Flux<HttpStatus> saveFiles(Flux<FilePart> files, String path) {
@@ -91,19 +103,6 @@ public class FileServiceImpl implements FileService {
     			: HttpStatus.INTERNAL_SERVER_ERROR;
     }
 
-	@Override
-	public Resource downloadFile(String path) {
-		Resource resource = null;
-
-		try {
-			resource = new UrlResource(path);
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		}
-
-		return resource;
-	}
-
     /**
 	 * Save {@link FilePart} to disk then add record to database
 	 *
@@ -114,7 +113,6 @@ public class FileServiceImpl implements FileService {
 		var file = new File(path + "\\" + filePart.filename());
 
 		try {
-			// create file locally on disk
 			if (file.createNewFile()) {
 				// transfer incoming file data to local file
                 filePart.transferTo(file).subscribe();

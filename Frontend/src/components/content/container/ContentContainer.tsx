@@ -7,7 +7,7 @@ import App					from '../../../App';
 import {FileEntity} 		from '../../../model/entity/FileEntity';
 import {FolderEntity} 		from '../../../model/entity/FolderEntity';
 
-type ContentContainerProps =  {
+type ContentContainerProps = {
 	parent: App,
 	files: FileEntity[],
 	folders: FolderEntity[]
@@ -80,6 +80,16 @@ export default class ContentContainer extends Component<ContentContainerProps> {
 		);
 	};
 
+	handleContextMenu = (action: string) => {
+		if (action === 'upload-files') {
+			const input = document.getElementById("select-upload-files");
+
+			if (input !== null) input.click();
+		} else if (action === 'paste') {
+			this.props.parent.sendPasteAction(this.props.parent.state.bufferElement);
+		}
+	};
+
 	render() {
 		return (
 			<div id="content-container">
@@ -91,12 +101,8 @@ export default class ContentContainer extends Component<ContentContainerProps> {
 				{this.state.contextMenuShow && !this.state.disableContextMenu
 					? <DefaultContextMenu
 						style={this.state.contextMenuStyle}
-						parent= {this.props.parent}
-						action= {(action: string) => {
-							if (this.props.parent.state.elementSelected !== undefined) {
-								this.props.parent.handleContextMenuAction(action, this.props.parent.state.elementSelected)
-							}
-						}}
+						parent={this.props.parent}
+						action={this.handleContextMenu}
 						/>
 					: undefined}
 			</div>	

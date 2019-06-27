@@ -1,5 +1,7 @@
 import React from 'react';
 
+import {Link} from 'react-router-dom';
+
 const DefaultContextMenu = props => {
 
     const pasteButton = () => {
@@ -11,7 +13,7 @@ const DefaultContextMenu = props => {
                         <span>Paste</span>
                     </div>
         }
-    }
+    };
 
     return (
         <div
@@ -28,12 +30,12 @@ const DefaultContextMenu = props => {
                 </div>
                 <span>Upload files</span>
             </div>
-            <div onClick={() => props.action("create-folder")}>
+            <Link to="/create-folder">
                 <div className="context-menu-icon">
                     <i className="fas fa-folder-plus"/>
                 </div>
                 <span>Create folder</span>
-            </div>
+            </Link>
             <div onClick={() => props.action("delete")}>
                 <div className="context-menu-icon">
                     <i className="far fa-trash-alt"/>

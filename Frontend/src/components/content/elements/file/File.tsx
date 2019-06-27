@@ -1,8 +1,11 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 
-import ContextMenu 	from '../contextmenu/ContextMenu'
+import ContextMenu 		from '../contextmenu/ContextMenu'
+import App 				from '../../../../App';
+import {FileEntity} 	from '../../../../model/entity/FileEntity';
+import ContentContainer from '../../container/ContentContainer';
 
-const contextMenuListener = async (e, obj) => {
+const contextMenuListener = async (e: MouseEvent, obj: File) => {
 	e.preventDefault();
 	obj.setState({ contextMenuShow : true });
 
@@ -11,29 +14,39 @@ const contextMenuListener = async (e, obj) => {
 	window.addEventListener('click', () => windowClickListener(obj), false);
 }
 
-const windowClickListener = async (obj) => {
+const windowClickListener = async (obj: File) => {
 	obj.setState({ contextMenuShow : false });
 
 	obj.props.parent.setState({ disableContextMenu : false });
 }
 
-export default class File extends Component {
+type FileProps = {
+	parent: ContentContainer
+	mainParent: App
+	data: FileEntity
+	handleAction: (action: string) => void
+};
+
+export default class File extends Component<FileProps> {
 	state = { contextMenuShow : false };
 
 	componentDidMount() {
-		document.getElementById(`file-${this.props.data.id}`)
-			.addEventListener('contextmenu', e => contextMenuListener(e, this), false);
+		const div = document.getElementById(`file-${this.props.data.id}`);
+
+		if (div !== null) div.addEventListener('contextmenu', e => contextMenuListener(e, this), false);
 	}
 
 	componentWillUnmount() {
-		document.getElementById(`file-${this.props.data.id}`)
-			.removeEventListener('contextmenu', e => contextMenuListener(e, this), false);
+		const div = document.getElementById(`file-${this.props.data.id}`);
+
+		if (div !== null) div.removeEventListener('contextmenu', e => contextMenuListener(e, this), false);
 	}
 
 	contextMenu() {
 		if (this.state.contextMenuShow) {
 			return 	<ContextMenu
-					action={action => this.props.handleAction(action)}
+					parent={this.props.data}
+					action={this.props.handleAction}
 					onStart={() => this.props.mainParent.setState({ elementSelected : this.props.data })}
 					/>
 		}

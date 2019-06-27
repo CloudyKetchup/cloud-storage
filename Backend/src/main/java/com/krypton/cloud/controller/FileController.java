@@ -1,9 +1,9 @@
 package com.krypton.cloud.controller;
 
-import com.krypton.cloud.service.file.FileServiceImpl;
 import lombok.AllArgsConstructor;
 import org.jetbrains.annotations.TestOnly;
-import org.springframework.core.io.Resource;
+import com.krypton.cloud.service.file.FileServiceImpl;
+import com.krypton.cloud.service.file.record.FileRecordServiceImpl;
 import org.springframework.http.*;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.http.codec.multipart.FormFieldPart;
@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.File;
 import java.util.HashMap;
 
 @RestController
@@ -18,7 +19,9 @@ import java.util.HashMap;
 @RequestMapping("/file")
 public class FileController {
 
-	private FileServiceImpl fileService;
+	private final FileServiceImpl fileService;
+
+	private final FileRecordServiceImpl fileRecordService;
 
 	/**
 	 * upload multiple files to specified folder
@@ -92,18 +95,27 @@ public class FileController {
 	}
 
 	/**
-	 * @param path 		file path
-	 * @param name 		file name
+	 * @param path	file path
+	 * @param name 	file name for download on client side
 	 * @return file
 	 */
-	@GetMapping("/{path}/{name}/download")
-	public ResponseEntity<Resource> downloadFile(
-			@PathVariable String path,
-			@PathVariable String name
+	@GetMapping("/{path}/{name}/download") 
+	public HttpEntity<byte[]> downloadFile(
+		@PathVariable String path,
+		@PathVariable String name
 	) {
-		return ResponseEntity
-				.ok()
-				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + name + "\"")
-				.body(fileService.downloadFile(path));
+		var file = new File(path);
+
+		var bytes = fileService.getFile(path);
+
+		return new HttpEntity<byte[]>(
+			bytes,
+			new HttpHeaders(){{
+				setContentType(MediaType.APPLICATION_PDF);
+
+				set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + name);
+
+				setContentLength(file.length());
+			}});
 	}
 }

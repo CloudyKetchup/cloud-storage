@@ -128,6 +128,8 @@ input:focus {
     padding: 10px;
     z-index: 9999;
     position: absolute;
+    animation-name: fade;
+    animation-duration: 0.2s;
 }
 
 .context-menu {
@@ -145,11 +147,7 @@ input:focus {
     animation-duration: 0.1s;
 }
 
-.context-menu-link {
-    padding: 10px;
-}
-
-.context-menu > div {
+.context-menu > div, .context-menu > a {
     padding: 10px;
     grid-column-gap: 10px;
     border-radius: 5px;
@@ -162,7 +160,7 @@ input:focus {
     float: left;
 }
 
-.context-menu > div:hover, .context-menu-link:hover {
+.context-menu > div:hover, .context-menu > a:hover {
     cursor : pointer;
     background: #101010;
 }
@@ -595,11 +593,18 @@ input:focus {
     height: 30px;
 }
 
-.check-button {
+.check-button, .error-button {
     background: transparent;
-    color: rgb(43, 206, 54);
     font-size: 20px;
     height: 100%;
+}
+
+.check-button {
+    color: rgb(43, 206, 54);
+}
+
+.error-button {
+    color: #F32C2C;
 }
 
 @keyframes fade {

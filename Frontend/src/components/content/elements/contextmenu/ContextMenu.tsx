@@ -1,9 +1,19 @@
-import React, { Component } from 'react'
+import React, {Component} from 'react'
 
-import { Link } from "react-router-dom";
+import {Link}       from "react-router-dom";
+import {Entity}     from "../../../../model/entity/Entity";
 
-export default class ContextMenu extends Component {
-        
+type ContextMenuProps = {
+    onStart: () => void,
+    action: (action: string) => void
+    parent: Entity
+};
+
+export default class ContextMenu extends Component<ContextMenuProps> {
+    state = {
+        downloadUrl: `localhost://8080/${this.props.parent.type.toLowerCase()}/${this.props.parent.path.replace(/[\\]/g,"%2F")}/download`
+    };
+
     componentDidMount() {
         this.props.onStart();
     }
@@ -29,7 +39,7 @@ export default class ContextMenu extends Component {
                     </div>
                     <span>Copy</span>
                 </div>
-                <Link to="/rename" className="context-menu-link">
+                <Link to="/rename">
                     <div className="context-menu-icon">
                         <i className="fas fa-signature"/>
                     </div>
@@ -41,7 +51,7 @@ export default class ContextMenu extends Component {
                     </div>
                     <span>Delete</span>
                 </div>
-                <Link to="/element-info" className="context-menu-link">
+                <Link to="/element-info">
                     <div className="context-menu-icon">
                         <i className="fas fa-info"/>
                     </div> 

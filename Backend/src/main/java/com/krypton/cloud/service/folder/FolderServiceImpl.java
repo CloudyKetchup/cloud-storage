@@ -1,16 +1,20 @@
 package com.krypton.cloud.service.folder;
 
+import lombok.AllArgsConstructor;
 import com.krypton.cloud.model.Folder;
 import com.krypton.cloud.service.folder.record.updater.FolderRecordUpdaterImpl;
 import com.krypton.cloud.service.folder.record.FolderRecordServiceImpl;
 import com.krypton.cloud.service.folder.record.FolderRecordUtils;
-import lombok.AllArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import org.zeroturnaround.zip.ZipUtil;
+
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.net.MalformedURLException;
 import java.util.*;
@@ -46,8 +50,8 @@ public class FolderServiceImpl implements FolderService {
 
 	@Override
 	public HttpStatus copyFolder(String folderPath, String copyPath) {
-		var folder = new File(folderPath);
-		var folderCopy = new File(copyPath + "\\" + folder.getName());
+		var folder 		= new File(folderPath);
+		var folderCopy 	= new File(copyPath + "\\" + folder.getName());
 
 		// copy folder to new path
 		try {
@@ -65,8 +69,8 @@ public class FolderServiceImpl implements FolderService {
 
 	@Override
 	public HttpStatus cutFolder(String oldPath, String newPath) {
-		var folder = new File(oldPath);
-		var folderCopy = new File(newPath + "\\" + folder.getName());
+		var folder 		= new File(oldPath);
+		var folderCopy 	= new File(newPath + "\\" + folder.getName());
 		
 		if (folder.renameTo(folderCopy)) {
 			return folderRecordUtils.moveFolder(oldPath, folderCopy);
@@ -76,8 +80,8 @@ public class FolderServiceImpl implements FolderService {
 
 	@Override
 	public HttpStatus renameFolder(String folderPath, String newName) {
-	    var folder = new File(folderPath);
-		var parentPath = Paths.get(folderPath).getParent().toFile().getPath();
+	    var folder 		= new File(folderPath);
+		var parentPath 	= Paths.get(folderPath).getParent().toFile().getPath();
 
 	    // rename folder locally on file system
 	    if (folder.renameTo(new File(parentPath + "\\" + newName))) {
@@ -103,20 +107,39 @@ public class FolderServiceImpl implements FolderService {
 			file.delete();	
         }
         folderRecordService.delete(folder.getPath());
+
         return folder.delete() ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR;
 	}
 
 	@Override
-	public Resource getFolder(String folder) {
+	public Resource getFolder(String path) {
 		Resource resource = null;
 
 		try {
-			resource = new UrlResource("file", System.getProperty("java.io.tmpdir"));
+			resource = new UrlResource("file", path);
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		}
-		assert resource != null;
-
 		return resource;
+	}
+
+	/**
+	 * zip folder and return path to it
+	 *
+	 * @param folder 	folder to zip
+	 * @return return path to zipped folder
+	 */
+	public String zipFolder(File folder) {
+		Path zip = null;
+
+		try {
+			zip = Files.createTempFile(folder.getName(), ".zip");
+		} catch (IOException e) {
+			return String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		// zip folder to file created in temp folder
+		ZipUtil.pack(folder, new File(zip.toString()));
+
+		return folder != null ? zip.toString() : String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 }
