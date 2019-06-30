@@ -11,7 +11,8 @@ import FileUploadManager, {UploadFile}  from './components/content/upload/Upload
 import RightPanel                       from './components/main/panel/rightpanel/RightPanel';
 import CreateFolderDialog               from './components/content/container/control/CreateFolderDialog';
 import RenameElementDialog              from './components/content/elements/rename/RenameElementDialog';
-import FolderZippingNotification        from './components/main/panel/rightpanel/FolderZippingNotification/FolderZippingNotification';
+import FolderZippingNotification        from './components/main/panel/rightpanel/notification/FolderZippingNotification/FolderZippingNotification';
+import ErrorNotification        		from './components/main/panel/rightpanel/notification/ErrorNotification/ErrorNotification';
 import {NotificationType}               from './components/main/panel/rightpanel/notification/Notification';
 import {BrowserRouter as Router, Link, Route, Switch} from "react-router-dom";
 
@@ -19,8 +20,10 @@ import {FolderEntity}   from './model/entity/FolderEntity';
 import {FileEntity}     from './model/entity/FileEntity';
 import {Entity}         from './model/entity/Entity';
 import {BufferElement}  from './model/BufferElement';
-import {Notification}   from './model/Notification';
+import {Notification}   from './model/notification/Notification';
 import {EntityType}     from './model/entity/EntityType';
+
+import {FolderDataHelper} from './helpers';
 
 import axios from 'axios';
 
@@ -36,6 +39,7 @@ type IState = {
 	rootMemory	        : object,
 	uploadingFiles      : File[],
 	notifications       : Notification[],
+	notificationKey 	: number
 	[fileUploadProgress : string]: any
 }
 
@@ -59,6 +63,7 @@ export default class App extends Component<{}, IState> {
 		rootMemory          : {},
 		uploadingFiles      : [],
 		notifications       : [],
+		notificationKey		: 0
 	};
 
 	componentDidMount() {
@@ -118,9 +123,10 @@ export default class App extends Component<{}, IState> {
 			case 'download':
 				if (target.type === EntityType.FILE) {
 					this.downloadFile(target.path, target.name);
-				} else {
-					this.sendZipRequest(target as FolderEntity);
 				}
+				// if folder has content inside send zip request else show error notification
+				FolderDataHelper.getInstance().folderHasContent(target.id)
+					.then(result => result ? this.sendZipRequest(target as FolderEntity) : this.folderEmptyNotification(target as FolderEntity));
 				break;
 			case 'cut':
 				this.setState({bufferElement: {
@@ -141,21 +147,63 @@ export default class App extends Component<{}, IState> {
 		}
 	};
 
+	folderEmptyNotification = (target: FolderEntity) => {
+		this.addNotification({
+			key			: this.state.notificationKey,
+			type 		: NotificationType.ERROR,
+			message 	: `Folder "${target.name}" is empty`,
+			targetType 	: target.type,
+			name 		: target.name,
+			processing 	: false,
+			error 		: true
+		});
+	}
+
 	addNotification = async (data: Notification) => {
 		const notifications = this.state.notifications;
 
 		notifications.push(data);
 
+		let updatedKey = this.state.notificationKey;
+
+		this.setState({
+			notifications : notifications,
+			notificationKey : ++updatedKey
+		});
+	};
+
+	successNotificationProcessing = (key: number) => {
+		const notifications = this.state.notifications;
+
+		notifications.filter(notification => notification.key === key)[0].processing = false;
+
 		this.setState({ notifications : notifications });
 	};
 
+	errorNotificationProcessing = (key: number) => {
+		const notifications = this.state.notifications;
+
+		notifications.filter(notification => notification.key === key)[0].error = true;
+
+		this.setState({ notifications : notifications });
+	};
+
+	removeNotification = (key: number) => {
+		const notifications = this.state.notifications;
+
+		notifications.splice(notifications.findIndex(n => n.key === key), 1);
+
+		this.setState({ notifications : notifications });
+	}
+
 	sendZipRequest = (target: FolderEntity) => {
+		const key = this.state.notificationKey;
 		this.addNotification({
-			key         : target.path,
-			type 		: NotificationType.processing,
+			key         : key,
+			type 		: NotificationType.PROCESSING,
 			message 	: `Processing "${target.name}"`,
 			targetType 	: target.type,
-			folderName 	: target.name,
+			name 		: target.name,
 			processing 	: true,
 			error 		: false
 		});
@@ -165,13 +213,20 @@ export default class App extends Component<{}, IState> {
 				path: target.path
 			})
 			.then(response => {
-				if (response.data !== 'INTERNAL_SERVER_ERROR') {
-					this.successNotificationProcessing(target);
+				switch (response.data) {
+					case 'folder is empty':
+						break;
+					case 'INTERNAL_SERVER_ERROR':
+						this.errorNotificationProcessing(key);
+						break;
+					default:
+						this.successNotificationProcessing(key);
 
-					this.downloadFile(response.data, `${target.name}.zip`);
+						this.downloadFile(response.data, `${target.name}.zip`);	
+						break;
 				}
 			})
-			.catch(error => this.errorNotificationProcessing(target));
+			.catch(_ => this.errorNotificationProcessing(key));
 	};
 
 	downloadFile = async (path: string, name: string) => {
@@ -184,22 +239,6 @@ export default class App extends Component<{}, IState> {
 		document.body.appendChild(link);
 		
 		link.click();
-	};
-
-	successNotificationProcessing = (target: Entity) => {
-		const notifications = this.state.notifications;
-
-		notifications.filter(__ => __.key === target.path)[0].processing = false;
-
-		this.setState({ notifications : notifications });
-	};
-
-	errorNotificationProcessing = (target: Entity) => {
-		const notifications = this.state.notifications;
-
-		notifications.filter(__ => __.key === target.path)[0].error = true;
-
-		this.setState({ notifications : notifications });
 	};
 
 	sendNewFolder = (folder: FolderEntity) => {
@@ -264,6 +303,17 @@ export default class App extends Component<{}, IState> {
 			.catch(error => console.log(error));
 	};
 
+	sendDeleteAll() {
+		axios.post(`${API_URL}/folder/delete-all`,
+			{
+				path: this.state.folderInfo.path
+			})
+			.then(response => response.data === 'OK'
+				? this.updateFolderInfo(this.state.folderInfo.id)
+				: console.log(response.data))
+			.catch(error => console.log(error));
+	}
+
 	uploadFiles = (files: Array<File>) => {
 		for(let file of files) {
 		   this.uploadFile(file);
@@ -320,18 +370,28 @@ export default class App extends Component<{}, IState> {
 				: null;
 	}
 
-	notificationDiv = (notification: Notification) => (
-		<FolderZippingNotification
-			key={notification.key}
-			folderName={notification.folderName}
-			processing={notification.processing}
-			error={notification.error}
-			/>
-	);
+	notificationDiv = (notification: Notification) => {
+		if (notification.type === NotificationType.ERROR) {
+			return <ErrorNotification 
+					key={notification.key}
+					id={notification.key}
+					appContext={this}
+					message={notification.message}
+					/>
+		} else {
+			return <FolderZippingNotification
+					appContext={this}
+					key={notification.key}
+					id={notification.key}
+					folderName={notification.name}
+					processing={notification.processing}
+					error={notification.error}
+					/>
+		}
+	};
 
-	render() {
-		return (
-			<Router>
+	render = () => (
+		<Router>
 			<div style={{height : '100%'}}>
 				<NavBar/>
 				<LeftPanel
@@ -389,8 +449,7 @@ export default class App extends Component<{}, IState> {
 				<RightPanel closePanel={() => {
 					const rightPanel = document.getElementById("right-panel");
 
-					if (rightPanel !== null)
-						rightPanel.style.right = '-300px';
+					if (rightPanel !== null) rightPanel.style.right = '-300px';
 				}}>
 					{this.state.notifications.map(this.notificationDiv)}
 				</RightPanel>
@@ -402,13 +461,11 @@ export default class App extends Component<{}, IState> {
 
 						const files = filesDom.files;
 
-						if(files !== null)
-							files.length > 1 ? this.uploadFiles(Array.from(files)) : this.uploadFile(files[0]);
+						if(files !== null) files.length > 1 ? this.uploadFiles(Array.from(files)) : this.uploadFile(files[0]);
 					}}
 					style={{ display : 'none' }}
 					multiple/>
 			</div>
-			</Router>
-		);
-	}
+		</Router>
+	);
 }
