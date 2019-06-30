@@ -5,8 +5,7 @@ import com.krypton.cloud.model.Folder;
 import com.krypton.cloud.service.folder.record.updater.FolderRecordUpdaterImpl;
 import com.krypton.cloud.service.folder.record.FolderRecordServiceImpl;
 import com.krypton.cloud.service.folder.record.FolderRecordUtils;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
+import com.krypton.cloud.service.file.record.FileRecordServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +15,6 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.net.MalformedURLException;
 import java.util.*;
 
 import org.apache.commons.io.FileUtils;
@@ -26,6 +24,8 @@ import org.apache.commons.io.FileUtils;
 public class FolderServiceImpl implements FolderService {
 
 	private final FolderRecordServiceImpl folderRecordService;
+
+	private final FileRecordServiceImpl fileRecordService;
 
 	private final FolderRecordUtils folderRecordUtils;
 
@@ -71,7 +71,7 @@ public class FolderServiceImpl implements FolderService {
 	public HttpStatus cutFolder(String oldPath, String newPath) {
 		var folder 		= new File(oldPath);
 		var folderCopy 	= new File(newPath + "\\" + folder.getName());
-		
+		// move folder to new location
 		if (folder.renameTo(folderCopy)) {
 			return folderRecordUtils.moveFolder(oldPath, folderCopy);
 		}
@@ -98,39 +98,46 @@ public class FolderServiceImpl implements FolderService {
 	public HttpStatus deleteFolder(String folderPath) {
         var folder = new File(folderPath);
 
-        // first delete inside content
-        for (var file : Objects.requireNonNull(folder.listFiles())) {
-            // if file is directory call function recursive to all files from inside
-			if (file.isDirectory()) {
-				deleteFolder(file.getAbsolutePath());
-			}
-			file.delete();	
-        }
+        deleteFolderContent(folderPath);
+
         folderRecordService.delete(folder.getPath());
 
         return folder.delete() ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR;
 	}
 
 	@Override
-	public Resource getFolder(String path) {
-		Resource resource = null;
+	public HttpStatus deleteFolderContent(String folderPath) {
+		var folder = new File(folderPath);
 
-		try {
-			resource = new UrlResource("file", path);
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		}
-		return resource;
+		if (folder.listFiles() != null) {
+			// delete inside content
+	        for (var file : folder.listFiles()) {
+	            // if file is directory delete content inside it
+				if (file.isDirectory()) {
+					deleteFolder(file.getPath());
+				} else {
+					file.delete();
+
+					fileRecordService.delete(file.getPath());
+				}
+	        }
+    	}
+        // check if folder is now empty
+        return new File(folderPath).list().length == 0 ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR;
 	}
 
 	/**
 	 * zip folder and return path to it
 	 *
 	 * @param folder 	folder to zip
-	 * @return return path to zipped folder
+	 * @return return path to zipped folder if success,"folder is empty" or internal server error
 	 */
 	public String zipFolder(File folder) {
 		Path zip = null;
+
+		if (folder.listFiles().length == 0) {
+			return "folder is empty";
+		}
 
 		try {
 			zip = Files.createTempFile(folder.getName(), ".zip");
@@ -141,5 +148,20 @@ public class FolderServiceImpl implements FolderService {
 		ZipUtil.pack(folder, new File(zip.toString()));
 
 		return folder != null ? zip.toString() : String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+
+	/**
+	 * get info about inside folder content 
+	 *
+	 * @param id 	folder id
+	 * @return folders and files count
+	 */
+	public HashMap<String, Integer> getContentInfo(Long id) {
+		var folder = folderRecordService.getById(id);
+
+		return new HashMap<>(){{
+			put("foldersCount", (Integer) folder.getFolders().size());
+			put("filesCount", (Integer) folder.getFiles().size());
+		}};
 	}
 }

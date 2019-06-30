@@ -20,5 +20,5 @@ public interface FolderService {
 
     HttpStatus deleteFolder(String folderPath);
 
-    Resource getFolder(String folder);
+    HttpStatus deleteFolderContent(String folderPath);
 }
