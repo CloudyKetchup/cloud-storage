@@ -27,10 +27,9 @@ const CreateFolderDialog = props => (
 					type="text"
 				/>
 			</div>
-			<button 
-				className="ok-button"
-				onClick={() => props.sendFolder(document.getElementById('folder-name').value)}
-			>OK</button>
+			<Link className="ok-button" onClick={() => props.sendFolder(document.getElementById('folder-name').value)} to={'/'}>
+			    OK
+			</Link>
 		</div>
 	</div>
 );
