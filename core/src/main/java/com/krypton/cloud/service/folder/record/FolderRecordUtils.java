@@ -1,6 +1,7 @@
 package com.krypton.cloud.service.folder.record;
 
 import com.krypton.cloud.model.Folder;
+import com.krypton.cloud.service.file.record.FileRecordServiceImpl;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,8 @@ public class FolderRecordUtils {
 
     private final FolderRecordServiceImpl folderRecordService;
 
+    private final FileRecordServiceImpl fileRecordService;
+
     /**
      * add {@link Folder} that was copied to another {@link Folder}
      *
@@ -24,7 +27,11 @@ public class FolderRecordUtils {
     public HttpStatus copyFolder(java.io.File copiedFolder) {
         folderRecordService.save(copiedFolder);
 
-        addAllFoldersToDatabase(Arrays.asList(copiedFolder.listFiles()));
+        var folderContent = Arrays.asList(copiedFolder.listFiles());
+
+        fileRecordService.addAllFilesToDatabase(folderContent);
+
+        addAllFoldersToDatabase(folderContent);
 
         return HttpStatus.OK;
     }
