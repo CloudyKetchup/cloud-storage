@@ -36,7 +36,7 @@ const DefaultContextMenu = props => {
                 </div>
                 <span>Create folder</span>
             </Link>
-            <div onClick={() => props.action("delete")}>
+            <div onClick={() => props.action("delete-all")}>
                 <div className="context-menu-icon">
                     <i className="far fa-trash-alt"/>
                 </div>
