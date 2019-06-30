@@ -37,40 +37,51 @@ public class FolderController {
 	/**
 	 * get {@link Folder} entity data
 	 *
-	 * @param folder folder id
+	 * @param id 	folder id
 	 * @return {@link Folder}
 	 */
-	@GetMapping("/{folder}/data")
-	public Folder getFolderData(@PathVariable("folder") Long folder) {
-		return folderService.getFolderData(folder);
+	@GetMapping("/{id}/data")
+	public Folder getFolderData(@PathVariable Long id) {
+		return folderService.getFolderData(id);
 	}
 
 	/**
 	 * get list of {@link Folder}'s inside a {@link Folder}
 	 *
-	 * @param id parent folder id
+	 * @param id 	parent folder id
 	 * @return {@link Folder}'s list
 	 */
-	@GetMapping("/{folder}/folders")
-	public Flux<Folder> getFolderFolders(@PathVariable("folder") Long id) {
+	@GetMapping("/{id}/folders")
+	public Flux<Folder> getFolderFolders(@PathVariable Long id) {
 		return folderRecordService.getFolderFolders(id);
 	}
 
 	/**
 	 * get list of {@link com.krypton.cloud.model.File}'s inside a {@link Folder}
 	 *
-	 * @param id parent folder id
+	 * @param id 	parent folder id
 	 * @return {@link com.krypton.cloud.model.File}'s list
 	 */
-	@GetMapping("/{folder}/files")
-	public Flux<com.krypton.cloud.model.File> getFolderFiles(@PathVariable("folder") Long id) {
+	@GetMapping("/{id}/files")
+	public Flux<com.krypton.cloud.model.File> getFolderFiles(@PathVariable Long id) {
 		return folderRecordService.getFolderFiles(id);
+	}
+
+	/**
+	 * get information about inside content of folder
+	 *
+	 * @param id 	fodler id
+	 * @return folder content information like inside files and folders number
+	 */
+	@GetMapping("/{id}/content_info")
+	public HashMap<String, Integer> contentInfo(@PathVariable Long id) {
+		return folderService.getContentInfo(id);
 	}
 
 	/**
 	 * create new folder to specified path
 	 *
-	 * @param request new folder data
+	 * @param request 	new folder data
 	 * @return http status
 	 */
 	@PostMapping("/create")
@@ -81,7 +92,7 @@ public class FolderController {
 	/**
 	 * move folder from one location to another
 	 *
-	 * @param request containing folder old and new path
+	 * @param request 	containing folder old and new path
 	 * @return http status
 	 */
 	@PostMapping("/cut")
@@ -92,7 +103,7 @@ public class FolderController {
 	/**
 	 * copy folder to new path
 	 *
-	 * @param request request containing  original folder path and path for folder copy
+	 * @param request 	request containing  original folder path and path for folder copy
 	 * @return http status
 	 */
 	@PostMapping("/copy")
@@ -103,7 +114,7 @@ public class FolderController {
 	/**
 	 * rename folder
 	 *
-	 * @param request request containing folder path and new name
+	 * @param request 	request containing folder path and new name
 	 * @return http status
 	 */
 	@PostMapping("/rename")
@@ -114,12 +125,23 @@ public class FolderController {
 	/**
 	 * delete folder
 	 *
-	 * @param request request containing folder path
+	 * @param request 	request containing folder path
 	 * @return http status
 	 */
 	@PostMapping("/delete")
 	public HttpStatus deleteFolder(@RequestBody HashMap<String, String> request) {
 		return folderService.deleteFolder(request.get("path"));
+	}
+
+	/**
+	 *
+	 *
+	 * @param request 	request containing folder path
+	 * @return http status
+	 */
+	@PostMapping("/delete-all")
+	public HttpStatus deleteFolderContent(@RequestBody HashMap<String, String> request) {
+		return folderService.deleteFolderContent(request.get("path"));
 	}
 
 	/**
