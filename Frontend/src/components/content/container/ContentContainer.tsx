@@ -94,7 +94,7 @@ export default class ContentContainer extends Component<ContentContainerProps> {
 				if (input !== null) input.click();
 				break;
 			case 'paste':
-				this.props.parent.sendPasteAction(this.props.parent.state.bufferElement);
+				this.props.parent.pasteEntity(this.props.parent.state.bufferElement);
 				break;
 			case 'delete-all':
 				this.props.parent.sendDeleteAll();
@@ -103,28 +103,28 @@ export default class ContentContainer extends Component<ContentContainerProps> {
 		}
 	};
 
-	emptyContent = () => {
-		if (this.props.folders.length < 1 && this.props.files.length < 1) {
-			return <EmptyContentBanner/>
-		}
-	};
-
 	render() {
 		return (
 			<div id="content-container">
 				{this.props.children}
-				{this.emptyContent()}
+				{this.props.folders.length < 1
+					&&
+					this.props.files.length < 1
+					&&
+					<EmptyContentBanner/>}
 				<div className="elements">
 					{this.props.folders.map(folder => this.createFolder(folder))}
 					{this.props.files.map(file => this.createFile(file))}
 				</div>
-				{this.state.contextMenuShow && !this.state.disableContextMenu
-					? <DefaultContextMenu
+				{this.state.contextMenuShow
+					&&
+					!this.state.disableContextMenu 
+					&&
+					<DefaultContextMenu
 						style={this.state.contextMenuStyle}
 						parent={this.props.parent}
 						action={this.handleContextMenu}
-						/>
-					: undefined}
+						/>}
 			</div>	
 		);
 	}

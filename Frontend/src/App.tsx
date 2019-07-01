@@ -14,7 +14,7 @@ import RenameElementDialog              from './components/content/elements/rena
 import FolderZippingNotification        from './components/main/panel/rightpanel/notification/FolderZippingNotification/FolderZippingNotification';
 import ErrorNotification        		from './components/main/panel/rightpanel/notification/ErrorNotification/ErrorNotification';
 import {NotificationType}               from './components/main/panel/rightpanel/notification/Notification';
-import {BrowserRouter as Router, Link, Route, Switch} from "react-router-dom";
+import {BrowserRouter as Router, Link, Route, Switch} from 'react-router-dom';
 
 import {FolderEntity}   from './model/entity/FolderEntity';
 import {FileEntity}     from './model/entity/FileEntity';
@@ -23,11 +23,7 @@ import {BufferElement}  from './model/BufferElement';
 import {Notification}   from './model/notification/Notification';
 import {EntityType}     from './model/entity/EntityType';
 
-import {FolderDataHelper} from './helpers';
-
-import axios from 'axios';
-
-const API_URL 	= 'http://localhost:8080';
+import {APIHelpers as API, API_URL} from './helpers';
 
 type IState = {
 	folders 	        : FolderEntity[],
@@ -40,8 +36,8 @@ type IState = {
 	uploadingFiles      : File[],
 	notifications       : Notification[],
 	notificationKey 	: number
-	[fileUploadProgress : string]: any
-}
+	[fileUploadProgress : string] : any
+};
 
 export default class App extends Component<{}, IState> {
 	state: IState = {
@@ -67,66 +63,40 @@ export default class App extends Component<{}, IState> {
 	};
 
 	componentDidMount() {
-		this.getRootMemory();
+		API.getRootMemory().then(memory => {
+			this.setState({
+				rootMemory : memory,
+				rootOpened : true
+			});
+		});
 		this.updateFolderInfo(1);
 	}
 
-	getRootMemory() {
-		axios.get(`${API_URL}/folder/root/memory`)
-			.then(memory =>
-				this.setState({
-					rootMemory : memory.data,
-					rootOpened : true
-				})
-			)
-			.catch(error => console.log(error));
-	}
-
-	updateFolderInfo = async (folderId: number) => {
-		this.getFolderData(folderId);
-		this.getFolderContent(folderId);
-	};
-
-	getFolderData = (folderId = this.state.folderInfo.id) => {
-		this.setState({
-			elementSelected : undefined
-		});
-
-		axios.get(`${API_URL}/folder/${folderId}/data`)
-			.then(response => {
-				this.setState({
-					folderInfo : response.data,
-					rootOpened : response.data.root
-				})
-			})
-			.catch(error => console.log(error));
-	};
-
-	getFolderContent = (folderId = this.state.folderInfo.id) => {
+	updateFolderInfo = (folderId: number) => {
 		this.setState({ elementSelected : undefined });
 
-		axios.get(`${API_URL}/folder/${folderId}/folders`)
-			.then(response => {
-				this.setState({ folders : response.data }
-			)})
-			.catch(error => console.log(error));
-
-		axios.get(`${API_URL}/folder/${folderId}/files`)
-			.then(response => {
-				this.setState({ files : response.data })
+		API.getFolderData(folderId).then(data => {
+			this.setState({
+				folderInfo : data,
+				rootOpened : data.root
 			})
-			.catch(error => console.log(error));
+		});
+		
+		API.getFolderFiles(folderId).then(files => this.setState({ files : files }));
+
+		API.getFolderFolders(folderId).then(folders => this.setState({ folders : folders }));	
 	};
 
-	handleContextMenuAction = (action: string, target: Entity) => {
+	handleContextMenuAction = async (action: string, target: Entity) => {
 		switch (action) {
 			case 'download':
 				if (target.type === EntityType.FILE) {
-					this.downloadFile(target.path, target.name);
+					API.downloadFile(target.path, target.name);
 				}
-				// if folder has content inside send zip request else show error notification
-				FolderDataHelper.getInstance().folderHasContent(target.id)
-					.then(result => result ? this.sendZipRequest(target as FolderEntity) : this.folderEmptyNotification(target as FolderEntity));
+				API.folderHasContent(target.id)
+					.then(result => {
+						result ? this.sendZipRequest(target as FolderEntity) : this.folderEmptyNotification(target as FolderEntity)
+					});
 				break;
 			case 'cut':
 				this.setState({bufferElement: {
@@ -198,6 +168,7 @@ export default class App extends Component<{}, IState> {
 
 	sendZipRequest = (target: FolderEntity) => {
 		const key = this.state.notificationKey;
+
 		this.addNotification({
 			key         : key,
 			type 		: NotificationType.PROCESSING,
@@ -208,12 +179,9 @@ export default class App extends Component<{}, IState> {
 			error 		: false
 		});
 
-		axios.post(`${API_URL}/folder/zip`,
-			{
-				path: target.path
-			})
+		API.folderZipRequest(target.path)
 			.then(response => {
-				switch (response.data) {
+				switch (response) {
 					case 'folder is empty':
 						break;
 					case 'INTERNAL_SERVER_ERROR':
@@ -222,69 +190,36 @@ export default class App extends Component<{}, IState> {
 					default:
 						this.successNotificationProcessing(key);
 
-						this.downloadFile(response.data, `${target.name}.zip`);	
+						API.downloadFile(response, `${target.name}.zip`);	
 						break;
 				}
 			})
 			.catch(_ => this.errorNotificationProcessing(key));
 	};
 
-	downloadFile = async (path: string, name: string) => {
-		const link = document.createElement("a");
-		
-		link.download = name;
-		
-		link.href = `${API_URL}/file/${path.replace(/[\\]/g, '%2F')}/${name}/download`;
-		
-		document.body.appendChild(link);
-		
-		link.click();
-	};
-
-	sendNewFolder = (folder: FolderEntity) => {
-		axios.post(`${API_URL}/folder/create/`,
-			{
-				'name' 		: folder,
-				'folderPath': this.state.folderInfo.path
-			})
-			.then(response => {
-				if (response.data === 'OK') {
-					this.updateFolderInfo(this.state.folderInfo.id);
-				} else {
-					console.log(response.data);
-				}
-			})
+	createNewFolder = (folder: FolderEntity) => {
+		API.sendNewFolder(folder, this.state.folderInfo.path)
+			.then(response => response === 'OK' 
+					? this.updateFolderInfo(this.state.folderInfo.id) 
+					: console.log(response))
 			.catch(error => console.log(error));
 	};
 
-	sendPasteAction = (targetEntity = this.state.bufferElement) => {
+	pasteEntity = (targetEntity = this.state.bufferElement) => {
 		if (targetEntity !== undefined) {
-			axios.post(`${API_URL}/${targetEntity.data.type.toLowerCase()}/${targetEntity.action}`,
-				{
-					oldPath: targetEntity.data.path,
-					newPath: this.state.folderInfo.path
-				})
-				.then(response =>
-					response.data === 'OK'
+			API.sendPasteRequest(targetEntity.data, targetEntity.action, this.state.folderInfo.path)
+				.then(response => response === 'OK'
 						? this.updateFolderInfo(this.state.folderInfo.id)
-						: console.log(response.data)
-				)
+						: console.log(response))
 				.catch(error => console.log(error));
 		}
 	};
 
-	sendRenameRequest = (newName: string) => {
-		const renameTarget 	= this.state.elementSelected;
-		const targetType   	= renameTarget !== undefined ? renameTarget.type.toLowerCase() : "";
-
-		if (renameTarget !== undefined) {
-			axios.post(`${API_URL}/${targetType}/rename`,
-				{
-					'path': renameTarget.path,
-					'newName': newName
-				})
+	renameEntity = (newName: string) => {
+		if (this.state.elementSelected !== undefined) {
+			API.sendRenameRequest(this.state.elementSelected, newName)
 				.then(response => {
-					if (response.data === 'OK') {
+					if (response === 'OK') {
 						this.updateFolderInfo(this.state.folderInfo.id);
 					}
 				})
@@ -293,65 +228,31 @@ export default class App extends Component<{}, IState> {
 	};
 
 	sendDeleteRequest = (target: Entity) => {
-		axios.post(`${API_URL}/${target.type.toLowerCase()}/delete`,
-			{
-				'path' : target.path
-			})
-			.then(response => response.data === 'OK'
+		API.sendDeleteRequest(target)
+			.then(response => response === 'OK'
 				? this.updateFolderInfo(this.state.folderInfo.id)
-				: console.log(response.data))
+				: console.log(response))
 			.catch(error => console.log(error));
 	};
 
 	sendDeleteAll() {
-		axios.post(`${API_URL}/folder/delete-all`,
-			{
-				path: this.state.folderInfo.path
-			})
-			.then(response => response.data === 'OK'
+		API.sendDeleteAll(this.state.folderInfo.path)
+			.then(response => response === 'OK'
 				? this.updateFolderInfo(this.state.folderInfo.id)
-				: console.log(response.data))
+				: console.log(response))
 			.catch(error => console.log(error));
 	}
 
 	uploadFiles = (files: Array<File>) => {
 		for(let file of files) {
-		   this.uploadFile(file);
+		   API.uploadFile(file, this);
 		}
 	};
 
-	uploadFile = (file: File) => {
-		const URL = `${API_URL}/file/upload/one`;
-
-		const formData = new FormData();
-
-		formData.append('file', file);
-		formData.append('path', this.state.folderInfo.path);
-
-		const uploadingFiles = this.state.uploadingFiles;
-
-		uploadingFiles.push(file);
-
-		this.setState({ uploadingFiles : uploadingFiles });
-
-		axios.request({
-				url     : URL,
-				method  : 'POST',
-				data    : formData,
-				onUploadProgress : p => this.setState({
-						[`uploadingFile${file.name}progress`] : (p.total - (p.total - p.loaded)) / p.total * 100
-				})
-			})
-			.then(response => response.data === 'OK'
-					? this.updateFolderInfo(this.state.folderInfo.id)
-					: console.log(response.data))
-			.catch(error => console.log(error));
-	};
-
-	createFolder() {
+	createFolderDialog() {
 		return 	<CreateFolderDialog
 				parent={this}
-				sendFolder={(folder: FolderEntity) => this.sendNewFolder(folder)}
+				sendFolder={(folder: FolderEntity) => this.createNewFolder(folder)}
 				/>;
 	}
 
@@ -359,7 +260,7 @@ export default class App extends Component<{}, IState> {
 		return this.state.elementSelected !== undefined
 				? <RenameElementDialog
 					element={this.state.elementSelected}
-					onRename={(newName: string) => this.sendRenameRequest(newName)}
+					onRename={(newName: string) => this.renameEntity(newName)}
 					/>
 				: null;
 	}
@@ -393,7 +294,7 @@ export default class App extends Component<{}, IState> {
 	render = () => (
 		<Router>
 			<div style={{height : '100%'}}>
-				<NavBar/>
+				<NavBar notifications={this.state.notifications}/>
 				<LeftPanel
 					memory={this.state.rootMemory}
 					folderInfo={this.state.folderInfo}
@@ -408,7 +309,7 @@ export default class App extends Component<{}, IState> {
 						>
 						<Switch>
 							<Route path="/rename" component={() => this.renameDialog()}/>
-							<Route path="/create-folder" component={() => this.createFolder()}/>
+							<Route path="/create-folder" component={() => this.createFolderDialog()}/>
 							<Route path="/element-info" component={() => this.elementInfoContainer()}/>
 						</Switch>
 						<PrevFolderButton
@@ -461,7 +362,7 @@ export default class App extends Component<{}, IState> {
 
 						const files = filesDom.files;
 
-						if(files !== null) files.length > 1 ? this.uploadFiles(Array.from(files)) : this.uploadFile(files[0]);
+						if(files !== null) files.length > 1 ? this.uploadFiles(Array.from(files)) : API.uploadFile(files[0], this);
 					}}
 					style={{ display : 'none' }}
 					multiple/>
