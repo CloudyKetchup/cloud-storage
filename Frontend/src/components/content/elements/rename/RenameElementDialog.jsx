@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Link } from 'react-router-dom';
+import {Link} from 'react-router-dom';
 
 const RenameElementDialog = props => (
     
@@ -36,10 +36,9 @@ const RenameElementDialog = props => (
                 width: '90%'
             }}
         />
-            <button 
-                className="ok-button"
-                onClick={() => props.onRename(document.getElementById('folder-name').value)}
-            >Rename</button>
+            <Link className="ok-button" onClick={() => props.onRename(document.getElementById('folder-name').value)} to={'/'}>
+                Rename
+            </Link>
         </div>
     </div>
 );
