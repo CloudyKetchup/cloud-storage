@@ -17,7 +17,7 @@ export default class RightPanel extends Component<RightPanelProps> {
 				</div>
 				<div style={{
 					marginTop: '50px',
-					height: '70%'
+					display : 'grid'
 				}}>
 					{this.props.children}
 				</div>
