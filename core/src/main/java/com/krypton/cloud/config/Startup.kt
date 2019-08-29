@@ -17,7 +17,7 @@ class Startup(
         private val folderRecordUtils   : FolderRecordUtils
 ) : CommandLineRunner {
 
-    private val root = File("C:\\Users\\dodon\\cloud")
+    private val root = File(System.getProperty("user.home") + "/Desktop/Cloud")
 
     override fun run(vararg args: String) {
 
