@@ -13,23 +13,23 @@ interface FolderZippingNotificationProps extends NotificationProps {
 export default class FolderZippingNotification extends Notification<FolderZippingNotificationProps> {
 	state = { deleteToggler : false };
 
-	componentDidMount() {
+	componentDidMount = () => {
 		const div = document.getElementById(`zipping-notification-${this.props.id}`);
 
 		if (div !== null) div.addEventListener('contextmenu', this.toggleDeleteOption, false);
-	}
+	};
 
-	componentWillUnmount() {
+	componentWillUnmount = () => {
 		const div = document.getElementById(`zipping-notification-${this.props.id}`);
 
 		if (div !== null) div.removeEventListener('contextmenu', this.toggleDeleteOption, false);
-	}
+	};
 
 	toggleDeleteOption = (e : Event) => {
 		e.preventDefault();
 
 		if (!this.props.processing) this.setState({ deleteToggler : !this.state.deleteToggler });
-	}
+	};
 
 	progressIcon = () => {
 		if (this.props.error) {
@@ -39,7 +39,7 @@ export default class FolderZippingNotification extends Notification<FolderZippin
 		} else {
 			return this.processingSuccess();
 		}
-	}
+	};
 
 	processingError = () => (
 		<div className="error-button">

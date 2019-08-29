@@ -10,31 +10,31 @@ interface Props extends NotificationProps {
 export default class ErrorNotification extends Notification<Props> {
 	state = { deleteToggler : false };
 
-	componentDidMount() {
+	componentDidMount = () => {
 		const div = document.getElementById(`error-notification-${this.props.id}`);
 
 		if (div !== null) div.addEventListener('contextmenu', this.toggleDeleteOption, false);
 
 		window.addEventListener('click', this.hideDeleteOption, false);
-	}
+	};
 
-	componentWillUnmount() {
+	componentWillUnmount = () => {
 		const div = document.getElementById(`error-notification-${this.props.id}`);
 
 		if (div !== null) div.removeEventListener('contextmenu', this.toggleDeleteOption, false);
 
 		window.removeEventListener('click', this.hideDeleteOption, false);
-	}
+	};
 
 	toggleDeleteOption = (e : Event) => {
 		e.preventDefault();
 
 		this.setState({ deleteToggler : !this.state.deleteToggler });
-	}
+	};
 
 	hideDeleteOption = (e : Event) => {
 		this.setState({ deleteToggler : false });
-	}
+	};
 
 	render = () => (
 		<div className="notification-body" id={`error-notification-${this.props.id}`}>
