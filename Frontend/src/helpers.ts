@@ -12,7 +12,7 @@ export class APIHelpers {
 	static getRootMemory = () : Promise<object> => (
 		axios.get(`${API_URL}/folder/root/memory`)
 			.then(memory => memory.data)
-			.catch(error => console.log(error))
+			.catch(console.log)
 	);
 
 	static folderHasContent = (id: number) : Promise<boolean> => (
@@ -24,19 +24,19 @@ export class APIHelpers {
 	static getFolderData = (id: number) : Promise<FolderEntity> => (
 		axios.get(`${API_URL}/folder/${id}/data`)
 			.then(response => response.data)
-			.catch(error => console.log(error))
+			.catch(console.log)
 	);
 
 	static getFolderFiles = (id: number) : Promise<[]> => (
 		axios.get(`${API_URL}/folder/${id}/files`)
 			.then(response => response.data)
-			.catch(error => console.log(error))
+			.catch(console.log)
 	);
 
 	static getFolderFolders = (id: number) : Promise<[]> => (
 		axios.get(`${API_URL}/folder/${id}/folders`)
 			.then(response => response.data)
-			.catch(error => console.log(error))
+			.catch(console.log)
 	);
 
 	static folderZipRequest = (folderPath: string) : Promise<string> => (
@@ -115,16 +115,16 @@ export class APIHelpers {
 			.then(response => response.data === 'OK'
 					? appContext.updateFolderInfo(appContext.state.folderInfo.id)
 					: console.log(response.data))
-			.catch(error => console.log(error));
-	}
+			.catch(console.log);
+	};
 
 	static downloadFile = async (path: string, name: string) => {
 		const link = document.createElement("a");
 		
 		link.download = name;
-		
-		link.href = `${API_URL}/file/${path.replace(/[\\]/g, '%2F')}/${name}/download`;
-		
+
+		link.href = `${API_URL}/file/${path.replace(/[/]/g, '%2F')}/${name}/download`;
+
 		document.body.appendChild(link);
 		
 		link.click();
