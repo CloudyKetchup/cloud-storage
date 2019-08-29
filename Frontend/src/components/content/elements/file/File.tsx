@@ -12,13 +12,13 @@ const contextMenuListener = async (e: MouseEvent, obj: File) => {
 	obj.props.parent.setState({ disableContextMenu : true });
 
 	window.addEventListener('click', () => windowClickListener(obj), false);
-}
+};
 
 const windowClickListener = async (obj: File) => {
 	obj.setState({ contextMenuShow : false });
 
 	obj.props.parent.setState({ disableContextMenu : false });
-}
+};
 
 type FileProps = {
 	parent: ContentContainer
@@ -30,19 +30,19 @@ type FileProps = {
 export default class File extends Component<FileProps> {
 	state = { contextMenuShow : false };
 
-	componentDidMount() {
+	componentDidMount = () => {
 		const div = document.getElementById(`file-${this.props.data.id}`);
 
 		if (div !== null) div.addEventListener('contextmenu', e => contextMenuListener(e, this), false);
-	}
+	};
 
-	componentWillUnmount() {
+	componentWillUnmount = () => {
 		const div = document.getElementById(`file-${this.props.data.id}`);
 
 		if (div !== null) div.removeEventListener('contextmenu', e => contextMenuListener(e, this), false);
-	}
+	};
 
-	contextMenu() {
+	contextMenu = () => {
 		if (this.state.contextMenuShow) {
 			return 	<ContextMenu
 					parent={this.props.data}
@@ -50,29 +50,27 @@ export default class File extends Component<FileProps> {
 					onStart={() => this.props.mainParent.setState({ elementSelected : this.props.data })}
 					/>
 		}
-	}
+	};
 
-	name() {
+	name = () => {
 		const name = this.props.data.name;
 
 		return name.length > 18 ? `${name.substring(0, 17)}...` : name;
-	}
+	};
 
-	render() {
-		return (
-			<div
-				className="entity"
-				key={this.props.data.path}
-				id={`file-${this.props.data.id}`}
-			>
-				{this.contextMenu()}
-				<div className="entity-icon">
-					<i className="fas fa-file"/>
-				</div>
-				<div className="entity-name">
-					<span>{this.name()}</span>
-				</div>
+	render = () => (
+		<div
+			className="entity"
+			key={this.props.data.path}
+			id={`file-${this.props.data.id}`}
+		>
+			{this.contextMenu()}
+			<div className="entity-icon">
+				<i className="fas fa-file"/>
 			</div>
-		);
-	}
+			<div className="entity-name">
+				<span>{this.name()}</span>
+			</div>
+		</div>
+	);
 }
