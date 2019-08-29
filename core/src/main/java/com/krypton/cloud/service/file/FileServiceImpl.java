@@ -34,7 +34,7 @@ public class FileServiceImpl implements FileService {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		return bytes; 
+		return bytes;
 	}
 
 	@Override
@@ -50,7 +50,7 @@ public class FileServiceImpl implements FileService {
 	@Override
 	public HttpStatus cutFile(String oldPath, String newPath) {
 		var file = new File(oldPath);
-		var fileCopy = new File(newPath + "\\" + file.getName());
+		var fileCopy = new File(newPath + "/" + file.getName());
 
 		if (file.renameTo(fileCopy)) {
 			// remove file with old path from database
@@ -65,8 +65,8 @@ public class FileServiceImpl implements FileService {
 
 	@Override
 	public HttpStatus copyFile(String oldPath, String newPath) {
-		var file = new File(oldPath);
-		var fileCopy = new File(newPath + "\\" + file.getName());
+		var file 	 = new File(oldPath);
+		var fileCopy = new File(newPath + "/" + file.getName());
 
 		// copy file to new folder
 		try {
@@ -89,48 +89,36 @@ public class FileServiceImpl implements FileService {
 		var file = new File(path);
 		var parentFolder = Paths.get(path).getParent().toFile().getPath();
 
-		return file.renameTo(new File(parentFolder + "\\" + newName))
+		return file.renameTo(new File(parentFolder + "/" + newName))
 				? fileRecordUpdater.updateName(path, newName)
 				: HttpStatus.INTERNAL_SERVER_ERROR;
 	}
 
 	@Override
-    public HttpStatus deleteFile(String path) {
-    	var file = new File(path);
+	public HttpStatus deleteFile(String path) {
+		return new File(path).delete()
+				? fileRecordService.delete(path)
+				: HttpStatus.INTERNAL_SERVER_ERROR;
+	}
 
-		return file.delete()
-    			? fileRecordService.delete(path)
-    			: HttpStatus.INTERNAL_SERVER_ERROR;
-    }
-
-    /**
+	/**
 	 * Save {@link FilePart} to disk then add record to database
 	 *
-	 * @param filePart	{@link FilePart} from request
-	 * @param path 		path to folder where to save file
+	 * @param filePart {@link FilePart} from request
+	 * @param path     path to folder where to save file
 	 */
 	private boolean writeFilePart(FilePart filePart, String path) {
-		var file = new File(path + "\\" + filePart.filename());
+		var file = new File(path + "/" + filePart.filename());
 
 		try {
 			if (file.createNewFile()) {
 				// transfer incoming file data to local file
-                filePart.transferTo(file).subscribe();
-            }
-			return saveFileRecord(file);
+				filePart.transferTo(file).subscribe();
+			}
+			return fileRecordService.save(file) != null;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-        return false;
-	}
-
-	/**
-	 * add record of file from filesystem to database
-	 *
-	 * @param file 		file for database record
-	 * @return boolean depending on success
-	 */
-	private boolean saveFileRecord(File file) {
-		return fileRecordService.save(file) != null;
+		return false;
 	}
 }
