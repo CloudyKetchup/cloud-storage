@@ -75,7 +75,7 @@ public class FolderController {
 	 */
 	@GetMapping("/{id}/content_info")
 	public HashMap<String, Integer> contentInfo(@PathVariable Long id) {
-		return folderService.getContentInfo(id);
+		return folderService.getItemsCount(id);
 	}
 
 	/**

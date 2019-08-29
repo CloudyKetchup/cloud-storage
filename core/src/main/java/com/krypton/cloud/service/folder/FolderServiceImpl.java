@@ -1,5 +1,4 @@
 package com.krypton.cloud.service.folder;
-
 import lombok.AllArgsConstructor;
 import com.krypton.cloud.model.Folder;
 import com.krypton.cloud.service.folder.record.updater.FolderRecordUpdaterImpl;
@@ -51,7 +50,7 @@ public class FolderServiceImpl implements FolderService {
 	@Override
 	public HttpStatus copyFolder(String folderPath, String copyPath) {
 		var folder 		= new File(folderPath);
-		var folderCopy 	= new File(copyPath + "\\" + folder.getName());
+		var folderCopy 	= new File(copyPath + "/" + folder.getName());
 
 		// copy folder to new path
 		try {
@@ -70,7 +69,7 @@ public class FolderServiceImpl implements FolderService {
 	@Override
 	public HttpStatus cutFolder(String oldPath, String newPath) {
 		var folder 		= new File(oldPath);
-		var folderCopy 	= new File(newPath + "\\" + folder.getName());
+		var folderCopy 	= new File(newPath + "/" + folder.getName());
 		// move folder to new location
 		if (folder.renameTo(folderCopy)) {
 			return folderRecordUtils.moveFolder(oldPath, folderCopy);
@@ -84,11 +83,11 @@ public class FolderServiceImpl implements FolderService {
 		var parentPath 	= Paths.get(folderPath).getParent().toFile().getPath();
 
 	    // rename folder locally on file system
-	    if (folder.renameTo(new File(parentPath + "\\" + newName))) {
+	    if (folder.renameTo(new File(parentPath + "/" + newName))) {
 			// update folder name in database
 			folderRecordUpdater.updateName(folderPath, newName);
 			// update folder path in database because it contains name
-			return folderRecordUpdater.updatePath(folder, parentPath + "\\" + newName);
+			return folderRecordUpdater.updatePath(folder, parentPath + "/" + newName);
 		}
 		// if fail return error http status
 		return HttpStatus.INTERNAL_SERVER_ERROR;
@@ -108,7 +107,7 @@ public class FolderServiceImpl implements FolderService {
 	@Override
 	public HttpStatus deleteFolderContent(String folderPath) {
 		var folder = new File(folderPath);
-
+		// check if folder is not empty
 		if (folder.listFiles() != null) {
 			// delete inside content
 	        for (var file : folder.listFiles()) {
@@ -127,13 +126,28 @@ public class FolderServiceImpl implements FolderService {
 	}
 
 	/**
+	 * get items count inside folder
+	 *
+	 * @param id 	folder id
+	 * @return folders and files count
+	 */
+	public HashMap<String, Integer> getItemsCount(Long id) {
+		var folder = folderRecordService.getById(id);
+
+		return new HashMap<>(){{
+			put("foldersCount", (Integer) folder.getFolders().size());
+			put("filesCount", (Integer) folder.getFiles().size());
+		}};
+	}
+
+	/**
 	 * zip folder and return path to it
 	 *
 	 * @param folder 	folder to zip
 	 * @return return path to zipped folder if success,"folder is empty" or internal server error
 	 */
 	public String zipFolder(File folder) {
-		Path zip = null;
+		Path zip;
 
 		if (folder.listFiles().length == 0) {
 			return "folder is empty";
@@ -148,20 +162,5 @@ public class FolderServiceImpl implements FolderService {
 		ZipUtil.pack(folder, new File(zip.toString()));
 
 		return folder != null ? zip.toString() : String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR);
-	}
-
-	/**
-	 * get info about inside folder content 
-	 *
-	 * @param id 	folder id
-	 * @return folders and files count
-	 */
-	public HashMap<String, Integer> getContentInfo(Long id) {
-		var folder = folderRecordService.getById(id);
-
-		return new HashMap<>(){{
-			put("foldersCount", (Integer) folder.getFolders().size());
-			put("filesCount", (Integer) folder.getFiles().size());
-		}};
 	}
 }
