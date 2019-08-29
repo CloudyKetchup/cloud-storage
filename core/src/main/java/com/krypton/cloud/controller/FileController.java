@@ -3,7 +3,6 @@ package com.krypton.cloud.controller;
 import lombok.AllArgsConstructor;
 import org.jetbrains.annotations.TestOnly;
 import com.krypton.cloud.service.file.FileServiceImpl;
-import com.krypton.cloud.service.file.record.FileRecordServiceImpl;
 import org.springframework.http.*;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.http.codec.multipart.FormFieldPart;
@@ -20,8 +19,6 @@ import java.util.HashMap;
 public class FileController {
 
 	private final FileServiceImpl fileService;
-
-	private final FileRecordServiceImpl fileRecordService;
 
 	/**
 	 * upload multiple files to specified folder
@@ -106,10 +103,8 @@ public class FileController {
 	) {
 		var file = new File(path);
 
-		var bytes = fileService.getFile(path);
-
-		return new HttpEntity<byte[]>(
-			bytes,
+		return new HttpEntity<>(
+			fileService.getFile(path),
 			new HttpHeaders(){{
 				setContentType(MediaType.APPLICATION_PDF);
 
