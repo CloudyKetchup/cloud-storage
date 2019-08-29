@@ -22,20 +22,22 @@ import {Entity}         from './model/entity/Entity';
 import {BufferElement}  from './model/BufferElement';
 import {Notification}   from './model/notification/Notification';
 import {EntityType}     from './model/entity/EntityType';
+import NavNode 			from './model/NavNode';
 
-import {APIHelpers as API, API_URL} from './helpers';
+import {APIHelpers as API} from './helpers';
 
 type IState = {
-	folders 	        : FolderEntity[],
-	files 		        : FileEntity[],
-	bufferElement       : BufferElement | undefined,
-	elementSelected     : Entity | undefined,
-	folderInfo 	        : FolderEntity,
-	rootOpened 	        : boolean,
-	rootMemory	        : object,
-	uploadingFiles      : File[],
-	notifications       : Notification[],
-	notificationKey 	: number
+	folders			: FolderEntity[],
+	files			: FileEntity[],
+	bufferElement		: BufferElement | undefined,
+	elementSelected		: Entity	| undefined,
+	folderInfo		: FolderEntity,
+	rootOpened		: boolean,
+	rootMemory		: object,
+	uploadingFiles		: File[],
+	notifications		: Notification[],
+	notificationKey 	: number,
+	foldersNavigation 	: NavNode[],
 	[fileUploadProgress : string] : any
 };
 
@@ -59,7 +61,8 @@ export default class App extends Component<{}, IState> {
 		rootMemory          : {},
 		uploadingFiles      : [],
 		notifications       : [],
-		notificationKey		: 0
+		notificationKey		: 0,
+		foldersNavigation 	: []
 	};
 
 	componentDidMount() {
@@ -69,6 +72,9 @@ export default class App extends Component<{}, IState> {
 				rootOpened : true
 			});
 		});
+
+		this.addNavNode(this.state.folderInfo);
+
 		this.updateFolderInfo(1);
 	}
 
@@ -78,10 +84,10 @@ export default class App extends Component<{}, IState> {
 		API.getFolderData(folderId).then(data => {
 			this.setState({
 				folderInfo : data,
-				rootOpened : data.root
+				rootOpened : data.root,			
 			})
 		});
-		
+
 		API.getFolderFiles(folderId).then(files => this.setState({ files : files }));
 
 		API.getFolderFolders(folderId).then(folders => this.setState({ folders : folders }));	
@@ -92,11 +98,12 @@ export default class App extends Component<{}, IState> {
 			case 'download':
 				if (target.type === EntityType.FILE) {
 					API.downloadFile(target.path, target.name);
+				} else {
+					API.folderHasContent(target.id)
+						.then(result => {
+							result ? this.sendZipRequest(target as FolderEntity) : this.folderEmptyNotification(target as FolderEntity)
+						});
 				}
-				API.folderHasContent(target.id)
-					.then(result => {
-						result ? this.sendZipRequest(target as FolderEntity) : this.folderEmptyNotification(target as FolderEntity)
-					});
 				break;
 			case 'cut':
 				this.setState({bufferElement: {
@@ -117,17 +124,35 @@ export default class App extends Component<{}, IState> {
 		}
 	};
 
-	folderEmptyNotification = (target: FolderEntity) => {
-		this.addNotification({
-			key			: this.state.notificationKey,
-			type 		: NotificationType.ERROR,
-			message 	: `Folder "${target.name}" is empty`,
-			targetType 	: target.type,
-			name 		: target.name,
-			processing 	: false,
-			error 		: true
-		});
-	}
+	addNavNode = async (entity: FolderEntity) => {
+		const nodes = this.state.foldersNavigation;
+
+		const prevNode = nodes.slice(-1).pop();
+
+		const node = new NavNode(
+			entity.id,
+			entity.root ? '/' : entity.name,
+			prevNode,
+			() => {
+				this.updateFolderInfo(entity.id);
+
+				this.removeNodeSuccessors(entity.id);
+			});
+
+		if (prevNode !== undefined) prevNode.next = node;
+
+		nodes.push(node);
+
+		this.setState({ foldersNavigation : nodes });
+	};
+
+	removeNodeSuccessors = async (id: number) => {
+		const nodes = this.state.foldersNavigation;
+
+		nodes.splice(nodes.findIndex(node => node.id === id) + 1, 9e9);
+
+		this.setState({ foldersNavigation : nodes });
+	};
 
 	addNotification = async (data: Notification) => {
 		const notifications = this.state.notifications;
@@ -137,8 +162,20 @@ export default class App extends Component<{}, IState> {
 		let updatedKey = this.state.notificationKey;
 
 		this.setState({
-			notifications : notifications,
+			notifications 	: notifications,
 			notificationKey : ++updatedKey
+		});
+	};
+
+	folderEmptyNotification = (target: FolderEntity) => {
+		this.addNotification({
+			key		: this.state.notificationKey,
+			type		: NotificationType.ERROR,
+			message 	: `Folder "${target.name}" is empty`,
+			targetType 	: target.type,
+			name 		: target.name,
+			processing 	: false,
+			error 		: true
 		});
 	};
 
@@ -164,13 +201,13 @@ export default class App extends Component<{}, IState> {
 		notifications.splice(notifications.findIndex(n => n.key === key), 1);
 
 		this.setState({ notifications : notifications });
-	}
+	};
 
 	sendZipRequest = (target: FolderEntity) => {
 		const key = this.state.notificationKey;
 
 		this.addNotification({
-			key         : key,
+			key         	: key,
 			type 		: NotificationType.PROCESSING,
 			message 	: `Processing "${target.name}"`,
 			targetType 	: target.type,
@@ -200,8 +237,8 @@ export default class App extends Component<{}, IState> {
 	createNewFolder = (folder: FolderEntity) => {
 		API.sendNewFolder(folder, this.state.folderInfo.path)
 			.then(response => response === 'OK' 
-					? this.updateFolderInfo(this.state.folderInfo.id) 
-					: console.log(response))
+				? this.updateFolderInfo(this.state.folderInfo.id) 
+				: console.log(response))
 			.catch(error => console.log(error));
 	};
 
@@ -209,8 +246,8 @@ export default class App extends Component<{}, IState> {
 		if (targetEntity !== undefined) {
 			API.sendPasteRequest(targetEntity.data, targetEntity.action, this.state.folderInfo.path)
 				.then(response => response === 'OK'
-						? this.updateFolderInfo(this.state.folderInfo.id)
-						: console.log(response))
+					? this.updateFolderInfo(this.state.folderInfo.id)
+					: console.log(response))
 				.catch(error => console.log(error));
 		}
 	};
@@ -245,56 +282,56 @@ export default class App extends Component<{}, IState> {
 
 	uploadFiles = (files: Array<File>) => {
 		for(let file of files) {
-		   API.uploadFile(file, this);
+			API.uploadFile(file, this);
 		}
 	};
 
 	createFolderDialog() {
 		return 	<CreateFolderDialog
-				parent={this}
-				sendFolder={(folder: FolderEntity) => this.createNewFolder(folder)}
-				/>;
+			parent={this}
+			sendFolder={(folder: FolderEntity) => this.createNewFolder(folder)}
+		/>;
 	}
 
 	renameDialog() {
 		return this.state.elementSelected !== undefined
-				? <RenameElementDialog
-					element={this.state.elementSelected}
-					onRename={(newName: string) => this.renameEntity(newName)}
-					/>
-				: null;
+			? <RenameElementDialog
+				element={this.state.elementSelected}
+				onRename={(newName: string) => this.renameEntity(newName)}
+			/>
+			: null;
 	}
 
 	elementInfoContainer() {
 		return this.state.elementSelected !== undefined
-				? <ElementInfoContainer parent={this} data={this.state.elementSelected}/>
-				: null;
+			? <ElementInfoContainer parent={this} data={this.state.elementSelected}/>
+			: null;
 	}
 
 	notificationDiv = (notification: Notification) => {
 		if (notification.type === NotificationType.ERROR) {
 			return <ErrorNotification 
-					key={notification.key}
-					id={notification.key}
-					appContext={this}
-					message={notification.message}
-					/>
+				key={notification.key}
+				id={notification.key}
+				appContext={this}
+				message={notification.message}
+			/>
 		} else {
 			return <FolderZippingNotification
-					appContext={this}
-					key={notification.key}
-					id={notification.key}
-					folderName={notification.name}
-					processing={notification.processing}
-					error={notification.error}
-					/>
+				appContext={this}
+				key={notification.key}
+				id={notification.key}
+				folderName={notification.name}
+				processing={notification.processing}
+				error={notification.error}
+			/>
 		}
 	};
 
 	render = () => (
 		<Router>
 			<div style={{height : '100%'}}>
-				<NavBar notifications={this.state.notifications}/>
+				<NavBar notifications={this.state.notifications} navNodes={this.state.foldersNavigation}/>
 				<LeftPanel
 					memory={this.state.rootMemory}
 					folderInfo={this.state.folderInfo}
@@ -302,11 +339,11 @@ export default class App extends Component<{}, IState> {
 					files={this.state.files.length}
 				/>
 				<DragAndDrop className="drag-and-drop" handleDrop={this.uploadFiles}>                    
-						<ContentContainer
-							parent={this}
-							files={this.state.files}
-							folders={this.state.folders}
-						>
+					<ContentContainer
+						parent={this}
+						files={this.state.files}
+						folders={this.state.folders}
+					>
 						<Switch>
 							<Route path="/rename" component={() => this.renameDialog()}/>
 							<Route path="/create-folder" component={() => this.createFolderDialog()}/>
@@ -315,7 +352,9 @@ export default class App extends Component<{}, IState> {
 						<PrevFolderButton
 							whenClicked={() => {
 								if (this.state.folderInfo.parentId !== null) {
-									this.updateFolderInfo(this.state.folderInfo.parentId)
+									this.removeNodeSuccessors(this.state.folderInfo.parentId);
+
+									this.updateFolderInfo(this.state.folderInfo.parentId);
 								}
 							}}
 							rootOpened={this.state.rootOpened}
@@ -337,36 +376,36 @@ export default class App extends Component<{}, IState> {
 						>
 							<i className='fas fa-file-upload'/>
 						</button>
-						{this.state.uploadingFiles.length > 0
-						&&
-						<FileUploadManager onClose={() => this.setState({ uploadingFiles : [] })}>
-							{this.state.uploadingFiles.map(file => <UploadFile key={file.name} data={file} parent={this}/>)}
-						</FileUploadManager>}    
-						{this.state.bufferElement !== undefined
-						&&
-						<BufferElementIndicator element={this.state.bufferElement}/>}
-					</ContentContainer>
-				</DragAndDrop>
-				<RightPanel closePanel={() => {
-					const rightPanel = document.getElementById("right-panel");
+	{this.state.uploadingFiles.length > 0
+		&&
+			<FileUploadManager onClose={() => this.setState({ uploadingFiles : [] })}>
+				{this.state.uploadingFiles.map(file => <UploadFile key={file.name} data={file} parent={this}/>)}
+			</FileUploadManager>}    
+		{this.state.bufferElement !== undefined
+				&&
+					<BufferElementIndicator element={this.state.bufferElement}/>}
+		</ContentContainer>
+		</DragAndDrop>
+			<RightPanel closePanel={() => {
+				const rightPanel = document.getElementById("right-panel");
 
-					if (rightPanel !== null) rightPanel.style.right = '-300px';
-				}}>
-					{this.state.notifications.map(this.notificationDiv)}
-				</RightPanel>
-				<input
-					id="select-upload-files"
-					type="file"
-					onChange={() => {
-						const filesDom = document.getElementById("select-upload-files") as HTMLInputElement;
+				if (rightPanel !== null) rightPanel.style.right = '-300px';
+			}}>
+				{this.state.notifications.map(this.notificationDiv)}
+			</RightPanel>
+			<input
+				id="select-upload-files"
+				type="file"
+				onChange={() => {
+					const filesDom = document.getElementById("select-upload-files") as HTMLInputElement;
 
-						const files = filesDom.files;
+					const files = filesDom.files;
 
-						if(files !== null) files.length > 1 ? this.uploadFiles(Array.from(files)) : API.uploadFile(files[0], this);
-					}}
-					style={{ display : 'none' }}
-					multiple/>
-			</div>
+					if (files !== null) files.length > 1 ? this.uploadFiles(Array.from(files)) : API.uploadFile(files[0], this);
+				}}
+				style={{ display : 'none' }}
+				multiple/>
+		</div>
 		</Router>
 	);
 }
