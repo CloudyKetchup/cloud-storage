@@ -1,10 +1,14 @@
-.vscode
-build
+core/.classpath
 .idea
 .gradle
+.vs
+.vscode
+build
+core/.gradle
 core/bin
 core/build
 core/gradle
 core/out
 Frontend/.gradle
 Frontend/node_modules
+Frontend/package-lock.json
