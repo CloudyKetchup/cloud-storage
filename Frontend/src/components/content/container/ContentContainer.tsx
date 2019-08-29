@@ -58,7 +58,7 @@ export default class ContentContainer extends Component<ContentContainerProps> {
 				mainParent={mainParent}
 				parent={this}
 				handleAction={(action: string) => {
-					mainParent.setState({elementSelected: data});
+					mainParent.setState({ elementSelected : data });
 
 					mainParent.handleContextMenuAction(action, data);
 				}}
@@ -76,13 +76,18 @@ export default class ContentContainer extends Component<ContentContainerProps> {
 				mainParent={mainParent}
 				parent={this}
 				handleAction={(action: string) => mainParent.handleContextMenuAction(action, data)}
-				whenClicked={() => 
-					mainParent.state.elementSelected !== undefined
-					&&
-					mainParent.state.elementSelected.id === data.id
-							? mainParent.updateFolderInfo(data.id)
-							: mainParent.setState({ elementSelected : data})
-				}/>
+				whenClicked={() => {
+					if (mainParent.state.elementSelected !== undefined
+						&&
+						mainParent.state.elementSelected.id === data.id
+					) {
+						mainParent.updateFolderInfo(data.id);
+
+						mainParent.addNavNode(data);
+					} else {
+						mainParent.setState({ elementSelected : data });
+					}
+				}}/>
 		);
 	};
 
@@ -113,8 +118,8 @@ export default class ContentContainer extends Component<ContentContainerProps> {
 					&&
 					<EmptyContentBanner/>}
 				<div className="elements">
-					{this.props.folders.map(folder => this.createFolder(folder))}
-					{this.props.files.map(file => this.createFile(file))}
+					{this.props.folders.map(this.createFolder)}
+					{this.props.files.map(this.createFile)}
 				</div>
 				{this.state.contextMenuShow
 					&&
