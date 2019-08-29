@@ -16,13 +16,7 @@ const RenameElementDialog = props => (
             <i className="fas fa-folder"/>
             <span>Rename {props.element.name}</span>
         </div>
-    <div 
-        style={{ 
-            padding: '10px',
-            height: '70%',
-            textAlign: 'center' 
-        }}
-    >
+    <div className="dialog-input-container">
         <input
             defaultValue={props.element.name}
             placeholder="Name"
