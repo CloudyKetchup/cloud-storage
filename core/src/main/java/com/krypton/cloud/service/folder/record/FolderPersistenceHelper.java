@@ -1,5 +1,4 @@
 package com.krypton.cloud.service.folder.record;
-
 import com.krypton.cloud.model.File;
 import com.krypton.cloud.model.Folder;
 import com.krypton.cloud.repository.FileRepository;
@@ -100,7 +99,7 @@ public class FolderPersistenceHelper {
      */
     private void updateFilesPaths(Folder parent) {
         parent.getFiles().parallelStream().forEach(childFile -> {
-            childFile.setPath(parent.getPath() + "\\" + childFile.getName());
+            childFile.setPath(parent.getPath() + "/" + childFile.getName());
 
             fileRepository.save(childFile);
         });
@@ -113,7 +112,7 @@ public class FolderPersistenceHelper {
      */
     private void updateFoldersPaths(Folder parent) {
         parent.getFolders().parallelStream().forEach(childFolder -> {
-            childFolder.setPath(parent.getPath() + "\\" + childFolder.getName());
+            childFolder.setPath(parent.getPath() + "/" + childFolder.getName());
 
             folderRepository.save(childFolder);
             // run recursive for content inside child folder
