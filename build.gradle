@@ -6,7 +6,7 @@ wrapper {
 
 // Run backend of Cloud Storage service build with Spring
 task bootRun(type: GradleBuild) {
-	dir = "Backend"
+	dir = "core"
 	tasks = ["bootRun"]
 }
 
