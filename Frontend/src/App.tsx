@@ -239,7 +239,7 @@ export default class App extends Component<{}, IState> {
 			.then(response => response === 'OK' 
 				? this.updateFolderInfo(this.state.folderInfo.id) 
 				: console.log(response))
-			.catch(error => console.log(error));
+			.catch(console.log);
 	};
 
 	pasteEntity = (targetEntity = this.state.bufferElement) => {
@@ -248,7 +248,7 @@ export default class App extends Component<{}, IState> {
 				.then(response => response === 'OK'
 					? this.updateFolderInfo(this.state.folderInfo.id)
 					: console.log(response))
-				.catch(error => console.log(error));
+				.catch(console.log);
 		}
 	};
 
@@ -260,7 +260,7 @@ export default class App extends Component<{}, IState> {
 						this.updateFolderInfo(this.state.folderInfo.id);
 					}
 				})
-				.catch(error => console.log(error));
+				.catch(console.log);
 		}
 	};
 
@@ -269,7 +269,7 @@ export default class App extends Component<{}, IState> {
 			.then(response => response === 'OK'
 				? this.updateFolderInfo(this.state.folderInfo.id)
 				: console.log(response))
-			.catch(error => console.log(error));
+			.catch(console.log);
 	};
 
 	sendDeleteAll() {
@@ -277,7 +277,7 @@ export default class App extends Component<{}, IState> {
 			.then(response => response === 'OK'
 				? this.updateFolderInfo(this.state.folderInfo.id)
 				: console.log(response))
-			.catch(error => console.log(error));
+			.catch(console.log);
 	}
 
 	uploadFiles = (files: Array<File>) => {
