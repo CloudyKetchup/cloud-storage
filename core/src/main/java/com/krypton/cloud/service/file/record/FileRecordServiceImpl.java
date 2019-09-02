@@ -1,9 +1,13 @@
 package com.krypton.cloud.service.file.record;
 
+import com.krypton.cloud.exception.entity.database.FileDatabaseException;
 import com.krypton.cloud.model.File;
+import com.krypton.cloud.model.LogType;
 import com.krypton.cloud.repository.FileRepository;
 import com.krypton.cloud.service.folder.record.FolderPersistenceHelper;
 import com.krypton.cloud.service.folder.record.FolderRecordServiceImpl;
+import com.krypton.cloud.service.util.log.LogFolder;
+import com.krypton.cloud.service.util.log.LoggingService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -21,6 +25,8 @@ public class FileRecordServiceImpl implements FileRecordService {
     private final FolderRecordServiceImpl folderRecordService;
 
     private final FolderPersistenceHelper folderPersistenceHelper;
+
+    private final LoggingService loggingService;
 
     @Override
     public File getById(Long id) {
@@ -52,7 +58,15 @@ public class FileRecordServiceImpl implements FileRecordService {
 
         fileRepository.delete(file);
 
-        return !exists(file.getPath()) ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR;
+        if (!exists(file.getPath())) {
+            return HttpStatus.OK;
+        } else {
+            // save error log
+            loggingService.saveLog(new FileDatabaseException("Error deleting file " + path + " entity").stackTraceToString(),
+                    LogType.ERROR,
+                    LogFolder.DATABASE.getType() + LogFolder.DATABASE.getType());
+            return HttpStatus.INTERNAL_SERVER_ERROR;
+        }
     }
 
     @Override
@@ -61,17 +75,25 @@ public class FileRecordServiceImpl implements FileRecordService {
     }
 
     /**
-     * add all cloud files records to database, runs on startup
+     * Add all files inside folder to database
+     *
+     * WARNING!!! if you want to add all folder content
+     * and you'll use {@link com.krypton.cloud.service.folder.record.FolderRecordUtils#addAllFoldersToDatabase(List)}
+     *  >>> call this method after calling method mentioned previously, or it will not 
+     *  work because you need to add all folders inside folder to database first, then all files, 
+     *  otherwise, content inside folder inside main folder will not be added, sounds confusing, i know :)
      *
      * @param files         files list for database
      */
     public void addAllFilesToDatabase(List<java.io.File> files) {
         files.parallelStream().forEach(file -> {
+            // if file is file and don't already exist in database
             if (file.isFile() && !exists(file.getPath())) {
                 save(file);
-            }else if (file.isDirectory()) {
+                // if is a folder
+            } else if (file.isDirectory()) {
                 var insideContent = Arrays.asList(file.listFiles());
-
+                // add all files inside
                 addAllFilesToDatabase(insideContent);
             }
         });

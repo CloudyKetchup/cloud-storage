@@ -1,10 +1,18 @@
 package com.krypton.cloud.service.folder;
+
+import com.krypton.cloud.exception.entity.io.FileIOException;
+import com.krypton.cloud.exception.entity.io.FolderIOException;
+import com.krypton.cloud.service.handler.http.ErrorHandler;
+import com.krypton.cloud.service.util.commons.ExceptionTools;
+import com.krypton.cloud.service.util.log.LogFolder;
 import lombok.AllArgsConstructor;
 import com.krypton.cloud.model.Folder;
+import com.krypton.cloud.model.LogType;
 import com.krypton.cloud.service.folder.record.updater.FolderRecordUpdaterImpl;
 import com.krypton.cloud.service.folder.record.FolderRecordServiceImpl;
 import com.krypton.cloud.service.folder.record.FolderRecordUtils;
 import com.krypton.cloud.service.file.record.FileRecordServiceImpl;
+import com.krypton.cloud.service.util.log.LoggingService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +28,7 @@ import org.apache.commons.io.FileUtils;
 
 @Service
 @AllArgsConstructor
-public class FolderServiceImpl implements FolderService {
+public class FolderServiceImpl implements FolderService, ErrorHandler {
 
 	private final FolderRecordServiceImpl folderRecordService;
 
@@ -30,6 +38,8 @@ public class FolderServiceImpl implements FolderService {
 
 	private final FolderRecordUpdaterImpl folderRecordUpdater;
 
+	private final LoggingService loggingService;
+
 	@Override
 	public Folder getFolderData(Long id) {
 		return folderRecordService.getById(id);
@@ -38,32 +48,32 @@ public class FolderServiceImpl implements FolderService {
 	@Override
 	public HttpStatus createFolder(String folderName, String folderPath) {
 		var folder = new File(folderPath + "/" + folderName);
-		
-		// make folder locally on file system
-		return folder.mkdir()
-				// then add record of folder to database
-				? folderRecordService.save(folder)
-				// if fail return error http status
-				: HttpStatus.INTERNAL_SERVER_ERROR;
+		// create folder locally on file system
+		if (folder.mkdir()) {
+			// add folder to database and return http status > ok
+			return folderRecordService.save(folder);
+		}
+		// if folder was not created, save log file and return http status
+		return httpError(new FolderIOException("Error while creating folder " + folder.getPath()).stackTraceToString());
 	}
 
 	@Override
 	public HttpStatus copyFolder(String folderPath, String copyPath) {
 		var folder 		= new File(folderPath);
 		var folderCopy 	= new File(copyPath + "/" + folder.getName());
-
 		// copy folder to new path
 		try {
 			FileUtils.copyDirectory(folder, folderCopy);
-		} catch (IOException e) {
-			return HttpStatus.INTERNAL_SERVER_ERROR;
+			// check if file was copied successful
+			if (folderCopy.exists())
+				// add copied folder record to database and return http status
+				return folderRecordUtils.copyFolder(folderCopy);
+			else throw new FolderIOException("Error when coping folder " + folder.getPath());
+		} catch (IOException | FolderIOException e) {
+			e.printStackTrace();
+			// save exception log
+			return httpError(ExceptionTools.INSTANCE.stackTraceToString(e));
 		}
-		// check if file was copied successful
-		if (folderCopy.exists()) {
-			// add copied folder record
-			return folderRecordUtils.copyFolder(folderCopy);
-		}
-		return HttpStatus.INTERNAL_SERVER_ERROR;
 	}
 
 	@Override
@@ -74,7 +84,7 @@ public class FolderServiceImpl implements FolderService {
 		if (folder.renameTo(folderCopy)) {
 			return folderRecordUtils.moveFolder(oldPath, folderCopy);
 		}
-		return HttpStatus.INTERNAL_SERVER_ERROR;
+		return httpError(new FolderIOException("Error when moving folder " + folder.getPath()).stackTraceToString());
 	}
 
 	@Override
@@ -89,8 +99,7 @@ public class FolderServiceImpl implements FolderService {
 			// update folder path in database because it contains name
 			return folderRecordUpdater.updatePath(folder, parentPath + "/" + newName);
 		}
-		// if fail return error http status
-		return HttpStatus.INTERNAL_SERVER_ERROR;
+		return httpError(new FolderIOException("Error when renaming folder " + folder.getPath()).stackTraceToString());
 	}
 
 	@Override
@@ -101,7 +110,9 @@ public class FolderServiceImpl implements FolderService {
 
         folderRecordService.delete(folder.getPath());
 
-        return folder.delete() ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR;
+        return folder.delete()
+				? HttpStatus.OK
+				: httpError(new FolderIOException("Error while deleting folder" + folder.getPath()).stackTraceToString());
 	}
 
 	@Override
@@ -116,13 +127,22 @@ public class FolderServiceImpl implements FolderService {
 					deleteFolder(file.getPath());
 				} else {
 					file.delete();
-
+					// delete file from database
 					fileRecordService.delete(file.getPath());
 				}
 	        }
     	}
         // check if folder is now empty
-        return new File(folderPath).list().length == 0 ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR;
+		return new File(folderPath).list().length == 0
+				? HttpStatus.OK
+				: httpError(new FolderIOException("Error while deleting folder " + folderPath + " content").stackTraceToString());
+	}
+
+	@Override
+	public HttpStatus httpError(String message) {
+		loggingService.saveLog(message, LogType.ERROR, LogFolder.FOLDER.getType());
+
+		return HttpStatus.INTERNAL_SERVER_ERROR;
 	}
 
 	/**
@@ -135,8 +155,8 @@ public class FolderServiceImpl implements FolderService {
 		var folder = folderRecordService.getById(id);
 
 		return new HashMap<>(){{
-			put("foldersCount", (Integer) folder.getFolders().size());
-			put("filesCount", (Integer) folder.getFiles().size());
+			put("foldersCount",  folder.getFolders().size());
+			put("filesCount",  folder.getFiles().size());
 		}};
 	}
 
@@ -152,15 +172,17 @@ public class FolderServiceImpl implements FolderService {
 		if (folder.listFiles().length == 0) {
 			return "folder is empty";
 		}
-
 		try {
 			zip = Files.createTempFile(folder.getName(), ".zip");
 		} catch (IOException e) {
-			return String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR);
+			e.printStackTrace();
+			return httpError(e.getLocalizedMessage()).toString();
 		}
 		// zip folder to file created in temp folder
 		ZipUtil.pack(folder, new File(zip.toString()));
 
-		return folder != null ? zip.toString() : String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR);
+		return folder != null
+				? zip.toString()
+				: String.valueOf(httpError(new FileIOException("Error while zipping folder " + folder.getPath()).stackTraceToString()));
 	}
 }

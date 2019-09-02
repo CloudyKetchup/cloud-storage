@@ -1,7 +1,11 @@
 package com.krypton.cloud.service.folder.record;
 
+import com.krypton.cloud.exception.entity.database.FolderDatabaseException;
 import com.krypton.cloud.model.*;
 import com.krypton.cloud.repository.*;
+import com.krypton.cloud.service.handler.http.ErrorHandler;
+import com.krypton.cloud.service.util.log.LogFolder;
+import com.krypton.cloud.service.util.log.LoggingService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -11,11 +15,13 @@ import java.nio.file.Paths;
 
 @Service
 @AllArgsConstructor
-public class FolderRecordServiceImpl implements FolderRecordService {
+public class FolderRecordServiceImpl implements FolderRecordService, ErrorHandler {
 
     private final FolderPersistenceHelper folderPersistenceHelper;
 
     private final FolderRepository folderRepository;
+
+    private final LoggingService loggingService;
 
     @Override
     public Folder getById(Long id) {
@@ -32,10 +38,14 @@ public class FolderRecordServiceImpl implements FolderRecordService {
     @Override
     public HttpStatus save(java.io.File folder) {
         // check if folder with same path exist
-        if(!exists(folder.getPath())) {
+        if (!exists(folder.getPath())) {
             folderRepository.save(new Folder(folder));
         }
-
+        // check if folder was saved
+        if (!exists(folder.getPath())) {
+            // save error log
+            return httpError("Error saving folder " + folder.getPath());
+        }
         var parentPath = Paths.get(folder.getPath()).getParent().toAbsolutePath();
         // newly added to database folder parent
         var parent = getByPath(parentPath.toString());
@@ -53,12 +63,25 @@ public class FolderRecordServiceImpl implements FolderRecordService {
 
         folderRepository.delete(folder);
 
-        return getByPath(folderPath) == null ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR;
+        if (getByPath(folderPath) == null) {
+            return HttpStatus.OK;
+        } else {
+            // save error log
+            return httpError("Error deleting folder " + folderPath);
+        }
     }
 
     @Override
     public boolean exists(String path) {
         return folderRepository.getByPath(path) != null;
+    }
+
+    @Override
+    public HttpStatus httpError(String message) {
+        loggingService.saveLog(new FolderDatabaseException(message).stackTraceToString(),
+                LogType.ERROR,
+                LogFolder.DATABASE.getType() + LogFolder.FOLDER.getType());
+        return HttpStatus.INTERNAL_SERVER_ERROR;
     }
 
     /**

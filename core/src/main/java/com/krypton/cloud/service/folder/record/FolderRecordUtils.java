@@ -1,7 +1,12 @@
 package com.krypton.cloud.service.folder.record;
 
+import com.krypton.cloud.exception.entity.database.FolderDatabaseException;
 import com.krypton.cloud.model.Folder;
 import com.krypton.cloud.service.file.record.FileRecordServiceImpl;
+import com.krypton.cloud.model.LogType;
+import com.krypton.cloud.service.handler.http.ErrorHandler;
+import com.krypton.cloud.service.util.log.LogFolder;
+import com.krypton.cloud.service.util.log.LoggingService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -12,11 +17,21 @@ import java.util.List;
 
 @Service
 @AllArgsConstructor
-public class FolderRecordUtils {
+public class FolderRecordUtils implements ErrorHandler {
 
     private final FolderRecordServiceImpl folderRecordService;
 
     private final FileRecordServiceImpl fileRecordService;
+
+    private final LoggingService loggingService;
+
+    @Override
+    public HttpStatus httpError(String message) {
+        loggingService.saveLog(new FolderDatabaseException(message).stackTraceToString(),
+                LogType.ERROR,
+                LogFolder.DATABASE.getType() + LogFolder.FOLDER.getType());
+        return HttpStatus.INTERNAL_SERVER_ERROR;
+    }
 
     /**
      * add {@link Folder} that was copied to another {@link Folder}
@@ -37,7 +52,7 @@ public class FolderRecordUtils {
     }
 
     /**
-     * when move {@link Folder} to another {@link Folder},update parent child relations
+     * when move {@link Folder} to another {@link Folder}, update parent < - > child relations
      *
      * @param oldPath       old folder path
      * @param folder        folder from new location
@@ -48,9 +63,14 @@ public class FolderRecordUtils {
 
         folderRecordService.save(folder);
         // check if folder was moved successful
-        return folderRecordService.getByPath(oldPath) == null && folderRecordService.exists(folder.getPath())
-                ? HttpStatus.OK
-                : HttpStatus.INTERNAL_SERVER_ERROR;
+        if (folderRecordService.getByPath(oldPath) == null && folderRecordService.exists(folder.getPath())) {
+            addAllFoldersToDatabase(Arrays.asList(folder.listFiles()));
+
+            fileRecordService.addAllFilesToDatabase(Arrays.asList(folder.listFiles()));
+            return HttpStatus.OK;
+        }
+        // save error log
+        return httpError("Error occurred while moving folder " + folder.getPath() + " record");
     }
 
     /**
@@ -60,7 +80,7 @@ public class FolderRecordUtils {
      */
     public void addAllFoldersToDatabase(List<File> content) {
         content.parallelStream().forEach(file -> {
-            // if file is directory missing not present in database
+            // if file is directory missing in database
             if (!folderRecordService.exists(file.getPath()) && file.isDirectory()) {
                 folderRecordService.save(file);
 

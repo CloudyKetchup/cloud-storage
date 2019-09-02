@@ -1,11 +1,16 @@
 package com.krypton.cloud.service.folder.record;
-import com.krypton.cloud.model.File;
-import com.krypton.cloud.model.Folder;
-import com.krypton.cloud.repository.FileRepository;
-import com.krypton.cloud.repository.FolderRepository;
+
+import com.krypton.cloud.model.*;
+import com.krypton.cloud.repository.*;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+/**
+ * Helper service for folders entities, manages relationships of
+ * folder entities, for example:
+ * a folder was created inside another folder, so we need to do parent and child relation
+ * and so on...
+ * */
 @Service
 @AllArgsConstructor
 public class FolderPersistenceHelper {

@@ -16,6 +16,7 @@ interface FolderRecordUpdater {
      * @param newName       new folder name
      * @return http status depending on success
      */
+    @Deprecated
     HttpStatus updateName(String folder, String newName);
 
     /**
