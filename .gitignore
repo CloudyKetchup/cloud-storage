@@ -1,4 +1,7 @@
+gradle/
+.DS_Store
 core/.classpath
+core/.project
 .idea
 .gradle
 .vs
@@ -9,6 +12,8 @@ core/bin
 core/build
 core/gradle
 core/out
+core/src/test
 Frontend/.gradle
+Frontend/.project
 Frontend/node_modules
 Frontend/package-lock.json
