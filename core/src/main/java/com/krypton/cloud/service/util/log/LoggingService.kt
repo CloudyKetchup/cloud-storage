@@ -13,20 +13,23 @@ class LoggingService {
     private val logsPath = "${System.getProperty("user.home")}/Desktop/Cloud/Logs"
 
     /**
-     * Wrtie log file to disk
+     * Write log file to disk
      *
      * @param message   log text that will be written to file
      * @param type      [LogType] type
      * @param logFolder folder path where to save log, by default is logs folder root => .../Cloud/Logs/
      * */
     @JvmOverloads
-    fun saveLog(message : String, type : LogType, logFolder : String = LogFolder.ROOT.type) {
-        // create folder for log
-        createLogFolder(path = logFolder, folderPath = { folderPath ->
-            val logFile = File("$folderPath/${LocalDateTime.now()}-$type.txt")
-            // create file and then write log to it
-            if (createLogFile(logFile)) logFile.printWriter().use { it.println(message) }
-        })
+    fun saveLog(message : String?, type : LogType, logFolder : String = LogFolder.ROOT.type) {
+        if (message != null) {
+            // create folder for log
+            createLogFolder(path = logFolder, folderPath = { folderPath ->
+                val logFile = File("$folderPath/${LocalDateTime.now()}-$type.txt")
+                // create file and then write log to it
+                if (createLogFile(logFile)) logFile.printWriter().use { it.println(message) }
+            })
+            // if message was null save error log
+        } else saveLog(LogException("Log message was null or empty").stackTraceToString(), LogType.ERROR, LogFolder.ROOT.type)
     }
 
     /**
