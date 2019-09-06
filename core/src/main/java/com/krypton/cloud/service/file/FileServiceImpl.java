@@ -5,6 +5,7 @@ import com.krypton.cloud.model.LogType;
 import com.krypton.cloud.service.file.record.FileRecordServiceImpl;
 import com.krypton.cloud.service.file.record.updater.FileRecordUpdaterImpl;
 import com.krypton.cloud.service.handler.http.ErrorHandler;
+import com.krypton.cloud.service.util.commons.ExceptionTools;
 import com.krypton.cloud.service.util.log.LogFolder;
 import com.krypton.cloud.service.util.log.LoggingService;
 import com.krypton.cloud.service.handler.io.IOErrorHandler;
@@ -54,10 +55,10 @@ public class FileServiceImpl implements FileService, IOErrorHandler, ErrorHandle
 	}
 
 	@Override
-	public Mono<HttpStatus> saveFile(Mono<FilePart> filePart, String path) {
-		return filePart.flatMap(file -> Mono.just(writeFilePart(file, path)
+	public Mono<HttpStatus> saveFile(FilePart file, String path) {
+		return Mono.just(writeFilePart(file, path)
 						? HttpStatus.OK 
-						: httpError(new FileIOException("Error while saving file " + file.filename()).stackTraceToString())));
+						: httpError(new FileIOException("Error while saving file " + file.filename()).stackTraceToString()));
 	}
 
 	@Override
@@ -144,8 +145,8 @@ public class FileServiceImpl implements FileService, IOErrorHandler, ErrorHandle
 			return fileRecordService.save(file) != null;
 		} catch (Exception e) {
 			e.printStackTrace();
+			error(ExceptionTools.INSTANCE.stackTraceToString(e));
 		}
-		error(new FileIOException("Error while writing file " + file.getPath() + " to disk").stackTraceToString());
 		return false;
 	}
 }

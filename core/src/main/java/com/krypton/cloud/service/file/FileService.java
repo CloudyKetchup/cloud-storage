@@ -11,7 +11,7 @@ public interface FileService {
 
     Flux<HttpStatus> saveFiles(Flux<FilePart> files, String folder);
 
-    Mono<HttpStatus> saveFile(Mono<FilePart> file, String folder);
+    Mono<HttpStatus> saveFile(FilePart file, String folder);
 
     HttpStatus cutFile(String oldPath, String newPath);
 
