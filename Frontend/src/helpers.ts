@@ -123,7 +123,7 @@ export class APIHelpers {
 		
 		link.download = name;
 
-		link.href = `${API_URL}/file/${path.replace(/[/]/g, '%2F')}/${name}/download`;
+		link.href = `${API_URL}/file/${path.replace(/[/]/g, '%2F')}/download`;
 
 		document.body.appendChild(link);
 		
