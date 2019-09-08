@@ -47,7 +47,7 @@ export default class ContentContainer extends Component<ContentContainerProps> {
 
 		window.addEventListener('click', () => this.setState({ contextMenuShow : false }), false);
 	}
-	
+
 	createFile = (data: FileEntity) => {
 		const mainParent = this.props.parent;
 
@@ -80,7 +80,7 @@ export default class ContentContainer extends Component<ContentContainerProps> {
 					if (mainParent.state.elementSelected !== undefined
 						&&
 						mainParent.state.elementSelected.id === data.id
-					) {
+				) {
 						mainParent.updateFolderInfo(data.id);
 
 						mainParent.addNavNode(data);
@@ -113,24 +113,37 @@ export default class ContentContainer extends Component<ContentContainerProps> {
 			<div id="content-container">
 				{this.props.children}
 				{this.props.folders.length < 1
-					&&
-					this.props.files.length < 1
-					&&
-					<EmptyContentBanner/>}
-				<div className="elements">
-					{this.props.folders.map(this.createFolder)}
-					{this.props.files.map(this.createFile)}
-				</div>
-				{this.state.contextMenuShow
-					&&
-					!this.state.disableContextMenu 
-					&&
-					<DefaultContextMenu
-						style={this.state.contextMenuStyle}
-						parent={this.props.parent}
-						action={this.handleContextMenu}
-						/>}
-			</div>	
+						&&
+						this.props.files.length < 1
+						&&
+							<EmptyContentBanner/>}
+							<div className="elements">
+								{this.props.folders.length > 0
+									?	<div className="content-elements-indicator">
+										<span>Folders</span>
+									</div>
+								: undefined}
+								<div className="content-folders">
+									{this.props.folders.map(this.createFolder)}
+								</div>
+								{this.props.files.length > 0
+									?	<div className="content-elements-indicator">
+										<span>Files</span>
+									</div>
+								: undefined}
+								<div className="content-files">
+									{this.props.files.map(this.createFile)}
+								</div>
+							</div>
+							{this.state.contextMenuShow
+								&&
+								!this.state.disableContextMenu 
+								&&
+									<DefaultContextMenu
+										style={this.state.contextMenuStyle}
+										parent={this.props.parent}
+										action={this.handleContextMenu}/>}
+									</div>	
 		);
 	}
 }
