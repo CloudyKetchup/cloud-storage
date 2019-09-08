@@ -1,13 +1,16 @@
-import React, {Component} from 'react';
+import React from 'react';
 
-import ContextMenu 		from '../contextmenu/ContextMenu'
-import App 				from '../../../../App';
-import {FileEntity} 	from '../../../../model/entity/FileEntity';
-import ContentContainer from '../../container/ContentContainer';
+import EntityComponent, {EntityProps} from '../entity/EntityComponent';
 
 const contextMenuListener = async (e: MouseEvent, obj: File) => {
 	e.preventDefault();
-	obj.setState({ contextMenuShow : true });
+	obj.setState({
+		contextMenuShow  : true,
+		contextMenuStyle : {
+			top : e.y - 70,
+			left: e.x - 275
+		}
+	});
 
 	obj.props.parent.setState({ disableContextMenu : true });
 
@@ -20,15 +23,7 @@ const windowClickListener = async (obj: File) => {
 	obj.props.parent.setState({ disableContextMenu : false });
 };
 
-type FileProps = {
-	parent: ContentContainer
-	mainParent: App
-	data: FileEntity
-	handleAction: (action: string) => void
-};
-
-export default class File extends Component<FileProps> {
-	state = { contextMenuShow : false };
+export default class File extends EntityComponent<EntityProps> {
 
 	componentDidMount = () => {
 		const div = document.getElementById(`file-${this.props.data.id}`);
@@ -42,34 +37,19 @@ export default class File extends Component<FileProps> {
 		if (div !== null) div.removeEventListener('contextmenu', e => contextMenuListener(e, this), false);
 	};
 
-	contextMenu = () => {
-		if (this.state.contextMenuShow) {
-			return 	<ContextMenu
-					parent={this.props.data}
-					action={this.props.handleAction}
-					onStart={() => this.props.mainParent.setState({ elementSelected : this.props.data })}
-					/>
-		}
-	};
-
-	name = () => {
-		const name = this.props.data.name;
-
-		return name.length > 18 ? `${name.substring(0, 17)}...` : name;
-	};
-
 	render = () => (
 		<div
 			className="entity"
 			key={this.props.data.path}
 			id={`file-${this.props.data.id}`}
+			style={{ height : "unset" }}
 		>
-			{this.contextMenu()}
-			<div className="entity-icon">
+			{this.contextMenu(this.props.data, this.props.handleAction, this.props.mainParent)}
+			<div className="file-icon">
 				<i className="fas fa-file"/>
 			</div>
-			<div className="entity-name">
-				<span>{this.name()}</span>
+			<div className="file-name">
+				<span>{this.name(this.props.data.name)}</span>
 			</div>
 		</div>
 	);
