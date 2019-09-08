@@ -16,20 +16,18 @@ const CreateFolderDialog = props => (
 			<i className="fas fa-folder"/>
 			<span>Create new Folder</span>
 		</div>
-		<div 
-			className="container"
-			style={{ textAlign : 'center' }}
-		>
-			<div className="input-field col s6">
-				<input 
-					placeholder="Name"
-					id="folder-name"
-					type="text"
-				/>
-			</div>
-			<Link className="ok-button" onClick={() => props.sendFolder(document.getElementById('folder-name').value)} to={'/'}>
-			    OK
-			</Link>
+		<div className="dialog-input-container">
+			<input 
+				placeholder="Name"
+				autoComplete="off"
+				id="folder-name"
+				type="text"
+			/>
+			<button className="ok-button">
+				<Link onClick={() => props.sendFolder(document.getElementById('folder-name').value)} to={'/'}>
+					OK
+				</Link>
+			</button>
 		</div>
 	</div>
 );

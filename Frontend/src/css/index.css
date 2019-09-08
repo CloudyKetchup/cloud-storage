@@ -63,11 +63,17 @@ input:focus {
 }
 
 .ok-button {
-	margin-top: 10px;
+	top: 70%;
+	margin-left: auto;
+	margin-right: auto;
+	left: 0;
+	right: 0;
+	font-size: 15px;
 	background: #292929;
 	color: #fff;
 	border-radius: 5px;
 	padding: 5px 10px;
+	position: absolute;
 }
 
 #root {
@@ -215,22 +221,62 @@ input:focus {
 }
 
 .elements {
+	padding: 20px;
+	padding-top: 10px;
+}
+
+.content-folders, .content-files {
 	display: grid;
 	grid-gap: 10px;
 	grid-auto-rows: 50px;
 	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-	padding: 20px;
+}
+
+.content-folders {
+	padding-bottom: 10px;
+}
+
+.content-files {
+	grid-auto-rows: 150px;
+	padding-top: 10px;
+}
+
+.content-elements-indicator {
+	padding: 10px;
+	padding-left: 0;
+}
+
+.folder-icon {
+	float: left;
+	height: 100%;
+	width: 50px;
+	color: #f14e4e;
+}
+
+.file-icon {
+	height: 115px;
+	font-size: 50px;
+	text-align: center;	
+}
+
+.file-icon > i {
+	margin-top: 30px;
+}
+
+.file-name {
+	height: 35px;
+	text-align: center;	
 }
 
 .entity {
 	height: 50px;
 	width: 100%;
 	border-radius: 5px;
-	border: 1px solid gray;
+	box-shadow: 0px 3px 9px 0px rgba(173, 173, 173, 0.60);
 }
 
 .entity:hover {
-	box-shadow: 0px 0px 8px -3px rgba(0,0,0,0.75);
+	box-shadow: 0px 3px 9px 0px rgba(173, 173, 173, 1);
 }
 
 .entity-icon {
@@ -240,7 +286,7 @@ input:focus {
 	color: #292929;
 }
 
-.entity-icon > i {
+.entity-icon > i, .folder-icon > i {
 	font-size: 25px;
 	margin-left: 10px;
 	line-height: 50px;
@@ -382,8 +428,17 @@ input:focus {
 
 .dialog-input-container {
 	width: 100%;
-	height: 100%;
-	border-bottom: 1px solid gray;
+	height: 80%;
+	text-align: center;
+}
+
+.dialog-input-container > input {
+	padding: 10px;
+	border-bottom: solid 2px gray;
+	margin-top: 5%;
+	width: 85%;
+	height: 25px;
+	font-size: 15px;
 }
 
 .dialog-header {
@@ -674,12 +729,13 @@ input:focus {
 }
 
 .navigation-folders {
+	overflow-x: auto;
+	overflow-y: hidden;
 	color: #fff;
 	padding: 10px;
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+	display: inline-flex;
 	width: 90%;
-	height: calc(100% - 20px);
+	height: calc(100% - 20px);		
 }
 
 @keyframes fade {
@@ -695,7 +751,6 @@ input:focus {
 	from {
 		opacity: 0;
 		margin-left: 50px;
-
 	}
 	to {
 		margin-left: 70px;
