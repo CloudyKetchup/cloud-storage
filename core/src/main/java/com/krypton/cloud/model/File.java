@@ -2,10 +2,12 @@ package com.krypton.cloud.model;
 
 import com.krypton.cloud.model.common.EntityType;
 import lombok.Data;
+import org.apache.commons.io.FilenameUtils;
 
 import javax.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.EnumSet;
 
 @Data
 @Entity
@@ -15,7 +17,7 @@ public class File {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(unique = false)
+	@Column
 	private String name;
 
 	@Column
@@ -26,6 +28,9 @@ public class File {
 
 	@Column
 	private EntityType type = EntityType.FILE;
+
+	@Column
+	private FileType fileType;
 
 	@Column
 	private String timeCreated;
@@ -42,5 +47,16 @@ public class File {
 		this.path = file.getPath();
 		this.size = (float) file.length() /1024 /1024;
 		this.timeCreated = time.getDayOfMonth() + "-" + time.getMonthValue() + "-" + time.getYear();
+
+
+		setFileType(getFileType(file));
+	}
+
+	private FileType getFileType(java.io.File file) {
+		return EnumSet.allOf(FileType.class)
+				.stream()
+				.filter(e -> e.getType().toLowerCase().equals(FilenameUtils.getExtension(file.getName())))
+				.findAny()
+				.orElse(FileType.OTHER);
 	}
 }
