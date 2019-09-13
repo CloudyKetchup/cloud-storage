@@ -1,10 +1,17 @@
 import React from 'react';
 
+import { FolderEntity } from '../../../../model/entity/FolderEntity';
 import EntityComponent, { EntityProps } from '../entity/EntityComponent';
 
 const contextMenuListener = async (e: MouseEvent, obj: Folder) => {
 	e.preventDefault();
-	obj.setState({ contextMenuShow : true });
+	obj.setState({
+		contextMenuShow : true,
+		contextMenuStyle: {
+			top : e.y - 70,
+			left: e.x - 275
+		}
+	});
 
 	obj.props.parent.setState({ disableContextMenu : true });
 
@@ -19,6 +26,7 @@ const windowClickListener = async (obj: Folder) => {
 
 interface FolderProps extends EntityProps {
 	whenClicked: () => void
+	data: FolderEntity
 }
 
 export default class Folder extends EntityComponent<FolderProps> {

@@ -1,6 +1,8 @@
-import React from 'react';
-
+import {Link} from "react-router-dom";
+import React, {Profiler} from 'react';
+import {FileEntity} from '../../../../model/entity/FileEntity';
 import EntityComponent, {EntityProps} from '../entity/EntityComponent';
+import {FileExtensionIcons} from "./FileExtensionIcons";
 
 const contextMenuListener = async (e: MouseEvent, obj: File) => {
 	e.preventDefault();
@@ -11,7 +13,6 @@ const contextMenuListener = async (e: MouseEvent, obj: File) => {
 			left: e.x - 275
 		}
 	});
-
 	obj.props.parent.setState({ disableContextMenu : true });
 
 	window.addEventListener('click', () => windowClickListener(obj), false);
@@ -23,7 +24,11 @@ const windowClickListener = async (obj: File) => {
 	obj.props.parent.setState({ disableContextMenu : false });
 };
 
-export default class File extends EntityComponent<EntityProps> {
+interface FileProps extends EntityProps {
+	data : FileEntity
+}
+
+export default class File extends EntityComponent<FileProps> {
 
 	componentDidMount = () => {
 		const div = document.getElementById(`file-${this.props.data.id}`);
@@ -46,11 +51,25 @@ export default class File extends EntityComponent<EntityProps> {
 		>
 			{this.contextMenu(this.props.data, this.props.handleAction, this.props.mainParent)}
 			<div className="file-icon">
-				<i className="fas fa-file"/>
+				{this.props.data.fileType === "IMAGE_JPG"
+					? <img src={`http://localhost:8080/file/${this.props.data.path.replace(/[/]/g, '%2F')}/image`} alt=""/>
+					: <i className={FileExtensionIcons[this.props.data.fileType as any]}/>}
 			</div>
-			<div className="file-name">
-				<span>{this.name(this.props.data.name)}</span>
-			</div>
+			<div className="file-footer">
+				<div className="file-name">
+					<span>{this.name(this.props.data.name)}</span>
+				</div>
+				<div className="file-footer-control">
+					<button onClick={() => this.props.mainParent.sendDeleteRequest(this.props.data)}><i className="far fa-trash-alt"/></button>
+					<div style={{width: '2px', height: '60%', background: "gray", marginTop: "7%"}}/>
+					<Link 
+						onClick={() => this.props.mainParent.setState({ elementSelected : this.props.data })}
+						to={"/element-info"}
+						style={{ lineHeight : "25px", color : "#181818", textAlign : "center"}}>
+						<i className="fas fa-info-circle"/>
+					</Link>
+				</div>
+			</div>	
 		</div>
 	);
 }

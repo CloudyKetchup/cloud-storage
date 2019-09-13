@@ -8,7 +8,6 @@ import ContextMenu 		from "../contextmenu/ContextMenu";
 export type EntityProps = {
 	parent: ContentContainer
 	mainParent: App
-	data: Entity
 	handleAction: (action: string) => void
 }
 
@@ -33,6 +32,6 @@ export default abstract class EntityComponent<EntityProps> extends Component<Ent
 	};
 
 	name = (name: string) => {
-		return name.length > 18 ? `${name.substring(0, 17)}...` : name;
+		return name.length > 14 ? `${name.substring(0, 13)}...` : name;
 	};
 }
