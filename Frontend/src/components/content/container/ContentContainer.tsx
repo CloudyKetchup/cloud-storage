@@ -108,42 +108,50 @@ export default class ContentContainer extends Component<ContentContainerProps> {
 		}
 	};
 
-	render() {
-		return (
-			<div id="content-container">
-				{this.props.children}
-				{this.props.folders.length < 1
-						&&
-						this.props.files.length < 1
-						&&
-							<EmptyContentBanner/>}
-							<div className="elements">
-								{this.props.folders.length > 0
-									?	<div className="content-elements-indicator">
-										<span>Folders</span>
-									</div>
-								: undefined}
-								<div className="content-folders">
-									{this.props.folders.map(this.createFolder)}
+	separatorStyle = {
+		width : '100px',
+		height: '1px',
+		marginTop: '10px',
+		marginLeft: '-20px',
+		background: 'gray'
+	};
+
+	render = () => (
+		<div id="content-container">
+			{this.props.children}
+			{this.props.folders.length < 1
+					&&
+					this.props.files.length < 1
+					&&
+					<EmptyContentBanner/>}
+					<div className="elements">
+						{this.props.folders.length > 0
+							?	<div className="content-elements-indicator">
+									<span>Folders</span>
+									<div style={this.separatorStyle}/>
 								</div>
-								{this.props.files.length > 0
-									?	<div className="content-elements-indicator">
-										<span>Files</span>
-									</div>
-								: undefined}
-								<div className="content-files">
-									{this.props.files.map(this.createFile)}
+						: undefined}
+						<div className="content-folders">
+							{this.props.folders.map(this.createFolder)}
+						</div>
+						{this.props.files.length > 0
+							?	<div className="content-elements-indicator">
+									<span>Files</span>
+									<div style={this.separatorStyle}/>
 								</div>
-							</div>
-							{this.state.contextMenuShow
-								&&
-								!this.state.disableContextMenu 
-								&&
-									<DefaultContextMenu
-										style={this.state.contextMenuStyle}
-										parent={this.props.parent}
-										action={this.handleContextMenu}/>}
-									</div>	
-		);
-	}
+						: undefined}
+						<div className="content-files">
+							{this.props.files.map(this.createFile)}
+						</div>
+					</div>
+					{this.state.contextMenuShow
+						&&
+						!this.state.disableContextMenu 
+						&&
+						<DefaultContextMenu
+							style={this.state.contextMenuStyle}
+							parent={this.props.parent}
+							action={this.handleContextMenu}/>}
+		</div>
+	);
 }
