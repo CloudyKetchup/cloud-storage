@@ -5,5 +5,5 @@ export type Entity = {
     name: string
     path: string
     location: string | null
-    type: EntityType
+	type: EntityType
 }
