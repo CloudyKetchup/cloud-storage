@@ -32,10 +32,6 @@ export const ElementInfoContainer = ({data, parent}) => (
 				<span className="element-info-text">{data.name}</span>
 			</div>
 			<div>
-				<span className="description-text">Path</span>
-				<span className="element-info-text">{data.path}</span>
-			</div>
-			<div>
 				<span className="description-text">Location</span>
 				<span className="element-info-text">{data.location}</span>
 			</div>
