@@ -14,7 +14,6 @@ import org.apache.commons.io.FileUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.File;
@@ -42,23 +41,24 @@ public class FileServiceImpl implements FileService, IOErrorHandler, ErrorHandle
 			bytes = Files.readAllBytes(file.toPath());
 		} catch (IOException e) {
 			e.printStackTrace();
-			error(new FileIOException("Error while downloading file " + file.getPath()).stackTraceToString());
+			error(ExceptionTools.INSTANCE.stackTraceToString(e));
 		}
 		return bytes;
 	}
 
 	@Override
-	public Flux<HttpStatus> saveFiles(Flux<FilePart> files, String path) {
-		return files.flatMap(file -> Flux.just(writeFilePart(file, path) 
-						? HttpStatus.OK 
-						: httpError(new FileIOException("Error while saving file " + file.filename()).stackTraceToString())));
-	}
-
-	@Override
 	public Mono<HttpStatus> saveFile(FilePart file, String path) {
-		return Mono.just(writeFilePart(file, path)
-						? HttpStatus.OK 
-						: httpError(new FileIOException("Error while saving file " + file.filename()).stackTraceToString()));
+		var fullPath = path + "/" + file.filename();
+
+		if (new File(fullPath).exists()) return Mono.just(HttpStatus.INTERNAL_SERVER_ERROR);
+		// write file and save it to database
+		return writeFilePart(file, fullPath).map(result -> {
+			// if result is true check if file is in database
+			if (result && fileRecordService.exists(fullPath)) {
+				return HttpStatus.OK;
+			}
+			return HttpStatus.INTERNAL_SERVER_ERROR;
+		});
 	}
 
 	@Override
@@ -75,7 +75,7 @@ public class FileServiceImpl implements FileService, IOErrorHandler, ErrorHandle
 
 			return HttpStatus.OK;
 		}
-		return httpError(new FileIOException("Error while moving file " + file.getPath()).stackTraceToString());
+		return httpError(ExceptionTools.INSTANCE.stackTraceToString(new FileIOException("Error moving File => " + oldPath)));
 	}
 
 	@Override
@@ -91,8 +91,9 @@ public class FileServiceImpl implements FileService, IOErrorHandler, ErrorHandle
 				return HttpStatus.OK;
 		} catch (IOException e) {
 			e.printStackTrace();
+			error(ExceptionTools.INSTANCE.stackTraceToString(e));
 		}
-		return httpError(new FileIOException("Error while coping file " + file.getPath()).stackTraceToString());
+		return HttpStatus.INTERNAL_SERVER_ERROR;
 	}
 
 	@Override
@@ -117,13 +118,12 @@ public class FileServiceImpl implements FileService, IOErrorHandler, ErrorHandle
 
 	@Override
 	public void error(String message) {
-		loggingService.saveLog(message != null ? message : "Blank log", LogType.ERROR, LogFolder.FILE.getType());
+		loggingService.saveLog(message, LogType.ERROR, LogFolder.FILE.getType());
 	}
 
 	@Override
 	public HttpStatus httpError(String message) {
 		loggingService.saveLog(message, LogType.ERROR, LogFolder.FILE.getType());
-
 		return HttpStatus.INTERNAL_SERVER_ERROR;
 	}
 
@@ -133,20 +133,24 @@ public class FileServiceImpl implements FileService, IOErrorHandler, ErrorHandle
 	 * @param filePart {@link FilePart} from request
 	 * @param path     path to folder where to save file
 	 */
-	private boolean writeFilePart(FilePart filePart, String path) {
-		var file = new File(path + "/" + filePart.filename());
+	private Mono<Boolean> writeFilePart(FilePart filePart, String path) {
+		var file = new File(path);
 
 		try {
-			if (file.createNewFile())
+			// create file for data transfer
+			if (file.createNewFile()) {
 				// transfer incoming file data to local file
-				filePart.transferTo(file).subscribe();
-			else throw new FileIOException();
-			// save file to database
-			return fileRecordService.save(file) != null;
-		} catch (Exception e) {
+				return filePart.transferTo(file)
+						.doOnSuccess(result -> fileRecordService.save(file))
+						.doOnError(Throwable::printStackTrace)
+						.thenReturn(true);
+			}
+			// in case that result is not returned rise error
+			throw new FileIOException();
+		} catch (FileIOException | IOException e) {
 			e.printStackTrace();
 			error(ExceptionTools.INSTANCE.stackTraceToString(e));
 		}
-		return false;
+		return Mono.just(false);
 	}
 }
