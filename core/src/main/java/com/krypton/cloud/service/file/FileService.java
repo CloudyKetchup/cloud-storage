@@ -9,8 +9,6 @@ public interface FileService {
 
 	byte[] getFile(String path);
 
-    Flux<HttpStatus> saveFiles(Flux<FilePart> files, String folder);
-
     Mono<HttpStatus> saveFile(FilePart file, String folder);
 
     HttpStatus cutFile(String oldPath, String newPath);
