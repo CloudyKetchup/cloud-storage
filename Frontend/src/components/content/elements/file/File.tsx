@@ -1,11 +1,13 @@
-import {Link} from "react-router-dom";
-import React, {Profiler} from 'react';
-import {FileEntity} from '../../../../model/entity/FileEntity';
-import EntityComponent, {EntityProps} from '../entity/EntityComponent';
-import {FileExtensionIcons} from "./FileExtensionIcons";
+import React from 'react';
+
+import {Link}							from "react-router-dom";
+import {FileEntity}						from '../../../../model/entity/FileEntity';
+import EntityComponent, {EntityProps} 	from '../entity/EntityComponent';
+import {FileExtensionIcons}				from "./FileExtensionIcons";
 
 const contextMenuListener = async (e: MouseEvent, obj: File) => {
 	e.preventDefault();
+
 	obj.setState({
 		contextMenuShow  : true,
 		contextMenuStyle : {
@@ -24,9 +26,7 @@ const windowClickListener = async (obj: File) => {
 	obj.props.parent.setState({ disableContextMenu : false });
 };
 
-interface FileProps extends EntityProps {
-	data : FileEntity
-}
+interface FileProps extends EntityProps { data : FileEntity }
 
 export default class File extends EntityComponent<FileProps> {
 
@@ -51,9 +51,9 @@ export default class File extends EntityComponent<FileProps> {
 		>
 			{this.contextMenu(this.props.data, this.props.handleAction, this.props.mainParent)}
 			<div className="file-icon">
-				{this.props.data.fileType === "IMAGE_JPG"
+				{this.props.data.extension === "IMAGE_JPG"
 					? <img src={`http://localhost:8080/file/${this.props.data.path.replace(/[/]/g, '%2F')}/image`} alt=""/>
-					: <i className={FileExtensionIcons[this.props.data.fileType as any]}/>}
+					: <i className={FileExtensionIcons[this.props.data.extension as any]}/>}
 			</div>
 			<div className="file-footer">
 				<div className="file-name">

@@ -1,4 +1,4 @@
 export enum EntityType {
-    FILE = "FILE",
-    FOLDER = "FOLDER"
+    FILE 		= "FILE",
+	FOLDER 		= "FOLDER",
 }
