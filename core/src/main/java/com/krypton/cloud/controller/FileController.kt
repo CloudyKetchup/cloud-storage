@@ -1,37 +1,46 @@
 package com.krypton.cloud.controller
 
+import com.krypton.cloud.model.File
 import lombok.AllArgsConstructor
 import com.krypton.cloud.service.file.FileServiceImpl
+import com.krypton.cloud.service.file.record.FileRecordServiceImpl
 import org.springframework.http.*
 import org.springframework.http.codec.multipart.FilePart
 import org.springframework.http.codec.multipart.FormFieldPart
 import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Mono
+import java.util.*
 
-import java.util.HashMap
+import java.util.function.Consumer
 
 @AllArgsConstructor
 @RestController
 @RequestMapping("/file")
-class FileController(private val fileService : FileServiceImpl) {
+class FileController(
+        private val fileService : FileServiceImpl,
+        private val fileRecordService : FileRecordServiceImpl
+) {
 
     /**
      * upload one file to specified folder path
      *
      * @param filePart  file for save
-     * @param path        path to folder where to save file
+     * @param path      path to folder where to save file
      * @return http status
      */
-    @PostMapping(value = ["/upload/one"])
+    @PostMapping("/upload/one")
     fun uploadFile(
             @RequestPart("file") filePart : Mono<FilePart>,
             @RequestPart("path") path : FormFieldPart
     ) : Mono<HttpStatus> = filePart.flatMap { fileService.saveFile(it, path.value()) }
 
+    @GetMapping("/{id}/data")
+    fun getData(@PathVariable id : String) : File = fileRecordService.getById(UUID.fromString(id))
+
     /**
      * move folder from one location to another
      *
-     * @param request containing folder old and new path
+     * @param request   containing folder old and new path
      * @return http status
      */
     @PostMapping("/cut")
@@ -40,14 +49,14 @@ class FileController(private val fileService : FileServiceImpl) {
     /**
      * copy folder to new path
      *
-     * @param request request containing  original folder path and path for folder copy
+     * @param request   request containing  original folder path and path for folder copy
      * @return http status
      */
     @PostMapping("/copy")
     fun copyFolder(@RequestBody request : HashMap<String, String>) : HttpStatus = fileService.copyFile(request["oldPath"], request["newPath"])
 
     /**
-     * @param request file path and new name
+     * @param request   file path and new name
      * @return http status
      */
     @PostMapping("/rename")
@@ -55,7 +64,7 @@ class FileController(private val fileService : FileServiceImpl) {
 
 
     /**
-     * @param request file path
+     * @param request   file path
      * @return http status
      */
     @PostMapping("/delete")
