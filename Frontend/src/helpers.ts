@@ -4,10 +4,17 @@ import {Entity} 		from './model/entity/Entity';
 import App from './App';
 
 import axios from 'axios';
+import { FileEntity } from './model/entity/FileEntity';
 
 export const API_URL = 'http://localhost:8080';
 
 export class APIHelpers {
+
+	static getRootId = () : Promise<string> => (
+		axios.get(`${API_URL}/folder/root/id`)
+			.then(id => id.data)
+			.catch(console.log)
+	);
 
 	static getRootMemory = () : Promise<object> => (
 		axios.get(`${API_URL}/folder/root/memory`)
@@ -15,25 +22,31 @@ export class APIHelpers {
 			.catch(console.log)
 	);
 
-	static folderHasContent = (id: number) : Promise<boolean> => (
+	static folderHasContent = (id: string) : Promise<boolean> => (
 		axios.get(`${API_URL}/folder/${id}/content_info`)
 			.then(response => response.data.folderCount > 0 || response.data.filesCount > 0)
 			.catch(_ => false)
 	);
+
+	static getFileData = (id: string) : Promise<Entity> => (
+		axios.get(`${API_URL}/file/${id}/data`)
+			.then(response => response.data)
+			.catch(console.log)
+	);
  
-	static getFolderData = (id: number) : Promise<FolderEntity> => (
+	static getFolderData = (id: string) : Promise<FolderEntity> => (
 		axios.get(`${API_URL}/folder/${id}/data`)
 			.then(response => response.data)
 			.catch(console.log)
 	);
 
-	static getFolderFiles = (id: number) : Promise<[]> => (
+	static getFolderFiles = (id: string) : Promise<[]> => (
 		axios.get(`${API_URL}/folder/${id}/files`)
 			.then(response => response.data)
 			.catch(console.log)
 	);
 
-	static getFolderFolders = (id: number) : Promise<[]> => (
+	static getFolderFolders = (id: string) : Promise<[]> => (
 		axios.get(`${API_URL}/folder/${id}/folders`)
 			.then(response => response.data)
 			.catch(console.log)

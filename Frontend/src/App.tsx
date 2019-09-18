@@ -10,8 +10,7 @@ import DragAndDrop                      from './components/content/dragdrop/Drag
 import FileUploadManager, {UploadFile}  from './components/content/upload/UploadManager';
 import RightPanel                       from './components/main/panel/rightpanel/RightPanel';
 import CreateFolderDialog               from './components/content/container/control/CreateFolderDialog';
-import RenameElementDialog              from './components/content/elements/rename/RenameElementDialog';
-import FolderZippingNotification        from './components/main/panel/rightpanel/notification/FolderZippingNotification/FolderZippingNotification';
+import FolderZippingNotification		from './components/main/panel/rightpanel/notification/FolderZippingNotification/FolderZippingNotification';
 import ErrorNotification        		from './components/main/panel/rightpanel/notification/ErrorNotification/ErrorNotification';
 import {NotificationType}               from './components/main/panel/rightpanel/notification/Notification';
 import {BrowserRouter as Router, Link, Route, Switch} from 'react-router-dom';
@@ -20,11 +19,12 @@ import {FolderEntity}   from './model/entity/FolderEntity';
 import {FileEntity}     from './model/entity/FileEntity';
 import {Entity}         from './model/entity/Entity';
 import {BufferElement}  from './model/BufferElement';
-import {Notification}   from './model/notification/Notification';
+import {Notification}	from './model/notification/Notification';
 import {EntityType}     from './model/entity/EntityType';
 import NavNode 			from './model/NavNode';
 
 import {APIHelpers as API} from './helpers';
+import RenameElementDialog from './components/content/elements/rename/RenameElementDialog';
 
 type IState = {
 	folders			: FolderEntity[],
@@ -48,13 +48,14 @@ export default class App extends Component<{}, IState> {
 		bufferElement       : undefined,
 		elementSelected     : undefined,
 		folderInfo          : {
-			id          : 1,
+			id          : "",
 			name        : 'cloud',
 			parentId    : null,
 			timeCreated : undefined,
 			root        : true,
 			path        : '',
 			location    : null,
+			size		: "0",
 			type        : EntityType.FOLDER
 		},
 		rootOpened          : true,
@@ -66,19 +67,35 @@ export default class App extends Component<{}, IState> {
 	};
 
 	componentDidMount() {
-		API.getRootMemory().then(memory => {
-			this.setState({
-				rootMemory : memory,
-				rootOpened : true
+		API.getRootId()
+			.then(result => this.setState({
+				folderInfo : {
+					id          : result,
+					name        : 'cloud',
+					parentId    : null,
+					timeCreated : undefined,
+					root        : true,
+					path        : '',
+					location    : null,
+					size		: "0",
+					type        : EntityType.FOLDER
+				}
+			}))
+			.then(() => {
+				API.getRootMemory().then(memory => {
+					this.setState({
+						rootMemory : memory,
+						rootOpened : true
+					});
+				});
+
+				this.addNavNode(this.state.folderInfo);
+
+				this.updateFolderInfo(this.state.folderInfo.id);
 			});
-		});
-
-		this.addNavNode(this.state.folderInfo);
-
-		this.updateFolderInfo(1);
 	}
 
-	updateFolderInfo = (folderId: number) => {
+	updateFolderInfo = (folderId: string) => {
 		this.setState({ elementSelected : undefined });
 
 		API.getFolderData(folderId).then(data => {
@@ -146,7 +163,7 @@ export default class App extends Component<{}, IState> {
 		this.setState({ foldersNavigation : nodes });
 	};
 
-	removeNodeSuccessors = async (id: number) => {
+	removeNodeSuccessors = async (id: string) => {
 		const nodes = this.state.foldersNavigation;
 
 		nodes.splice(nodes.findIndex(node => node.id === id) + 1, 9e9);
@@ -169,7 +186,7 @@ export default class App extends Component<{}, IState> {
 
 	folderEmptyNotification = (target: FolderEntity) => {
 		this.addNotification({
-			key		: this.state.notificationKey,
+			key			: this.state.notificationKey,
 			type		: NotificationType.ERROR,
 			message 	: `Folder "${target.name}" is empty`,
 			targetType 	: target.type,
@@ -252,16 +269,12 @@ export default class App extends Component<{}, IState> {
 		}
 	};
 
-	renameEntity = (newName: string) => {
-		if (this.state.elementSelected !== undefined) {
-			API.sendRenameRequest(this.state.elementSelected, newName)
-				.then(response => {
-					if (response === 'OK') {
-						this.updateFolderInfo(this.state.folderInfo.id);
-					}
-				})
-				.catch(console.log);
-		}
+	renameEntity = (target : Entity, newName: string) => {
+		API.sendRenameRequest(target, newName)
+			.then(response => {
+				if (response === 'OK') this.updateFolderInfo(this.state.folderInfo.id);
+			})
+			.catch(console.log);
 	};
 
 	sendDeleteRequest = (target: Entity) => {
@@ -291,21 +304,6 @@ export default class App extends Component<{}, IState> {
 			parent={this}
 			sendFolder={(folder: FolderEntity) => this.createNewFolder(folder)}
 		/>;
-	}
-
-	renameDialog() {
-		return this.state.elementSelected !== undefined
-			? <RenameElementDialog
-				element={this.state.elementSelected}
-				onRename={(newName: string) => this.renameEntity(newName)}
-			/>
-			: null;
-	}
-
-	elementInfoContainer() {
-		return this.state.elementSelected !== undefined
-			? <ElementInfoContainer parent={this} data={this.state.elementSelected}/>
-			: null;
 	}
 
 	notificationDiv = (notification: Notification) => {
@@ -345,9 +343,13 @@ export default class App extends Component<{}, IState> {
 						folders={this.state.folders}
 					>
 						<Switch>
-							<Route path="/rename" component={() => this.renameDialog()}/>
-							<Route path="/create-folder" component={() => this.createFolderDialog()}/>
-							<Route path="/element-info" component={() => this.elementInfoContainer()}/>
+							<Route path="/:type/:id/rename" render={props => 
+									<RenameElementDialog
+										onRename={(target : Entity, newName: string) => this.renameEntity(target, newName)}
+										{...props}/>}
+									/>
+							<Route path="/folder/create" component={() => this.createFolderDialog()}/>
+							<Route path="/:type/:id/info" render={props => <ElementInfoContainer parent={this} {...props}/>}/>
 						</Switch>
 						<PrevFolderButton
 							whenClicked={() => {
@@ -360,11 +362,7 @@ export default class App extends Component<{}, IState> {
 							rootOpened={this.state.rootOpened}
 						/>
 						<Link to="/create-folder">
-							<button
-								className='create-folder'
-							>
-								<i className='fas fa-folder-plus'/>
-							</button>
+							<button className='create-folder'><i className='fas fa-folder-plus'/></button>
 						</Link>
 						<button
 							className='upload-file-button'
@@ -373,39 +371,33 @@ export default class App extends Component<{}, IState> {
 
 								if (uploadInput !== null) uploadInput.click();
 							}}
-						>
-							<i className='fas fa-file-upload'/>
-						</button>
-	{this.state.uploadingFiles.length > 0
-		&&
-			<FileUploadManager onClose={() => this.setState({ uploadingFiles : [] })}>
-				{this.state.uploadingFiles.map(file => <UploadFile key={file.name} data={file} parent={this}/>)}
-			</FileUploadManager>}    
-		{this.state.bufferElement !== undefined
-				&&
-					<BufferElementIndicator element={this.state.bufferElement}/>}
-		</ContentContainer>
-		</DragAndDrop>
-			<RightPanel closePanel={() => {
-				const rightPanel = document.getElementById("right-panel");
+						><i className='fas fa-file-upload'/></button>
+						{this.state.uploadingFiles.length > 0
+							&&
+							<FileUploadManager onClose={() => this.setState({ uploadingFiles : [] })}>
+								{this.state.uploadingFiles.map(file => <UploadFile key={file.name} data={file} parent={this}/>)}
+							</FileUploadManager>}    
+						{this.state.bufferElement !== undefined && <BufferElementIndicator element={this.state.bufferElement}/>}
+					</ContentContainer>
+					</DragAndDrop>
+					<RightPanel closePanel={() => {
+						const rightPanel = document.getElementById("right-panel");
 
-				if (rightPanel !== null) rightPanel.style.right = '-300px';
-			}}>
-				{this.state.notifications.map(this.notificationDiv)}
-			</RightPanel>
-			<input
-				id="select-upload-files"
-				type="file"
-				onChange={() => {
-					const filesDom = document.getElementById("select-upload-files") as HTMLInputElement;
+						if (rightPanel !== null) rightPanel.style.right = '-300px';
+					}}>
+						{this.state.notifications.map(this.notificationDiv)}
+					</RightPanel>
+					<input
+						id="select-upload-files"
+						type="file"
+						onChange={() => {
+							const files = (document.getElementById("select-upload-files") as HTMLInputElement).files;
 
-					const files = filesDom.files;
-
-					if (files !== null) files.length > 1 ? this.uploadFiles(Array.from(files)) : API.uploadFile(files[0], this);
-				}}
-				style={{ display : 'none' }}
-				multiple/>
-		</div>
+							if (files !== null) files.length > 1 ? this.uploadFiles(Array.from(files)) : API.uploadFile(files[0], this);
+						}}
+						style={{ display : 'none' }}
+						multiple/>
+			</div>
 		</Router>
 	);
 }
