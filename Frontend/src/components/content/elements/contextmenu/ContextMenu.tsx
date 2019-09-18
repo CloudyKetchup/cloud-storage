@@ -43,7 +43,7 @@ export default class ContextMenu extends Component<ContextMenuProps> {
 					</div>
 					<span>Copy</span>
 				</div>
-				<Link to="/rename">
+				<Link to={`/${this.props.parent.type.toLowerCase()}/${this.props.parent.id}/rename`}>
 					<div className="context-menu-icon">
 						<i className="fas fa-signature"/>
 					</div>
@@ -55,7 +55,7 @@ export default class ContextMenu extends Component<ContextMenuProps> {
 					</div>
 					<span>Delete</span>
 				</div>
-				<Link to="/element-info">
+				<Link to={`/${this.props.parent.type.toLowerCase()}/${this.props.parent.id}/info`}>
 					<div className="context-menu-icon">
 						<i className="fas fa-info"/>
 					</div> 

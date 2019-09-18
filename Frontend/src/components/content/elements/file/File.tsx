@@ -64,7 +64,7 @@ export default class File extends EntityComponent<FileProps> {
 					<div style={{width: '2px', height: '60%', background: "gray", marginTop: "7%"}}/>
 					<Link 
 						onClick={() => this.props.mainParent.setState({ elementSelected : this.props.data })}
-						to={"/element-info"}
+						to={`/file/${this.props.data.id}/info`}
 						style={{ lineHeight : "25px", color : "#181818", textAlign : "center"}}>
 						<i className="fas fa-info-circle"/>
 					</Link>
