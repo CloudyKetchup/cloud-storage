@@ -4,12 +4,13 @@ import com.krypton.cloud.model.Folder
 import com.krypton.cloud.service.folder.FolderServiceImpl
 import com.krypton.cloud.service.folder.record.FolderRecordServiceImpl
 import lombok.AllArgsConstructor
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Flux
 
 import java.io.File
-import java.util.HashMap
+import java.util.*
 
 @RestController
 @AllArgsConstructor
@@ -18,6 +19,8 @@ class FolderController(
         private val folderService : FolderServiceImpl,
         private val folderRecordService : FolderRecordServiceImpl
 ) {
+    @Value(value = "\${root.folder}")
+    var root : String? = null
 
     /**
      * get total and free disk space in GB format
@@ -31,13 +34,21 @@ class FolderController(
     }
 
     /**
+     * get root folder id in [UUID] format
+     *
+     * @return  [UUID] in string format
+     * */
+    @GetMapping("/root/id")
+    fun rootId() : String = folderRecordService.getByPath(root).id!!.toString()
+
+    /**
      * get [Folder] entity data
      *
      * @param id    folder id
      * @return [Folder]
      */
     @GetMapping("/{id}/data")
-    fun getFolderData(@PathVariable id : Long): Folder = folderService.getFolderData(id)
+    fun getFolderData(@PathVariable id : String) : Folder = folderRecordService.getById(UUID.fromString(id))
 
     /**
      * get list of [Folder]'s inside a [Folder]
@@ -46,7 +57,7 @@ class FolderController(
      * @return [Folder]'s list
      */
     @GetMapping("/{id}/folders")
-    fun getFolderFolders(@PathVariable id : Long) : Flux<Folder> = folderRecordService.getFolderFolders(id)
+    fun getFolderFolders(@PathVariable id : String) : Flux<Folder> = folderRecordService.getFolderFolders(UUID.fromString(id))
 
     /**
      * get list of [com.krypton.cloud.model.File]'s inside a [Folder]
@@ -55,7 +66,7 @@ class FolderController(
      * @return [com.krypton.cloud.model.File]'s list
      */
     @GetMapping("/{id}/files")
-    fun getFolderFiles(@PathVariable id : Long) : Flux<com.krypton.cloud.model.File> = folderRecordService.getFolderFiles(id)
+    fun getFolderFiles(@PathVariable id : String) : Flux<com.krypton.cloud.model.File> = folderRecordService.getFolderFiles(UUID.fromString(id))
 
     /**
      * get information about inside content of folder
@@ -64,7 +75,7 @@ class FolderController(
      * @return folder content information like inside files and folders number
      */
     @GetMapping("/{id}/content_info")
-    fun contentInfo(@PathVariable id : Long) : HashMap<String, Int> = folderService.getItemsCount(id)
+    fun contentInfo(@PathVariable id : String) : HashMap<String, Int> = folderService.getItemsCount(UUID.fromString(id))
 
     /**
      * create new folder to specified path
