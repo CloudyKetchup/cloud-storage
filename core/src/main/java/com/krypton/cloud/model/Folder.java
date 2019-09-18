@@ -3,6 +3,8 @@ package com.krypton.cloud.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.krypton.cloud.model.common.EntityType;
 import lombok.Data;
+import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 
@@ -10,14 +12,21 @@ import java.time.LocalDateTime;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Data
 @Entity
+@Table(name = "folder")
 public class Folder {
-    
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(
+            name = "id",
+            strategy = "org.hibernate.id.UUIDGenerator"
+    )
+    @Column(columnDefinition = "BINARY(16)")
+    public UUID id;
 
     @Column
     private String name;
@@ -37,8 +46,8 @@ public class Folder {
     @Column
     private Float size = 0f;
 
-    @Column
-    private Integer parentId;
+    @Column(columnDefinition = "BINARY(16)")
+    private UUID parentId;
 
     @Column
     private Boolean root = false;

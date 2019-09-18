@@ -4,10 +4,12 @@ import com.krypton.cloud.model.File;
 import com.krypton.cloud.service.record.RecordService;
 import org.springframework.http.HttpStatus;
 
+import java.util.UUID;
+
 public interface FileRecordService extends RecordService {
 
     @Override
-    File getById(Long id);
+    File getById(UUID id);
 
     @Override
     File getByPath(String path);

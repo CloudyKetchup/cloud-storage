@@ -4,19 +4,28 @@ import com.krypton.cloud.model.common.EntityType;
 import lombok.Data;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.util.EnumSet;
+import java.util.UUID;
 
 @Data
 @Entity
+@Table(name = "file")
 public class File {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+	@GeneratedValue(generator = "UUID")
+	@GenericGenerator(
+			name = "id",
+			strategy = "org.hibernate.id.UUIDGenerator"
+	)
+	@Column(columnDefinition = "BINARY(16)")
+	private UUID id;
 
 	@Column
 	private String name;

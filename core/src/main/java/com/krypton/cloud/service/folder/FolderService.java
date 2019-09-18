@@ -5,10 +5,9 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 
 import java.util.HashMap;
+import java.util.UUID;
 
 public interface FolderService {
-
-    Folder getFolderData(Long id);
 
     HttpStatus createFolder(String folderName, String folderPath);
 

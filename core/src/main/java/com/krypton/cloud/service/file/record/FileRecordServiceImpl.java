@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @AllArgsConstructor
@@ -29,8 +30,8 @@ public class FileRecordServiceImpl implements FileRecordService {
     private final LoggingService loggingService;
 
     @Override
-    public File getById(Long id) {
-        return fileRepository.getOne(id);
+    public File getById(UUID id) {
+        return fileRepository.findById(id).get();
     }
 
     @Override

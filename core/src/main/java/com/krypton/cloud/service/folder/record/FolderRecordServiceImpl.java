@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
 import java.nio.file.Paths;
+import java.util.Comparator;
+import java.util.UUID;
 
 @Service
 @AllArgsConstructor
@@ -24,10 +26,8 @@ public class FolderRecordServiceImpl implements FolderRecordService, ErrorHandle
     private final LoggingService loggingService;
 
     @Override
-    public Folder getById(Long id) {
-        var folder = folderRepository.findById(id);
-
-        return folder.get();
+    public Folder getById(UUID id) {
+        return folderRepository.findById(id).get();
     }
 
     @Override
@@ -85,7 +85,7 @@ public class FolderRecordServiceImpl implements FolderRecordService, ErrorHandle
     }
 
     /**
-     * When {@link #save(java.io.File)} runs it save a {@link Folder},then it calls this method,
+     * When {@link #save} runs it save a {@link Folder},then it calls this method,
      * witch will add to parent folder newly added folder as child
      *
      * @param parent    folder where to add child folder
@@ -96,8 +96,6 @@ public class FolderRecordServiceImpl implements FolderRecordService, ErrorHandle
         if (parent != null && !folderPersistenceHelper.folderHasChildFolder(parent, folder)) {
             // add new folder as child
             folderPersistenceHelper.addFolderChild(parent, folder);
-
-            // updateFolderSize(parent);
         }
     }
 
@@ -107,11 +105,11 @@ public class FolderRecordServiceImpl implements FolderRecordService, ErrorHandle
      * @param id    folder id
      * @return a flux stream containing folders
      */
-    public Flux<Folder> getFolderFolders(Long id) {
+    public Flux<Folder> getFolderFolders(UUID id) {
         return Flux.fromStream(getById(id)
                 .getFolders()
                 .stream()
-                .sorted((folder1, folder2) -> (int) (folder1.getId() - folder2.getId())));
+                .sorted(Comparator.comparing(Folder::getId)));
     }
 
     /**
@@ -120,10 +118,10 @@ public class FolderRecordServiceImpl implements FolderRecordService, ErrorHandle
      * @param id    folder id
      * @return a flux stream containing files
      */
-    public Flux<File> getFolderFiles(Long id) {
+    public Flux<File> getFolderFiles(UUID id) {
         return Flux.fromStream(getById(id)
                 .getFiles()
                 .stream()
-                .sorted((folder1, folder2) -> (int) (folder1.getId() - folder2.getId())));
+                .sorted(Comparator.comparing(File::getId)));
     }
 }

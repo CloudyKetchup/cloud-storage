@@ -41,11 +41,6 @@ public class FolderServiceImpl implements FolderService, ErrorHandler {
 	private final LoggingService loggingService;
 
 	@Override
-	public Folder getFolderData(Long id) {
-		return folderRecordService.getById(id);
-	}
-
-	@Override
 	public HttpStatus createFolder(String folderName, String folderPath) {
 		var folder = new File(folderPath + "/" + folderName);
 		// create folder locally on file system
@@ -151,7 +146,7 @@ public class FolderServiceImpl implements FolderService, ErrorHandler {
 	 * @param id 	folder id
 	 * @return folders and files count
 	 */
-	public HashMap<String, Integer> getItemsCount(Long id) {
+	public HashMap<String, Integer> getItemsCount(UUID id) {
 		var folder = folderRecordService.getById(id);
 
 		return new HashMap<>(){{

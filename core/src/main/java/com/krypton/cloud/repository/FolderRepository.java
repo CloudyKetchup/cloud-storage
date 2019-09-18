@@ -6,12 +6,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-@Repository
-public interface FolderRepository extends JpaRepository<Folder, Long> {
+import java.util.UUID;
 
-    @Deprecated
-    @Query(value = "select * from folder where folder.name = :name", nativeQuery = true)
-    Folder getByName(@Param("name") String name);
+@Repository
+public interface FolderRepository extends JpaRepository<Folder, UUID> {
 
     @Query(value = "select * from folder where folder.path = :path", nativeQuery = true)
     Folder getByPath(@Param("path") String path);

@@ -1,6 +1,7 @@
 package com.krypton.cloud.service.record;
 
 import java.io.File;
+import java.util.UUID;
 
 /**
  * Standard record service
@@ -13,7 +14,7 @@ public interface RecordService<T> {
 	 * @param id 	entity id
 	 * @return entity
 	 */
-    T getById(Long id);
+    T getById(UUID id);
 
     /**
      * Get entity by path,related to files and folders
