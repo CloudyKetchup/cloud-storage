@@ -1,7 +1,6 @@
 import {Entity} from "./Entity";
 
 export interface FolderEntity extends Entity {
-    timeCreated: string | undefined
-    parentId: number | null
+    parentId: string | null
     root: boolean
 }
