@@ -30,7 +30,7 @@ const DefaultContextMenu = props => {
                 </div>
                 <span>Upload files</span>
             </div>
-            <Link to="/create-folder">
+            <Link to="/folder/create">
                 <div className="context-menu-icon">
                     <i className="fas fa-folder-plus"/>
                 </div>
@@ -45,6 +45,6 @@ const DefaultContextMenu = props => {
             {pasteButton()}
         </div>
     );
-}
+};
 
 export default DefaultContextMenu;
