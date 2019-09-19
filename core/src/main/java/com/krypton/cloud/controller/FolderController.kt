@@ -19,7 +19,7 @@ class FolderController(
         private val folderService : FolderServiceImpl,
         private val folderRecordService : FolderRecordServiceImpl
 ) {
-    @Value(value = "\${root.folder}")
+    @Value(value = "\${cloud.root}")
     var root : String? = null
 
     /**
