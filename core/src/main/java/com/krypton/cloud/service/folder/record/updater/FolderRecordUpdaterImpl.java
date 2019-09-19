@@ -2,7 +2,8 @@ package com.krypton.cloud.service.folder.record.updater;
 
 import com.krypton.cloud.model.*;
 import com.krypton.cloud.repository.*;
-import com.krypton.cloud.service.folder.record.*;
+import com.krypton.cloud.service.util.file.FileTools;
+import com.krypton.cloud.service.util.folder.FolderTools;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -11,17 +12,15 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 public class FolderRecordUpdaterImpl implements FolderRecordUpdater {
 
-    private final FolderPersistenceHelper folderPersistenceHelper;
-
-    private final FolderRecordServiceImpl folderRecordService;
-
     private final FolderRepository folderRepository;
 
     private final FileRepository fileRepository;
 
+    private final String ROOT = "/Users/Krypt0n/Desktop/Cloud";
+
     @Override
     public HttpStatus updateName(String path, String newName) {
-        var folder = folderRecordService.getByPath(path);
+        var folder = folderRepository.getByPath(path);
 
         folder.setName(newName);
 
@@ -34,15 +33,38 @@ public class FolderRecordUpdaterImpl implements FolderRecordUpdater {
 
     @Override
     public HttpStatus updatePath(java.io.File folder, String newPath) {
-        var dbFolder = folderRecordService.getByPath(folder.getPath());
+        var dbFolder = folderRepository.getByPath(folder.getPath());
 
         dbFolder.setPath(newPath);
 
         folderRepository.save(dbFolder);
         // update folder child's path
-        folderPersistenceHelper.updateChildsPaths(dbFolder);
+        updateChildsPaths(dbFolder);
 
         return HttpStatus.OK;
+    }
+
+    @Override
+    public void updateLocation(Folder folder, String newLocation) {
+        folder.setLocation(newLocation);
+
+        folderRepository.save(folder);
+    }
+
+    @Override
+    public void updateSize(Folder folder) {
+        var fsFolder = new java.io.File(folder.getPath());
+
+        var sizeLength = FolderTools.INSTANCE.getFolderLength(fsFolder);
+
+        folder.setSize(FileTools.INSTANCE.getFileSize(sizeLength));
+
+        folderRepository.save(folder);
+
+        var parentFolder = folderRepository.getByPath(fsFolder.getParentFile().getPath());
+
+        if (parentFolder != null)
+            if (!parentFolder.getPath().equals(ROOT)) updateSize(parentFolder);
     }
 
     /**
@@ -85,15 +107,43 @@ public class FolderRecordUpdaterImpl implements FolderRecordUpdater {
     }
 
     /**
-     * set new location name for folder
+     * if folder path was updated this method runs and update all
+     * child folders and files records path's
      *
-     * @param folder            folder who need location name update
-     * @param newLocation       new folder location name
+     * @param parent        folder who path was updated
      */
-    private void updateLocation(Folder folder, String newLocation) {
-        folder.setLocation(newLocation);
+    private void updateChildsPaths(Folder parent) {
+        updateFilesPaths(parent);
 
-        folderRepository.save(folder);
+        updateFoldersPaths(parent);
+    }
+
+    /**
+     * Update {@link File}' path inside {@link Folder}
+     *
+     * @param parent        folder who child files need path update
+     */
+    private void updateFilesPaths(Folder parent) {
+        parent.getFiles().parallelStream().forEach(childFile -> {
+            childFile.setPath(parent.getPath() + "/" + childFile.getName());
+
+            fileRepository.save(childFile);
+        });
+    }
+
+    /**
+     * Update {@link Folder}'s path inside parent {@link Folder}
+     *
+     * @param parent        folder who child folders need path update
+     */
+    private void updateFoldersPaths(Folder parent) {
+        parent.getFolders().parallelStream().forEach(childFolder -> {
+            childFolder.setPath(parent.getPath() + "/" + childFolder.getName());
+
+            folderRepository.save(childFolder);
+            // run recursive for content inside child folder
+            updateChildsPaths(childFolder);
+        });
     }
 
     /**

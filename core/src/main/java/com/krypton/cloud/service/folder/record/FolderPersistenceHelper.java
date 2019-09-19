@@ -2,6 +2,7 @@ package com.krypton.cloud.service.folder.record;
 
 import com.krypton.cloud.model.*;
 import com.krypton.cloud.repository.*;
+import com.krypton.cloud.service.folder.record.updater.FolderRecordUpdaterImpl;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +15,8 @@ import org.springframework.stereotype.Service;
 @Service
 @AllArgsConstructor
 public class FolderPersistenceHelper {
+
+    private final FolderRecordUpdaterImpl folderRecordUpdater;
 
     private final FolderRepository folderRepository;
 
@@ -35,7 +38,7 @@ public class FolderPersistenceHelper {
         ) {
             parent.getFiles().add(child);
 
-            folderRepository.save(parent);
+            folderRecordUpdater.updateSize(parent);
         }
     }
 
@@ -55,7 +58,7 @@ public class FolderPersistenceHelper {
         ) {
             parent.getFolders().add(child);
 
-            folderRepository.save(parent);
+            folderRecordUpdater.updateSize(parent);
         }
     }
 
@@ -86,46 +89,6 @@ public class FolderPersistenceHelper {
     }
 
     /**
-     * if folder path was updated this method runs and update all
-     * child folders and files records path's
-     *
-     * @param parent        folder who path was updated
-     */
-    public void updateChildsPaths(Folder parent) {
-        updateFilesPaths(parent);
-
-        updateFoldersPaths(parent);
-    }
-
-    /**
-     * Update {@link File}' path inside {@link Folder}
-     *
-     * @param parent        folder who child files need path update
-     */
-    private void updateFilesPaths(Folder parent) {
-        parent.getFiles().parallelStream().forEach(childFile -> {
-            childFile.setPath(parent.getPath() + "/" + childFile.getName());
-
-            fileRepository.save(childFile);
-        });
-    }
-
-    /**
-     * Update {@link Folder}'s path inside parent {@link Folder}
-     *
-     * @param parent        folder who child folders need path update
-     */
-    private void updateFoldersPaths(Folder parent) {
-        parent.getFolders().parallelStream().forEach(childFolder -> {
-            childFolder.setPath(parent.getPath() + "/" + childFolder.getName());
-
-            folderRepository.save(childFolder);
-            // run recursive for content inside child folder
-            updateChildsPaths(childFolder);
-        });
-    }
-
-    /**
      * remove all {@link Folder} child's records from database
      *
      * @param folder        parent folder
@@ -139,6 +102,8 @@ public class FolderPersistenceHelper {
             folderRepository.delete(childFolder);
         });
         removeChildFiles(folder);
+
+        folderRecordUpdater.updateSize(folder);
     }
 
     /**

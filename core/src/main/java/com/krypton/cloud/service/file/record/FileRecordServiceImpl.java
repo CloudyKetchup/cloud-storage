@@ -6,8 +6,8 @@ import com.krypton.cloud.model.LogType;
 import com.krypton.cloud.repository.FileRepository;
 import com.krypton.cloud.service.folder.record.FolderPersistenceHelper;
 import com.krypton.cloud.service.folder.record.FolderRecordServiceImpl;
-import com.krypton.cloud.service.util.log.LogFolder;
-import com.krypton.cloud.service.util.log.LoggingService;
+import com.krypton.cloud.service.folder.record.updater.FolderRecordUpdaterImpl;
+import com.krypton.cloud.service.util.log.*;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -26,6 +26,8 @@ public class FileRecordServiceImpl implements FileRecordService {
     private final FolderRecordServiceImpl folderRecordService;
 
     private final FolderPersistenceHelper folderPersistenceHelper;
+
+    private final FolderRecordUpdaterImpl folderRecordUpdater;
 
     private final LoggingService loggingService;
 
@@ -59,7 +61,21 @@ public class FileRecordServiceImpl implements FileRecordService {
 
         fileRepository.delete(file);
 
-        if (!exists(file.getPath())) {
+        var parent = new java.io.File(file.getPath()).getParentFile();
+
+        folderRecordUpdater.updateSize(folderRecordService.getByPath(parent.getPath()));
+
+        return handleDeleteError(path);
+    }
+
+    /**
+     * If file was not deleted properly, handle error
+     *
+     * @param path  file path
+     * @return {@link HttpStatus}
+     * */
+    private HttpStatus handleDeleteError(String path) {
+        if (!exists(path)) {
             return HttpStatus.OK;
         } else {
             // save error log

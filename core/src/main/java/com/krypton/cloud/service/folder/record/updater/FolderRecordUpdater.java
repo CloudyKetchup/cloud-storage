@@ -1,5 +1,6 @@
 package com.krypton.cloud.service.folder.record.updater;
 
+import com.krypton.cloud.model.Folder;
 import org.springframework.http.HttpStatus;
 
 import java.io.File;
@@ -27,4 +28,14 @@ interface FolderRecordUpdater {
      * @return http status depending on success
      */
     HttpStatus updatePath(File folder, String path);
+
+    /**
+     * set new location name for folder
+     *
+     * @param folder            folder who need location name update
+     * @param newLocation       new folder location name
+     */
+    void updateLocation(Folder folder, String newLocation);
+
+    void updateSize(Folder folder);
 }
