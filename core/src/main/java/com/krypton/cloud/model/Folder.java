@@ -2,9 +2,11 @@ package com.krypton.cloud.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.krypton.cloud.model.common.EntityType;
+import com.krypton.cloud.service.util.file.FileTools;
+import com.krypton.cloud.service.util.folder.FolderTools;
 import lombok.Data;
 import org.hibernate.annotations.GenericGenerator;
-import org.hibernate.annotations.Type;
+import org.springframework.beans.factory.annotation.Value;
 
 import javax.persistence.*;
 
@@ -44,7 +46,7 @@ public class Folder {
     private String timeCreated;
 
     @Column
-    private Float size = 0f;
+    private String size;
 
     @Column(columnDefinition = "BINARY(16)")
     private UUID parentId;
@@ -53,12 +55,12 @@ public class Folder {
     private Boolean root = false;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JoinColumn(name= "parentId")
+    @JoinColumn(name = "parentId")
     @JsonIgnore
     private Set<Folder> folders = new HashSet<>();
     
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JoinColumn(name= "parentId")
+    @JoinColumn(name = "parentId")
     @JsonIgnore
     private Set<File> files = new HashSet<>();
 
@@ -67,12 +69,13 @@ public class Folder {
     public Folder(java.io.File folder) {
         var time = LocalDateTime.now();
 
-        this.name = folder.getName();
-        this.path = folder.getPath();
-        this.location = Paths.get(folder.getPath()).getParent().toFile().getName();
-        this.timeCreated = time.getDayOfMonth() + "-" + time.getMonthValue() + "-" + time.getYear();
+        name        = folder.getName();
+        path        = folder.getPath();
+        location    = Paths.get(folder.getPath()).getParent().toFile().getName();
+        timeCreated = time.getDayOfMonth() + "-" + time.getMonthValue() + "-" + time.getYear();
+        size        = FileTools.INSTANCE.getFileSize(FolderTools.INSTANCE.getFolderLength(folder));
 
-        if(this.path.equals(System.getProperty("user.home") + "/Desktop/Cloud")) {
+        if (this.path.equals(System.getProperty("user.home") + "/Desktop/Cloud")) {
             root = true;
         }
     }
