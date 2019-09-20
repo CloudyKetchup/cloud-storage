@@ -2,12 +2,11 @@ package com.krypton.cloud.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.krypton.cloud.model.common.EntityType;
+import com.krypton.cloud.service.util.common.CommonTools;
 import com.krypton.cloud.service.util.file.FileTools;
 import com.krypton.cloud.service.util.folder.FolderTools;
 import lombok.Data;
 import org.hibernate.annotations.GenericGenerator;
-import org.springframework.beans.factory.annotation.Value;
-
 import javax.persistence.*;
 
 import java.time.LocalDateTime;
@@ -75,7 +74,11 @@ public class Folder {
         timeCreated = time.getDayOfMonth() + "-" + time.getMonthValue() + "-" + time.getYear();
         size        = FileTools.INSTANCE.getFileSize(FolderTools.INSTANCE.getFolderLength(folder));
 
-        if (this.path.equals(System.getProperty("user.home") + "/Desktop/Cloud")) {
+        // check if runs inside docker container and this is root folder
+        if (this.path.equals(CommonTools.INSTANCE.runsInsideContainer()
+                ? "/Cloud"
+                : System.getProperty("user.home") + "/Cloud")
+        ) {
             root = true;
         }
     }
