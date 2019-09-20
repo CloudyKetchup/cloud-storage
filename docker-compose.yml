@@ -1,0 +1,63 @@
+version: '3.7'
+
+services:
+  # Database Service (Mysql)
+  db:
+    image: mysql:8.0.17
+    ports:
+      - "3306:3306"
+    restart: always
+    environment:
+      MYSQL_DATABASE: cloudFilesRecord
+      MYSQL_USER: krypt0n
+      MYSQL_PASSWORD: 1708
+      MYSQL_ROOT_PASSWORD: 1708
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - cloud-backend  
+
+  # App backend service
+  app-server:
+    # Configuration for building the docker image for the backend service
+    build:
+      context: core
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    restart: always
+    volumes:
+      # Use storage folder from host filesystem, mount it to /Cloud volume inside app-server image
+      - /Users/Krypt0n/Cloud:/Cloud
+    depends_on:
+      - db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/cloudFilesRecord?useSSL=false&serverTimezone=UTC&useLegacyDatetimeCode=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: krypt0n
+      SPRING_DATASOURCE_PASSWORD: 1708 
+    networks: # Networks to join (Services on the same network can communicate with each other using their name)
+      - cloud-backend
+      - cloud-frontend
+
+  # Frontend Service 
+  app-client:
+    build:
+      context: Frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    restart: always
+    depends_on:
+      - app-server
+    networks:
+      - cloud-backend
+      - cloud-frontend
+
+# Volumes
+volumes:
+  db-data:
+
+# Networks to be created to facilitate communication between containers
+networks:
+  cloud-backend:
+  cloud-frontend:    
