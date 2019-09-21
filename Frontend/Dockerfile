@@ -1,4 +1,4 @@
-FROM node:12.4.0-alpine as build
+FROM node:latest as build
 
 WORKDIR /app
 
@@ -7,6 +7,9 @@ RUN npm install
 
 COPY . ./
 
-RUN npm build
+RUN npm run build
 
-ENTRYPOINT ["npm", "start"]
+RUN npm install -g serve
+
+ENTRYPOINT ["serve", "-s", "build"]
+
