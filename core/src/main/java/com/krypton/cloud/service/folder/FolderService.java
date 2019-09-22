@@ -1,23 +1,11 @@
 package com.krypton.cloud.service.folder;
 
-import com.krypton.cloud.model.Folder;
-import org.springframework.core.io.Resource;
+import com.krypton.cloud.service.IOEntityService;
 import org.springframework.http.HttpStatus;
 
-import java.util.HashMap;
-import java.util.UUID;
+public interface FolderService extends IOEntityService {
 
-public interface FolderService {
+    HttpStatus createFolder(String name, String path);
 
-    HttpStatus createFolder(String folderName, String folderPath);
-
-    HttpStatus copyFolder(String folderPath, String copyPath);
-
-    HttpStatus cutFolder(String oldPath, String newPath);
-
-    HttpStatus renameFolder(String folderPath, String newName);
-
-    HttpStatus deleteFolder(String folderPath);
-
-    HttpStatus deleteFolderContent(String folderPath);
+    HttpStatus deleteFolderContent(String path);
 }

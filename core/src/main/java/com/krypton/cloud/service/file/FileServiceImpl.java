@@ -1,13 +1,12 @@
 package com.krypton.cloud.service.file;
 
 import com.krypton.cloud.exception.entity.io.FileIOException;
-import com.krypton.cloud.model.LogType;
+import com.krypton.cloud.model.common.LogType;
 import com.krypton.cloud.service.file.record.FileRecordServiceImpl;
 import com.krypton.cloud.service.file.record.updater.FileRecordUpdaterImpl;
 import com.krypton.cloud.service.handler.http.ErrorHandler;
 import com.krypton.cloud.service.util.exception.ExceptionTools;
-import com.krypton.cloud.service.util.log.LogFolder;
-import com.krypton.cloud.service.util.log.LoggingService;
+import com.krypton.cloud.service.util.log.*;
 import com.krypton.cloud.service.handler.io.IOErrorHandler;
 import lombok.AllArgsConstructor;
 import org.apache.commons.io.FileUtils;
@@ -18,7 +17,6 @@ import reactor.core.publisher.Mono;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 
 @Service
@@ -30,21 +28,6 @@ public class FileServiceImpl implements FileService, IOErrorHandler, ErrorHandle
 	private final FileRecordUpdaterImpl fileRecordUpdater;
 
 	private final LoggingService loggingService;
-
-	@Override
-	public byte[] getFile(String path) {
-		var file = new File(path);
-
-		byte[] bytes = null;
-
-		try {
-			bytes = Files.readAllBytes(file.toPath());
-		} catch (IOException e) {
-			e.printStackTrace();
-			error(ExceptionTools.INSTANCE.stackTraceToString(e));
-		}
-		return bytes;
-	}
 
 	@Override
 	public Mono<HttpStatus> saveFile(FilePart file, String path) {
@@ -62,7 +45,7 @@ public class FileServiceImpl implements FileService, IOErrorHandler, ErrorHandle
 	}
 
 	@Override
-	public HttpStatus cutFile(String oldPath, String newPath) {
+	public HttpStatus move(String oldPath, String newPath) {
 		var file = new File(oldPath);
 
 		var fileCopy = new File(newPath + "/" + file.getName());
@@ -79,7 +62,7 @@ public class FileServiceImpl implements FileService, IOErrorHandler, ErrorHandle
 	}
 
 	@Override
-	public HttpStatus copyFile(String oldPath, String newPath) {
+	public HttpStatus copy(String oldPath, String newPath) {
 		var file = new File(oldPath);
 
 		var fileCopy = new File(newPath + "/" + file.getName());
@@ -97,7 +80,7 @@ public class FileServiceImpl implements FileService, IOErrorHandler, ErrorHandle
 	}
 
 	@Override
-	public HttpStatus renameFile(String path, String newName) {
+	public HttpStatus rename(String path, String newName) {
 		var file = new File(path);
 
 		var parentFolder = Paths.get(path).getParent().toFile().getPath();
@@ -110,7 +93,7 @@ public class FileServiceImpl implements FileService, IOErrorHandler, ErrorHandle
 	}
 
 	@Override
-	public HttpStatus deleteFile(String path) {
+	public HttpStatus delete(String path) {
 		return new File(path).delete()
 				? fileRecordService.delete(path)
 				: httpError(new FileIOException("Error while deleting file " + path).stackTraceToString());

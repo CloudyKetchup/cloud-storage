@@ -6,7 +6,7 @@ import com.krypton.cloud.service.handler.http.ErrorHandler;
 import com.krypton.cloud.service.util.exception.ExceptionTools;
 import com.krypton.cloud.service.util.log.LogFolder;
 import lombok.AllArgsConstructor;
-import com.krypton.cloud.model.LogType;
+import com.krypton.cloud.model.common.LogType;
 import com.krypton.cloud.service.folder.record.updater.FolderRecordUpdaterImpl;
 import com.krypton.cloud.service.folder.record.FolderRecordServiceImpl;
 import com.krypton.cloud.service.folder.record.FolderRecordUtils;
@@ -52,7 +52,7 @@ public class FolderServiceImpl implements FolderService, ErrorHandler {
 	}
 
 	@Override
-	public HttpStatus copyFolder(String folderPath, String copyPath) {
+	public HttpStatus copy(String folderPath, String copyPath) {
 		var folder 		= new File(folderPath);
 		var folderCopy 	= new File(copyPath + "/" + folder.getName());
 		// copy folder to new path
@@ -65,13 +65,12 @@ public class FolderServiceImpl implements FolderService, ErrorHandler {
 			else throw new FolderIOException("Error when coping folder " + folder.getPath());
 		} catch (IOException | FolderIOException e) {
 			e.printStackTrace();
-			// save exception log
 			return httpError(ExceptionTools.INSTANCE.stackTraceToString(e));
 		}
 	}
 
 	@Override
-	public HttpStatus cutFolder(String oldPath, String newPath) {
+	public HttpStatus move(String oldPath, String newPath) {
 		var folder 		= new File(oldPath);
 		var folderCopy 	= new File(newPath + "/" + folder.getName());
 		// move folder to new location
@@ -82,7 +81,7 @@ public class FolderServiceImpl implements FolderService, ErrorHandler {
 	}
 
 	@Override
-	public HttpStatus renameFolder(String folderPath, String newName) {
+	public HttpStatus rename(String folderPath, String newName) {
 	    var folder 		= new File(folderPath);
 		var parentPath 	= Paths.get(folderPath).getParent().toFile().getPath();
 
@@ -97,7 +96,7 @@ public class FolderServiceImpl implements FolderService, ErrorHandler {
 	}
 
 	@Override
-	public HttpStatus deleteFolder(String folderPath) {
+	public HttpStatus delete(String folderPath) {
         var folder = new File(folderPath);
 
         deleteFolderContent(folderPath);
@@ -118,7 +117,7 @@ public class FolderServiceImpl implements FolderService, ErrorHandler {
 	        for (var file : folder.listFiles()) {
 	            // if file is directory delete content inside it
 				if (file.isDirectory()) {
-					deleteFolder(file.getPath());
+					delete (file.getPath());
 				} else {
 					file.delete();
 					// delete file from database
