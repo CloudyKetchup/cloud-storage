@@ -11,7 +11,12 @@ class AppProperties {
 
     // folder used for cloud storage
     val root = when (CommonTools.runsInsideContainer()) {
-        true -> File("/Cloud")
-        false -> File("${System.getProperty("user.home")}/Cloud")
+        true -> "/Cloud"
+        false -> "${System.getProperty("user.home")}/Cloud"
     }
+
+    val storageFolder   = File("${root}/Storage")
+    val trashFolder     = File("${root}/Trash")
+    val logsFolder      = File("${root}/Logs")
+
 }
