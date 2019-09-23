@@ -1,16 +1,17 @@
 package com.krypton.cloud.service.file.record;
 
-import com.krypton.cloud.exception.entity.database.FileDatabaseException;
+import common.exception.entity.database.FileDatabaseException;
 import com.krypton.cloud.model.File;
-import com.krypton.cloud.model.LogType;
 import com.krypton.cloud.repository.FileRepository;
 import com.krypton.cloud.service.folder.record.FolderPersistenceHelper;
 import com.krypton.cloud.service.folder.record.FolderRecordServiceImpl;
 import com.krypton.cloud.service.folder.record.updater.FolderRecordUpdaterImpl;
-import com.krypton.cloud.service.util.log.*;
+import common.model.LogType;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import util.log.LogFolder;
+import util.log.LoggingService;
 
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -28,8 +29,6 @@ public class FileRecordServiceImpl implements FileRecordService {
     private final FolderPersistenceHelper folderPersistenceHelper;
 
     private final FolderRecordUpdaterImpl folderRecordUpdater;
-
-    private final LoggingService loggingService;
 
     @Override
     public File getById(UUID id) {
@@ -79,7 +78,7 @@ public class FileRecordServiceImpl implements FileRecordService {
             return HttpStatus.OK;
         } else {
             // save error log
-            loggingService.saveLog(new FileDatabaseException("Error deleting file " + path + " entity").stackTraceToString(),
+            LoggingService.INSTANCE.saveLog(new FileDatabaseException("Error deleting file " + path + " entity").stackTraceToString(),
                     LogType.ERROR,
                     LogFolder.DATABASE.getType() + LogFolder.DATABASE.getType());
             return HttpStatus.INTERNAL_SERVER_ERROR;

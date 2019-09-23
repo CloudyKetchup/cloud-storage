@@ -3,6 +3,7 @@ package com.krypton.cloud.config
 import com.krypton.cloud.service.file.record.FileRecordServiceImpl
 import com.krypton.cloud.service.folder.record.FolderRecordServiceImpl
 import com.krypton.cloud.service.folder.record.FolderRecordUtils
+import common.config.AppProperties
 import lombok.AllArgsConstructor
 import org.springframework.boot.CommandLineRunner
 import org.springframework.stereotype.Service
@@ -18,16 +19,15 @@ import org.springframework.stereotype.Service
 class Startup(
         private val fileRecordService   : FileRecordServiceImpl,
         private val folderRecordService : FolderRecordServiceImpl,
-        private val folderRecordUtils   : FolderRecordUtils,
-        appProperties : AppProperties
+        private val folderRecordUtils   : FolderRecordUtils
 ) : CommandLineRunner {
 
     // folder used for storage
-    private val storage = appProperties.storageFolder
+    private val storage = AppProperties.storageFolder
     // folder used for storing log files
-    private val logsFolder = appProperties.logsFolder
+    private val logsFolder = AppProperties.logsFolder
     // folder used for trash
-    private val trashFolder = appProperties.trashFolder
+    private val trashFolder = AppProperties.trashFolder
 
     override fun run(vararg args: String) {
         createFolders()

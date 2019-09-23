@@ -11,8 +11,6 @@ import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Mono
 import java.util.*
 
-import java.util.function.Consumer
-
 @AllArgsConstructor
 @RestController
 @RequestMapping("/file")
@@ -44,7 +42,7 @@ class FileController(
      * @return http status
      */
     @PostMapping("/cut")
-    fun cutFolder(@RequestBody request : HashMap<String, String>) : HttpStatus = fileService.cutFile(request["oldPath"], request["newPath"])
+    fun cutFolder(@RequestBody request : HashMap<String, String>) : HttpStatus = fileService.move(request["oldPath"]!!, request["newPath"]!!)
 
     /**
      * copy folder to new path
@@ -53,14 +51,14 @@ class FileController(
      * @return http status
      */
     @PostMapping("/copy")
-    fun copyFolder(@RequestBody request : HashMap<String, String>) : HttpStatus = fileService.copyFile(request["oldPath"], request["newPath"])
+    fun copyFolder(@RequestBody request : HashMap<String, String>) : HttpStatus = fileService.copy(request["oldPath"]!!, request["newPath"]!!)
 
     /**
      * @param request   file path and new name
      * @return http status
      */
     @PostMapping("/rename")
-    fun renameFile(@RequestBody request : HashMap<String, String>) : HttpStatus = fileService.renameFile(request["path"], request["newName"])
+    fun renameFile(@RequestBody request : HashMap<String, String>) : HttpStatus = fileService.rename(request["path"]!!, request["newName"]!!)
 
 
     /**
@@ -68,5 +66,5 @@ class FileController(
      * @return http status
      */
     @PostMapping("/delete")
-    fun deleteFile(@RequestBody request : HashMap<String, String>) : HttpStatus = fileService.deleteFile(request["path"])
+    fun deleteFile(@RequestBody request : HashMap<String, String>) : HttpStatus = fileService.delete(request["path"]!!)
 }

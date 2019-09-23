@@ -1,4 +1,6 @@
 rootProject.name = 'CloudStorage'
 
 include 'core'
+include 'util'
+include 'common'
 include 'Frontend'

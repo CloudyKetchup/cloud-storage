@@ -1,17 +1,13 @@
 package com.krypton.cloud.service.folder;
 
-import com.krypton.cloud.exception.entity.io.FileIOException;
-import com.krypton.cloud.exception.entity.io.FolderIOException;
+import common.exception.entity.io.FolderIOException;
 import com.krypton.cloud.service.handler.http.ErrorHandler;
-import com.krypton.cloud.service.util.exception.ExceptionTools;
-import com.krypton.cloud.service.util.log.LogFolder;
+import common.model.LogType;
 import lombok.AllArgsConstructor;
-import com.krypton.cloud.model.common.LogType;
 import com.krypton.cloud.service.folder.record.updater.FolderRecordUpdaterImpl;
 import com.krypton.cloud.service.folder.record.FolderRecordServiceImpl;
 import com.krypton.cloud.service.folder.record.FolderRecordUtils;
 import com.krypton.cloud.service.file.record.FileRecordServiceImpl;
-import com.krypton.cloud.service.util.log.LoggingService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +20,9 @@ import java.nio.file.Paths;
 import java.util.*;
 
 import org.apache.commons.io.FileUtils;
+import common.exception.ExceptionTools;
+import util.log.LogFolder;
+import util.log.LoggingService;
 
 @Service
 @AllArgsConstructor
@@ -36,8 +35,6 @@ public class FolderServiceImpl implements FolderService, ErrorHandler {
 	private final FolderRecordUtils folderRecordUtils;
 
 	private final FolderRecordUpdaterImpl folderRecordUpdater;
-
-	private final LoggingService loggingService;
 
 	@Override
 	public HttpStatus createFolder(String folderName, String folderPath) {
@@ -133,7 +130,7 @@ public class FolderServiceImpl implements FolderService, ErrorHandler {
 
 	@Override
 	public HttpStatus httpError(String message) {
-		loggingService.saveLog(message, LogType.ERROR, LogFolder.FOLDER.getType());
+		LoggingService.INSTANCE.saveLog(message, LogType.ERROR, LogFolder.FOLDER.getType());
 
 		return HttpStatus.INTERNAL_SERVER_ERROR;
 	}
@@ -162,7 +159,7 @@ public class FolderServiceImpl implements FolderService, ErrorHandler {
 	public String zipFolder(File folder) {
 		Path zip;
 
-		if (folder.listFiles().length == 0) {
+		if (folder.listFiles() == null || folder.listFiles().length == 0) {
 			return "folder is empty";
 		}
 		try {
@@ -174,8 +171,6 @@ public class FolderServiceImpl implements FolderService, ErrorHandler {
 		// zip folder to file created in temp folder
 		ZipUtil.pack(folder, new File(zip.toString()));
 
-		return folder != null
-				? zip.toString()
-				: String.valueOf(httpError(new FileIOException("Error while zipping folder " + folder.getPath()).stackTraceToString()));
+		return zip.toString();
 	}
 }

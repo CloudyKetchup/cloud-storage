@@ -1,20 +1,15 @@
 package com.krypton.cloud.model;
 
-import com.krypton.cloud.model.common.EntityType;
-import com.krypton.cloud.service.util.file.FileTools;
-import lombok.Data;
+import common.model.EntityType;
+import common.model.FileType;
+import util.file.FileTools;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.hibernate.annotations.GenericGenerator;
-import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
-import java.text.DecimalFormat;
 import java.time.LocalDateTime;
-import java.util.EnumSet;
 import java.util.UUID;
 
-@Data
 @Entity
 @Table(name = "file")
 public class File {
@@ -61,5 +56,69 @@ public class File {
 		size = FileTools.INSTANCE.getFileSize(FileUtils.sizeOf(file));
 
 		setExtension(FileTools.INSTANCE.getFileExtension(file));
+	}
+
+	public UUID getId() {
+		return id;
+	}
+
+	public void setId(UUID id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getPath() {
+		return path;
+	}
+
+	public void setPath(String path) {
+		this.path = path;
+	}
+
+	public String getLocation() {
+		return location;
+	}
+
+	public void setLocation(String location) {
+		this.location = location;
+	}
+
+	public EntityType getType() {
+		return type;
+	}
+
+	public void setType(EntityType type) {
+		this.type = type;
+	}
+
+	public FileType getExtension() {
+		return extension;
+	}
+
+	public void setExtension(FileType extension) {
+		this.extension = extension;
+	}
+
+	public String getTimeCreated() {
+		return timeCreated;
+	}
+
+	public void setTimeCreated(String timeCreated) {
+		this.timeCreated = timeCreated;
+	}
+
+	public String getSize() {
+		return size;
+	}
+
+	public void setSize(String size) {
+		this.size = size;
 	}
 }

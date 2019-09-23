@@ -2,8 +2,9 @@ package com.krypton.cloud.service.folder.record.updater;
 
 import com.krypton.cloud.model.*;
 import com.krypton.cloud.repository.*;
-import com.krypton.cloud.service.util.file.FileTools;
-import com.krypton.cloud.service.util.folder.FolderTools;
+import common.config.AppProperties;
+import util.file.FileTools;
+import util.folder.FolderTools;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -15,8 +16,6 @@ public class FolderRecordUpdaterImpl implements FolderRecordUpdater {
     private final FolderRepository folderRepository;
 
     private final FileRepository fileRepository;
-
-    private final String ROOT = "/Users/Krypt0n/Desktop/Cloud";
 
     @Override
     public HttpStatus updateName(String path, String newName) {
@@ -64,7 +63,7 @@ public class FolderRecordUpdaterImpl implements FolderRecordUpdater {
         var parentFolder = folderRepository.getByPath(fsFolder.getParentFile().getPath());
 
         if (parentFolder != null)
-            if (!parentFolder.getPath().equals(ROOT)) updateSize(parentFolder);
+            if (!parentFolder.getPath().equals(AppProperties.INSTANCE.getRoot())) updateSize(parentFolder);
     }
 
     /**

@@ -2,16 +2,16 @@ package com.krypton.cloud.service.file.record.updater;
 
 import java.io.File;
 
-import com.krypton.cloud.exception.entity.database.FileDatabaseException;
-import com.krypton.cloud.model.LogType;
+import common.exception.entity.database.FileDatabaseException;
 import com.krypton.cloud.repository.FileRepository;
 import com.krypton.cloud.service.file.record.FileRecordServiceImpl;
 import com.krypton.cloud.service.handler.http.ErrorHandler;
-import com.krypton.cloud.service.util.log.LogFolder;
-import com.krypton.cloud.service.util.log.LoggingService;
+import common.model.LogType;
+import util.log.LogFolder;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import util.log.LoggingService;
 
 @Service
 @AllArgsConstructor
@@ -20,8 +20,6 @@ public class FileRecordUpdaterImpl implements FileRecordUpdater, ErrorHandler {
     private final FileRecordServiceImpl fileRecordService;
 
     private final FileRepository fileRepository;
-
-    private final LoggingService loggingService;
 
     @Override
     public HttpStatus updateName(String path, File newFile) {
@@ -57,7 +55,7 @@ public class FileRecordUpdaterImpl implements FileRecordUpdater, ErrorHandler {
 
     @Override
     public HttpStatus httpError(String message) {
-        loggingService.saveLog(new FileDatabaseException(message).stackTraceToString(),
+        LoggingService.INSTANCE.saveLog(new FileDatabaseException(message).stackTraceToString(),
                 LogType.ERROR,
                 LogFolder.DATABASE.getType() + LogFolder.FILE.getType());
         return HttpStatus.INTERNAL_SERVER_ERROR;

@@ -1,6 +1,5 @@
 package com.krypton.cloud.controller
 
-import com.krypton.cloud.service.file.record.FileRecordServiceImpl
 import lombok.AllArgsConstructor
 import org.springframework.core.io.InputStreamResource
 
@@ -13,7 +12,7 @@ import java.io.File
 
 @RestController
 @AllArgsConstructor
-class TransferController(private val fileRecordService : FileRecordServiceImpl) {
+class TransferController {
 
 	/**
 	 * Download file from input stream

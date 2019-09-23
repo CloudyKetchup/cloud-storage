@@ -1,11 +1,13 @@
 package com.krypton.cloud.service.folder.record;
 
-import com.krypton.cloud.exception.entity.database.FolderDatabaseException;
-import com.krypton.cloud.model.*;
-import com.krypton.cloud.repository.*;
+import common.exception.entity.database.FolderDatabaseException;
+import com.krypton.cloud.model.File;
+import com.krypton.cloud.model.Folder;
+import com.krypton.cloud.repository.FolderRepository;
 import com.krypton.cloud.service.handler.http.ErrorHandler;
-import com.krypton.cloud.service.util.log.LogFolder;
-import com.krypton.cloud.service.util.log.LoggingService;
+import common.model.LogType;
+import util.log.LogFolder;
+import util.log.LoggingService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -22,8 +24,6 @@ public class FolderRecordServiceImpl implements FolderRecordService, ErrorHandle
     private final FolderPersistenceHelper folderPersistenceHelper;
 
     private final FolderRepository folderRepository;
-
-    private final LoggingService loggingService;
 
     @Override
     public Folder getById(UUID id) {
@@ -78,7 +78,7 @@ public class FolderRecordServiceImpl implements FolderRecordService, ErrorHandle
 
     @Override
     public HttpStatus httpError(String message) {
-        loggingService.saveLog(new FolderDatabaseException(message).stackTraceToString(),
+        LoggingService.INSTANCE.saveLog(new FolderDatabaseException(message).stackTraceToString(),
                 LogType.ERROR,
                 LogFolder.DATABASE.getType() + LogFolder.FOLDER.getType());
         return HttpStatus.INTERNAL_SERVER_ERROR;

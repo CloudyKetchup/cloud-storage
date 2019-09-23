@@ -1,6 +1,6 @@
 package com.krypton.cloud.controller
 
-import com.krypton.cloud.config.AppProperties
+import common.config.AppProperties
 import com.krypton.cloud.model.Folder
 import com.krypton.cloud.service.folder.FolderServiceImpl
 import com.krypton.cloud.service.folder.record.FolderRecordServiceImpl
@@ -17,8 +17,7 @@ import java.util.*
 @RequestMapping("/folder")
 class FolderController(
         private val folderService : FolderServiceImpl,
-        private val folderRecordService : FolderRecordServiceImpl,
-        private val appProperties: AppProperties
+        private val folderRecordService : FolderRecordServiceImpl
 ) {
     /**
      * get total and free disk space in GB format
@@ -37,7 +36,7 @@ class FolderController(
      * @return  [UUID] in string format
      * */
     @GetMapping("/root/id")
-    fun rootId() : String = folderRecordService.getByPath(appProperties.root.absolutePath).id!!.toString()
+    fun rootId() : String = folderRecordService.getByPath(AppProperties.storageFolder.absolutePath).id.toString()
 
     /**
      * get [Folder] entity data
@@ -91,7 +90,7 @@ class FolderController(
      * @return http status
      */
     @PostMapping("/cut")
-    fun cutFolder(@RequestBody request : HashMap<String, String>) : HttpStatus = folderService.cutFolder(request["oldPath"], request["newPath"])
+    fun cutFolder(@RequestBody request : HashMap<String, String>) : HttpStatus = folderService.move(request["oldPath"]!!, request["newPath"]!!)
 
     /**
      * copy folder to new path
@@ -100,21 +99,21 @@ class FolderController(
      * @return http status
      */
     @PostMapping("/copy")
-    fun copyFolder(@RequestBody request : HashMap<String, String>) : HttpStatus = folderService.copyFolder(request["oldPath"], request["newPath"])
+    fun copyFolder(@RequestBody request : HashMap<String, String>) : HttpStatus = folderService.copy(request["oldPath"]!!, request["newPath"]!!)
 
     /**
      * @param request    request containing folder path and new name
      * @return http status
      */
     @PostMapping("/rename")
-    fun renameFolder(@RequestBody request: HashMap<String, String>) : HttpStatus = folderService.renameFolder(request["path"], request["newName"])
+    fun renameFolder(@RequestBody request: HashMap<String, String>) : HttpStatus = folderService.rename(request["path"]!!, request["newName"]!!)
 
     /**
      * @param request    request containing folder path
      * @return http status
      */
     @PostMapping("/delete")
-    fun deleteFolder(@RequestBody request : HashMap<String, String>) : HttpStatus = folderService.deleteFolder(request["path"])
+    fun deleteFolder(@RequestBody request : HashMap<String, String>) : HttpStatus = folderService.delete(request["path"]!!)
 
     /**
      * @param request    request containing folder path

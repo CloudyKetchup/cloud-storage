@@ -1,11 +1,10 @@
 package com.krypton.cloud.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.krypton.cloud.model.common.EntityType;
-import com.krypton.cloud.service.util.common.CommonTools;
-import com.krypton.cloud.service.util.file.FileTools;
-import com.krypton.cloud.service.util.folder.FolderTools;
-import lombok.Data;
+import common.model.EntityType;
+import common.tools.CommonTools;
+import util.file.FileTools;
+import util.folder.FolderTools;
 import org.hibernate.annotations.GenericGenerator;
 import javax.persistence.*;
 
@@ -15,7 +14,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-@Data
 @Entity
 @Table(name = "folder")
 public class Folder {
@@ -27,7 +25,7 @@ public class Folder {
             strategy = "org.hibernate.id.UUIDGenerator"
     )
     @Column(columnDefinition = "BINARY(16)")
-    public UUID id;
+    private UUID id;
 
     @Column
     private String name;
@@ -76,10 +74,98 @@ public class Folder {
 
         // check if runs inside docker container and this is root folder
         if (this.path.equals(CommonTools.INSTANCE.runsInsideContainer()
-                ? "/Cloud"
-                : System.getProperty("user.home") + "/Cloud")
+                ? "/Cloud/Storage"
+                : System.getProperty("user.home") + "/Cloud/Storage")
         ) {
             root = true;
         }
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public EntityType getType() {
+        return type;
+    }
+
+    public void setType(EntityType type) {
+        this.type = type;
+    }
+
+    public String getTimeCreated() {
+        return timeCreated;
+    }
+
+    public void setTimeCreated(String timeCreated) {
+        this.timeCreated = timeCreated;
+    }
+
+    public String getSize() {
+        return size;
+    }
+
+    public void setSize(String size) {
+        this.size = size;
+    }
+
+    public UUID getParentId() {
+        return parentId;
+    }
+
+    public void setParentId(UUID parentId) {
+        this.parentId = parentId;
+    }
+
+    public Boolean getRoot() {
+        return root;
+    }
+
+    public void setRoot(Boolean root) {
+        this.root = root;
+    }
+
+    public Set<Folder> getFolders() {
+        return folders;
+    }
+
+    public void setFolders(Set<Folder> folders) {
+        this.folders = folders;
+    }
+
+    public Set<File> getFiles() {
+        return files;
+    }
+
+    public void setFiles(Set<File> files) {
+        this.files = files;
     }
 }
