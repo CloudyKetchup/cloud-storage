@@ -1,5 +1,7 @@
 package com.krypton.cloud.service.record;
 
+import org.springframework.http.HttpStatus;
+
 import java.io.File;
 import java.util.UUID;
 
@@ -17,20 +19,12 @@ public interface RecordService<T> {
     T getById(UUID id);
 
     /**
-     * Get entity by path,related to files and folders
-     *
-     * @param path 	entity path
-     * @return entity
-     */
-    T getByPath(String path);
-
-    /**
      * Makes a record of file or folder
      *
      * @param entity 	file or folder from filesystem
      * @return saved entity
      */
-    T save(File entity);
+    T save(T entity);
 
     /**
      * Delete entity record from database, use path find entity because it's unique
@@ -38,7 +32,7 @@ public interface RecordService<T> {
      * @param path 		entity path
      * @return result of delete
      */
-    T delete(String path);
+    boolean delete(String path);
 
  	/**
  	 * Check if entity exists in database

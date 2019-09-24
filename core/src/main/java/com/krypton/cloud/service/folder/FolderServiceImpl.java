@@ -1,5 +1,6 @@
 package com.krypton.cloud.service.folder;
 
+import com.krypton.cloud.model.Folder;
 import common.exception.entity.io.FolderIOException;
 import com.krypton.cloud.service.handler.http.ErrorHandler;
 import common.model.LogType;
@@ -42,10 +43,12 @@ public class FolderServiceImpl implements FolderService, ErrorHandler {
 		// create folder locally on file system
 		if (folder.mkdir()) {
 			// add folder to database and return http status > ok
-			return folderRecordService.save(folder);
+			return folderRecordService.save(new Folder(folder)) != null
+					? HttpStatus.OK
+					: httpError(new FolderIOException().stackTraceToString());
 		}
 		// if folder was not created, save log file and return http status
-		return httpError(new FolderIOException("Error while creating folder " + folder.getPath()).stackTraceToString());
+		return httpError(new FolderIOException().stackTraceToString());
 	}
 
 	@Override

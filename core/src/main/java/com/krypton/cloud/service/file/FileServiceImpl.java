@@ -53,7 +53,7 @@ public class FileServiceImpl implements FileService, IOErrorHandler, ErrorHandle
 			// remove file with old path from database
 			fileRecordService.delete(oldPath);
 			// add file with new path to database
-			fileRecordService.save(fileCopy);
+			fileRecordService.save(new com.krypton.cloud.model.File(fileCopy));
 
 			return HttpStatus.OK;
 		}
@@ -69,7 +69,7 @@ public class FileServiceImpl implements FileService, IOErrorHandler, ErrorHandle
 		try {
 			FileUtils.copyFile(file, fileCopy);
 			// check if file was copied successful
-			if (fileCopy.exists() && fileRecordService.save(fileCopy) != null)
+			if (fileCopy.exists() && fileRecordService.save(new com.krypton.cloud.model.File(fileCopy)) != null)
 				return HttpStatus.OK;
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -93,9 +93,13 @@ public class FileServiceImpl implements FileService, IOErrorHandler, ErrorHandle
 
 	@Override
 	public HttpStatus delete(String path) {
-		return new File(path).delete()
-				? fileRecordService.delete(path)
-				: httpError(new FileIOException("Error while deleting file " + path).stackTraceToString());
+		if (new File(path).delete()) {
+			return fileRecordService.delete(path)
+					? HttpStatus.OK
+					: HttpStatus.INTERNAL_SERVER_ERROR;
+		}
+
+		return httpError(new FileIOException("Error while deleting file " + path).stackTraceToString());
 	}
 
 	@Override
@@ -123,7 +127,7 @@ public class FileServiceImpl implements FileService, IOErrorHandler, ErrorHandle
 			if (file.createNewFile()) {
 				// transfer incoming file data to local file
 				return filePart.transferTo(file)
-						.doOnSuccess(result -> fileRecordService.save(file))
+						.doOnSuccess(result -> fileRecordService.save(new com.krypton.cloud.model.File(file)))
 						.doOnError(Throwable::printStackTrace)
 						.thenReturn(true);
 			}

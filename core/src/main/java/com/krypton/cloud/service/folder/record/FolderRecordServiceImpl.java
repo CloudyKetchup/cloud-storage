@@ -1,5 +1,6 @@
 package com.krypton.cloud.service.folder.record;
 
+import com.krypton.cloud.service.record.IOEntityRecordService;
 import common.exception.entity.database.FolderDatabaseException;
 import com.krypton.cloud.model.File;
 import com.krypton.cloud.model.Folder;
@@ -19,7 +20,7 @@ import java.util.UUID;
 
 @Service
 @AllArgsConstructor
-public class FolderRecordServiceImpl implements FolderRecordService, ErrorHandler {
+public class FolderRecordServiceImpl implements IOEntityRecordService<Folder>, ErrorHandler {
 
     private final FolderPersistenceHelper folderPersistenceHelper;
 
@@ -36,15 +37,16 @@ public class FolderRecordServiceImpl implements FolderRecordService, ErrorHandle
     }
 
     @Override
-    public HttpStatus save(java.io.File folder) {
+    public Folder save(Folder folder) {
         // check if folder with same path exist
         if (!exists(folder.getPath())) {
-            folderRepository.save(new Folder(folder));
+            folderRepository.save(folder);
         }
         // check if folder was saved
         if (!exists(folder.getPath())) {
             // save error log
-            return httpError("Error saving folder " + folder.getPath());
+            httpError("Error saving folder " + folder.getPath());
+            return null;
         }
         var parentPath = Paths.get(folder.getPath()).getParent().toAbsolutePath();
         // newly added to database folder parent
@@ -52,23 +54,18 @@ public class FolderRecordServiceImpl implements FolderRecordService, ErrorHandle
 
         addToParent(parent, getByPath(folder.getPath()));
 
-        return HttpStatus.OK;
+        return folder;
     }
 
     @Override
-    public HttpStatus delete(String folderPath) {
+    public boolean delete(String folderPath) {
         var folder = getByPath(folderPath);
 
         folderPersistenceHelper.removeAllFolderChilds(folder);
 
         folderRepository.delete(folder);
 
-        if (getByPath(folderPath) == null) {
-            return HttpStatus.OK;
-        } else {
-            // save error log
-            return httpError("Error deleting folder " + folderPath);
-        }
+        return !exists(folderPath);
     }
 
     @Override

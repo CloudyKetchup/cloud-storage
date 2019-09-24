@@ -1,5 +1,6 @@
 package com.krypton.cloud.service.file.record;
 
+import com.krypton.cloud.service.record.IOEntityRecordService;
 import common.exception.entity.database.FileDatabaseException;
 import com.krypton.cloud.model.File;
 import com.krypton.cloud.repository.FileRepository;
@@ -20,7 +21,7 @@ import java.util.UUID;
 
 @Service
 @AllArgsConstructor
-public class FileRecordServiceImpl implements FileRecordService {
+public class FileRecordServiceImpl implements IOEntityRecordService<File> {
 
     private final FileRepository fileRepository;
 
@@ -41,21 +42,21 @@ public class FileRecordServiceImpl implements FileRecordService {
     }
 
     @Override
-    public File save(java.io.File file) {
+    public File save(File file) {
         // file saved to database
-        var dbFile          = fileRepository.save(new File(file));
+        fileRepository.save(file);
         // filesystem folder where file is located
         var parentFolder    = Paths.get(file.getPath()).getParent().toFile();
         // folder record where file need to be added as child
         var dbParentFolder  = folderRecordService.getByPath(parentFolder.getPath());
 
-        folderPersistenceHelper.addFileChild(dbParentFolder, dbFile);
+        folderPersistenceHelper.addFileChild(dbParentFolder, file);
 
-        return dbFile;
+        return file;
     }
 
     @Override
-    public HttpStatus delete(String path) {
+    public boolean delete(String path) {
         var file = getByPath(path);
 
         fileRepository.delete(file);
@@ -64,7 +65,7 @@ public class FileRecordServiceImpl implements FileRecordService {
 
         folderRecordUpdater.updateSize(folderRecordService.getByPath(parent.getPath()));
 
-        return handleDeleteError(path);
+        return !exists(path);
     }
 
     /**
@@ -105,7 +106,7 @@ public class FileRecordServiceImpl implements FileRecordService {
         files.parallelStream().forEach(file -> {
             // if file is file and don't already exist in database
             if (file.isFile() && !exists(file.getPath())) {
-                save(file);
+                save(new File(file));
                 // if is a folder
             } else if (file.isDirectory()) {
                 var insideContent = Arrays.asList(file.listFiles());

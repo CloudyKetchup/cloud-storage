@@ -38,7 +38,7 @@ public class FolderRecordUtils implements ErrorHandler {
      * @return Http Status
      */
     public HttpStatus copyFolder(java.io.File copiedFolder) {
-        folderRecordService.save(copiedFolder);
+        folderRecordService.save(new Folder(copiedFolder));
 
         var folderContent = Arrays.asList(copiedFolder.listFiles());
 
@@ -59,7 +59,7 @@ public class FolderRecordUtils implements ErrorHandler {
     public HttpStatus moveFolder(String oldPath, File folder) {
         folderRecordService.delete(oldPath);
 
-        folderRecordService.save(folder);
+        folderRecordService.save(new Folder(folder));
         // check if folder was moved successful
         if (folderRecordService.getByPath(oldPath) == null && folderRecordService.exists(folder.getPath())) {
             addAllFoldersToDatabase(Arrays.asList(folder.listFiles()));
@@ -77,12 +77,12 @@ public class FolderRecordUtils implements ErrorHandler {
      * @param content       folder content list(folders and files inside)
      */
     public void addAllFoldersToDatabase(List<File> content) {
-        content.parallelStream().forEach(file -> {
+        content.parallelStream().forEach(folder -> {
             // if file is directory missing in database
-            if (!folderRecordService.exists(file.getPath()) && file.isDirectory()) {
-                folderRecordService.save(file);
+            if (!folderRecordService.exists(folder.getPath()) && folder.isDirectory()) {
+                folderRecordService.save(new Folder(folder));
 
-                addAllFoldersToDatabase(Arrays.asList(file.listFiles()));
+                addAllFoldersToDatabase(Arrays.asList(folder.listFiles()));
             }
         });
     }

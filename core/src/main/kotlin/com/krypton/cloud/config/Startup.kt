@@ -1,5 +1,6 @@
 package com.krypton.cloud.config
 
+import com.krypton.cloud.model.Folder
 import com.krypton.cloud.service.file.record.FileRecordServiceImpl
 import com.krypton.cloud.service.folder.record.FolderRecordServiceImpl
 import com.krypton.cloud.service.folder.record.FolderRecordUtils
@@ -33,8 +34,8 @@ class Startup(
         createFolders()
 
         folderRecordService.apply {
-            save(storage)
-            save(trashFolder)
+            save(Folder(storage))
+            save(Folder(trashFolder))
         }
 
         // list of files and folders from cloud root
