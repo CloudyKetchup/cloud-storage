@@ -41,8 +41,8 @@ class FileController(
      * @param request   containing folder old and new path
      * @return http status
      */
-    @PostMapping("/cut")
-    fun cutFolder(@RequestBody request : HashMap<String, String>) : HttpStatus = fileService.move(request["oldPath"]!!, request["newPath"]!!)
+    @PostMapping("/move")
+    fun moveFile(@RequestBody request : HashMap<String, String>) : HttpStatus = fileService.move(request["oldPath"]!!, request["newPath"]!!)
 
     /**
      * copy folder to new path
@@ -51,7 +51,7 @@ class FileController(
      * @return http status
      */
     @PostMapping("/copy")
-    fun copyFolder(@RequestBody request : HashMap<String, String>) : HttpStatus = fileService.copy(request["oldPath"]!!, request["newPath"]!!)
+    fun copyFile(@RequestBody request : HashMap<String, String>) : HttpStatus = fileService.copy(request["oldPath"]!!, request["newPath"]!!)
 
     /**
      * @param request   file path and new name

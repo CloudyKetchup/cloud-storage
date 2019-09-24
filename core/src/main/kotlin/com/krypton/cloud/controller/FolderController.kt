@@ -89,8 +89,8 @@ class FolderController(
      * @param request    containing folder old and new path
      * @return http status
      */
-    @PostMapping("/cut")
-    fun cutFolder(@RequestBody request : HashMap<String, String>) : HttpStatus = folderService.move(request["oldPath"]!!, request["newPath"]!!)
+    @PostMapping("/move")
+    fun moveFolder(@RequestBody request : HashMap<String, String>) : HttpStatus = folderService.move(request["oldPath"]!!, request["newPath"]!!)
 
     /**
      * copy folder to new path
