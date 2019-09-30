@@ -5,8 +5,9 @@ const PrevFolderButton = props => {
 	const style = {
 		display : props.rootOpened ? 'none' : 'block',
 		position : 'fixed',
-		padding : '15px',
-		paddingLeft : '10px'
+		zIndex : 999,
+		padding : 15,
+		paddingLeft : 10
 	}
 
 	return (
