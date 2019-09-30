@@ -12,3 +12,6 @@ pluginManagement {
 		}
 	}
 }
+
+include ":util"
+include ":common"
