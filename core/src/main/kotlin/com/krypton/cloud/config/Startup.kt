@@ -4,6 +4,7 @@ import com.krypton.cloud.model.Folder
 import com.krypton.cloud.service.file.record.FileRecordServiceImpl
 import com.krypton.cloud.service.folder.record.FolderRecordServiceImpl
 import com.krypton.cloud.service.folder.record.FolderRecordUtils
+import com.krypton.cloud.service.trash.TrashService
 import common.config.AppProperties
 import lombok.AllArgsConstructor
 import org.springframework.boot.CommandLineRunner
@@ -20,7 +21,8 @@ import org.springframework.stereotype.Service
 class Startup(
         private val fileRecordService   : FileRecordServiceImpl,
         private val folderRecordService : FolderRecordServiceImpl,
-        private val folderRecordUtils   : FolderRecordUtils
+        private val folderRecordUtils   : FolderRecordUtils,
+        private val trashService : TrashService<Folder>
 ) : CommandLineRunner {
 
     // folder used for storage
@@ -54,6 +56,8 @@ class Startup(
             folderRecordUtils.addAllFoldersToDatabase(trashContent)
 
             fileRecordService.addAllFilesToDatabase(trashContent)
+
+            trashService.addAllTrashEntities(trashContent)
         }
     }
 

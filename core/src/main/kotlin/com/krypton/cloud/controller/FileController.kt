@@ -4,6 +4,7 @@ import com.krypton.cloud.model.File
 import lombok.AllArgsConstructor
 import com.krypton.cloud.service.file.FileServiceImpl
 import com.krypton.cloud.service.file.record.FileRecordServiceImpl
+import com.krypton.cloud.service.trash.TrashService
 import org.springframework.http.*
 import org.springframework.http.codec.multipart.FilePart
 import org.springframework.http.codec.multipart.FormFieldPart
@@ -16,7 +17,8 @@ import java.util.*
 @RequestMapping("/file")
 class FileController(
         private val fileService : FileServiceImpl,
-        private val fileRecordService : FileRecordServiceImpl
+        private val fileRecordService : FileRecordServiceImpl,
+        private val trashService: TrashService<File>
 ) {
 
     /**
@@ -60,11 +62,35 @@ class FileController(
     @PostMapping("/rename")
     fun renameFile(@RequestBody request : HashMap<String, String>) : HttpStatus = fileService.rename(request["path"]!!, request["newName"]!!)
 
-
     /**
      * @param request   file path
      * @return http status
      */
     @PostMapping("/delete")
     fun deleteFile(@RequestBody request : HashMap<String, String>) : HttpStatus = fileService.delete(request["path"]!!)
+
+    @PostMapping("/move-to-trash")
+    fun moveToTrash(@RequestBody request : HashMap<String, String>) : HttpStatus {
+        val file = fileRecordService.getById(UUID.fromString(request["id"]))
+
+        return if (trashService.moveToTrash(file)) {
+            HttpStatus.OK
+        } else HttpStatus.INTERNAL_SERVER_ERROR
+    }
+
+    @PostMapping("/delete-from-trash")
+    fun deleteFromTrash(@RequestBody request : HashMap<String, String>) : HttpStatus {
+        return if (trashService.deleteFromTrash(UUID.fromString(request["id"]))) {
+            HttpStatus.OK
+        } else HttpStatus.INTERNAL_SERVER_ERROR
+    }
+
+    @PostMapping("/restore-from-trash")
+	fun restoreFromTrash(@RequestBody request : HashMap<String, String>) : HttpStatus {
+		return if (trashService.restoreFromTrash(UUID.fromString(request["id"]))) {
+			HttpStatus.OK
+		} else {
+			HttpStatus.INTERNAL_SERVER_ERROR
+		}
+	}
 }
