@@ -1,20 +1,15 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 
+import { EmptyContentBanner } from './emptycontent/EmptyContentBanner';
+import { FileEntity } 		from '../../../model/entity/FileEntity';
+import { FolderEntity } 	from '../../../model/entity/FolderEntity';
+import App, { ContentContext } from '../../../App';
 import DefaultContextMenu	from './contextmenu/DefaultContextMenu';
-import Folder 				from '../elements/folder/Folder';
 import File 				from '../elements/file/File';
-import App					from '../../../App';
-import {FileEntity} 		from '../../../model/entity/FileEntity';
-import {FolderEntity} 		from '../../../model/entity/FolderEntity';
-import {EmptyContentBanner} from './emptycontent/EmptyContentBanner';
+import Folder 				from '../elements/folder/Folder';
+import { APIHelpers as API } from '../../../helpers';
 
-type ContentContainerProps = {
-	parent 	: App,
-	files 	: FileEntity[],
-	folders : FolderEntity[]
-}
-
-export default class ContentContainer extends Component<ContentContainerProps> {
+export default class ContentContainer extends Component<{ folderId : string, parent : App }> {
 	state = {
 		disableContextMenu : false,
 		contextMenuShow : false,
@@ -38,15 +33,16 @@ export default class ContentContainer extends Component<ContentContainerProps> {
 				this.setState({
 					contextMenuShow: true,
 					contextMenuStyle: {
-						top: e.y - 70,
-						left: e.x - 275
+						top: e.y,
+						left: e.x
 					}
 				})
 			});
 		}
-
 		window.addEventListener('click', () => this.setState({ contextMenuShow : false }), false);
 	}
+
+
 
 	createFile = (data: FileEntity) => {
 		const mainParent = this.props.parent;
@@ -116,42 +112,57 @@ export default class ContentContainer extends Component<ContentContainerProps> {
 		background: 'gray'
 	};
 
+	getContent = (
+		setFiles : (newFiles : FileEntity[]) => FileEntity[],
+		setFolders : (newFolders : FolderEntity[]) => FolderEntity[]
+	) => {
+		API.getFolderFiles(this.props.folderId)
+			.then(files => setFiles(files));
+
+		API.getFolderFolders(this.props.folderId)
+			.then(folders => setFolders(folders));
+	};
+
 	render = () => (
-		<div id="content-container">
-			{this.props.children}
-			{this.props.folders.length < 1
+		<ContentContext.Consumer>
+			{content => 
+				<div id="content-container">
+					{this.props.children}
+					{content.folders.length < 1
 					&&
-					this.props.files.length < 1
+					content.files.length < 1
 					&&
 					<EmptyContentBanner/>}
 					<div className="elements">
-						{this.props.folders.length > 0
-							?	<div className="content-elements-indicator">
+						{content.folders.length > 0
+							? <div className="content-elements-indicator">
 									<span>Folders</span>
-									<div style={this.separatorStyle}/>
+									<div style={this.separatorStyle} />
 								</div>
-						: undefined}
-						<div className="content-folders">
-							{this.props.folders.map(this.createFolder)}
-						</div>
-						{this.props.files.length > 0
-							?	<div className="content-elements-indicator">
+							: undefined}
+							<div className="content-folders">
+								{content.folders.map(this.createFolder)}
+							</div>
+							{content.files.length > 0
+								? <div className="content-elements-indicator">
 									<span>Files</span>
-									<div style={this.separatorStyle}/>
-								</div>
-						: undefined}
-						<div className="content-files">
-							{this.props.files.map(this.createFile)}
-						</div>
+										<div style={this.separatorStyle} />
+									</div>
+								: undefined}
+							<div className="content-files">
+								{content.files.map(this.createFile)}
+							</div>
 					</div>
 					{this.state.contextMenuShow
-						&&
-						!this.state.disableContextMenu 
-						&&
-						<DefaultContextMenu
-							style={this.state.contextMenuStyle}
-							parent={this.props.parent}
-							action={this.handleContextMenu}/>}
-		</div>
+					&&
+					!this.state.disableContextMenu
+					&&
+					<DefaultContextMenu
+						style={this.state.contextMenuStyle}
+						parent={this.props.parent}
+						action={this.handleContextMenu} />}
+				</div>
+			}
+		</ContentContext.Consumer>
 	);
 }

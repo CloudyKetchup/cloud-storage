@@ -4,15 +4,17 @@ import {Link}							from "react-router-dom";
 import {FileEntity}						from '../../../../model/entity/FileEntity';
 import EntityComponent, {EntityProps} 	from '../entity/EntityComponent';
 import {FileExtensionIcons}				from "./FileExtensionIcons";
+import { APIHelpers as API } from '../../../../helpers';
+import { AppContentContext } from '../../../../App';
 
 const contextMenuListener = async (e: MouseEvent, obj: File) => {
 	e.preventDefault();
 
 	obj.setState({
-		contextMenuShow  : true,
-		contextMenuStyle : {
-			top : e.y - 70,
-			left: e.x - 275
+		contextMenuShow: true,
+		contextMenuStyle: {
+			top: e.clientY,
+			left: e.clientX
 		}
 	});
 	obj.props.parent.setState({ disableContextMenu : true });
@@ -33,13 +35,25 @@ export default class File extends EntityComponent<FileProps> {
 	componentDidMount = () => {
 		const div = document.getElementById(`file-${this.props.data.id}`);
 
-		if (div !== null) div.addEventListener('contextmenu', e => contextMenuListener(e, this), false);
+		if (div !== null) div.addEventListener('contextmenu', e => contextMenuListener(e, this));
 	};
 
 	componentWillUnmount = () => {
 		const div = document.getElementById(`file-${this.props.data.id}`);
 
-		if (div !== null) div.removeEventListener('contextmenu', e => contextMenuListener(e, this), false);
+		if (div !== null) div.removeEventListener('contextmenu', e => contextMenuListener(e, this));
+	};
+
+	moveToTrash = () => {
+		API.moveToTrash(this.props.data)
+			.then(response => {
+				if (response === "OK") {
+					this.props.mainParent.updateFolderInfo()
+
+					API.getTrashItems()
+						.then(items => AppContentContext.setTrashItems(items));
+				}
+			});
 	};
 
 	render = () => (
@@ -60,7 +74,7 @@ export default class File extends EntityComponent<FileProps> {
 					<span>{this.name(this.props.data.name)}</span>
 				</div>
 				<div className="file-footer-control">
-					<button onClick={() => this.props.mainParent.sendDeleteRequest(this.props.data)}><i className="far fa-trash-alt"/></button>
+					<button onClick={this.moveToTrash}><i className="far fa-trash-alt"/></button>
 					<div style={{width: '2px', height: '60%', background: "gray", marginTop: "7%"}}/>
 					<Link 
 						onClick={() => this.props.mainParent.setState({ elementSelected : this.props.data })}

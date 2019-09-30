@@ -1,4 +1,4 @@
-	* {
+* {
 	transition: 0.2s;
 }
 
@@ -123,19 +123,20 @@ input:focus {
 
 .element-info-container {
 	box-shadow: 0 0 21px 10000px rgba(0,0,0,0.50);
-	background: #202020;
-	border-radius: 5px;
-	margin-left: 25%;
-	left: 0;
-	right: 0;
-	top: 5%;
-	width: 400px;
-	height: 500px;
-	padding: 10px;
-	z-index: 9999;
-	position: absolute;
-	animation-name: fade;
-	animation-duration: 0.2s;
+    background: #202020;
+    border-radius: 5px;
+    margin: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: 0;
+    width: 400px;
+    height: 500px;
+    padding: 10px;
+    z-index: 9999;
+    position: absolute;
+    animation-name: fade;
+    animation-duration: 0.2s;
 }
 
 .context-menu {
@@ -212,6 +213,160 @@ input:focus {
 	height: calc(100% - 50px);
 }
 
+.trash-button {
+    padding: 5px;
+	text-align: center;
+    width: 70px !important;
+	margin-left: -15px;
+    line-height: 30px;
+	transition: 0s;
+}
+
+.trash-button:hover {
+	cursor: pointer;
+}
+
+.trash-container {
+	top: 8%;
+	right: 10px;
+	height: 90%;
+	width: 300px;
+	border-radius: 5px;
+	box-shadow: 0px 0px 5px 0px rgba(0,0,0,0.75);
+	background: #181818;
+	z-index: 100;
+	position: fixed;
+}
+
+.trash-container-header {
+	height: 5%;
+    width: 100%;
+    position: absolute;
+}
+
+.trash-content {
+	display: grid;
+	grid-auto-rows: 50px;
+	grid-gap: 10px;
+	overflow-y: auto;
+	width: 90%;
+	height: 93%;
+	margin-top: 10%;
+	margin-left: 5%;
+}
+
+.trash-item {
+	background: #181818;
+	margin-right: 0;
+	border-bottom: 1px solid ghostwhite;
+	border-radius: 5px;
+	color: white;
+	position: relative;
+}
+
+.trash-item:hover {
+	cursor: pointer;
+	background: #303030;
+}
+
+.trash-item-background, .trash-item-foreground {
+	border-radius: 5px;
+	height: 100%;
+    width: 100%;
+	position: absolute;
+}
+
+.trash-item-foreground {
+	border-top-right-radius: 0;
+	border-top-left-radius: 0;
+	background: #181818;
+    z-index: 99;
+}
+	
+.trash-item-background {
+	color: #181818;
+    background: ghostwhite;
+    z-index: 98;
+}
+
+.trash-item-background-control {
+	text-align: center;
+	width: 80px;
+    height: 100%;
+    float: right;
+    display: flex;
+}
+
+.trash-item-background-control > div {
+	width: 40px;
+    height: 100%;
+    font-size: 20px;
+    line-height: 45px;
+}
+
+.trash-container-close-button {
+	margin-top: -6%;
+	margin-right: 5px;
+	float: right;
+	transition: 0.05s;
+	padding: 6px;
+	background: transparent;
+	color: white;
+}
+
+.trash-container-close-button:hover {
+	background: unset;
+	cursor: pointer;
+	color: gray;
+}
+
+.trash-container-top-pad {
+	background: #fafafa;
+	height: 7px;
+	width: 170px;
+	border-radius: 10px;
+	margin-top: 10px;
+	margin-left: 70px;
+}
+
+.trash-side-buttons {
+	display: grid;
+	grid-gap: 10px;
+	grid-auto-rows: 40px;
+	height: 80px;
+	width: 70px;
+	bottom: 30px;
+	right: 0;
+	z-index: 100;
+	position: absolute;
+}
+
+.trash-control-button {
+	height: 100%;
+	width: 10px;
+	justify-self: right;
+	color: white;
+	transition: 0.3s;
+}
+
+.trash-control-button-icon {
+	margin-top: 8px;
+	margin-right: 12px;
+	font-size: 23px;
+	color: #181818;
+	float: right;
+	display: none;
+}
+
+.trash-control-button:hover .trash-control-button-icon {
+	display: unset;
+}
+
+.trash-control-button:hover {
+	cursor: pointer;
+	width: 50px;
+}
+
 #content-container {
 	height: calc(100% - 50px);
 	width: calc(100% - 200px);
@@ -226,7 +381,7 @@ input:focus {
 	padding-top: 10px;
 }
 
-.content-folders, .content-files {
+.content-folders, .content-files, .content-trash {
 	display: grid;
 	grid-gap: 10px;
 	grid-auto-rows: 50px;
@@ -366,12 +521,10 @@ input:focus {
 }
 
 .element-info {
-	height: 80%;
-	position: absolute;
-	left: 0;
-	bottom: 10%;
-	padding: 10px;
-	overflow-y: auto;
+	margin-top: 10%;
+    height: 78%;
+    padding: 10px;
+    overflow-y: auto;
 }
 
 .element-info > div {
@@ -383,9 +536,9 @@ input:focus {
 
 .memory-info {
 	bottom: 0;
-	left: 0;
-	padding: 5px 10px;
-	position: absolute;
+    left: 0;
+    padding: 0 20px 5px 0px;
+    position: absolute;;
 }
 
 .used-memory-info {
@@ -457,6 +610,7 @@ input:focus {
 	color: #fff;
 	border-radius: 100px;
 	box-shadow: 0 5px 5px rgba(0, 0, 0, 0.25);
+	z-index: 99;
 	position: fixed;
 }
 
@@ -516,19 +670,19 @@ input:focus {
 
 .standard-dialog {
 	background: #fff;
-	border-radius: 5px;
-	height: 200px;
-	width: 400px;
-	position: absolute;
-	z-index: 99;
-	margin-left: 25%;
-	margin-right: auto;
-	top: 25%;
-	box-shadow: 0 0 5px 1000px rgba(0,0,0,0.35);
-	animation-name: slideTop;
-	animation-duration: 0.2s;
-	z-index: 9999;
-	position: absolute;
+    border-radius: 5px;
+    height: 200px;
+    width: 400px;
+    margin: auto;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    box-shadow: 0 0 5px 1000px rgba(0,0,0,0.35);
+    animation-name: slideTop;
+    animation-duration: 0.2s;
+    z-index: 9999;
+    position: absolute;
 }
 
 .input-field input:focus {

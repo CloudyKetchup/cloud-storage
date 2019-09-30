@@ -1,34 +1,32 @@
-import React, {Component} from 'react';
-
-import NavBar                           from './components/main/navbar/NavBar'
-import LeftPanel                        from './components/main/panel/leftpanel/LeftPanel';
-import ContentContainer                 from './components/content/container/ContentContainer';
-import PrevFolderButton                 from './components/content/container/control/PrevFolderButton';
-import BufferElementIndicator           from './components/bufferelement/BufferElementIndicator';
-import {ElementInfoContainer}           from './components/content/elements/info/ElementInfoContainer';
-import DragAndDrop                      from './components/content/dragdrop/DragAndDrop';
-import FileUploadManager, {UploadFile}  from './components/content/upload/UploadManager';
-import RightPanel                       from './components/main/panel/rightpanel/RightPanel';
-import CreateFolderDialog               from './components/content/container/control/CreateFolderDialog';
-import FolderZippingNotification		from './components/main/panel/rightpanel/notification/FolderZippingNotification/FolderZippingNotification';
-import ErrorNotification        		from './components/main/panel/rightpanel/notification/ErrorNotification/ErrorNotification';
-import {NotificationType}               from './components/main/panel/rightpanel/notification/Notification';
 import {BrowserRouter as Router, Link, Route, Switch} from 'react-router-dom';
+import React, {Component, Context, createContext} from 'react';
 
-import {FolderEntity}   from './model/entity/FolderEntity';
-import {FileEntity}     from './model/entity/FileEntity';
-import {Entity}         from './model/entity/Entity';
-import {BufferElement}  from './model/BufferElement';
-import {Notification}	from './model/notification/Notification';
-import {EntityType}     from './model/entity/EntityType';
-import NavNode 			from './model/NavNode';
-
-import {APIHelpers as API} from './helpers';
-import RenameElementDialog from './components/content/elements/rename/RenameElementDialog';
+import {APIHelpers as API} 				from './helpers';
+import {BufferElement}  				from './model/BufferElement';
+import {ElementInfoContainer}           from './components/content/elements/info/ElementInfoContainer';
+import {Entity}         				from './model/entity/Entity';
+import {EntityType}     				from './model/entity/EntityType';
+import {FolderEntity}   				from './model/entity/FolderEntity';
+import {Notification}					 from './model/notification/Notification';
+import {NotificationType}                from './components/main/panel/rightpanel/notification/Notification';
+import BufferElementIndicator           from './components/bufferelement/BufferElementIndicator';
+import ContentContainer                 from './components/content/container/ContentContainer';
+import CreateFolderDialog               from './components/content/container/control/CreateFolderDialog';
+import DragAndDrop                      from './components/content/dragdrop/DragAndDrop';
+import ErrorNotification				 from './components/main/panel/rightpanel/notification/ErrorNotification/ErrorNotification';
+import FileUploadManager, { UploadFile} from './components/content/upload/UploadManager';
+import FolderZippingNotification		 from './components/main/panel/rightpanel/notification/FolderZippingNotification/FolderZippingNotification';
+import LeftPanel                        from './components/main/panel/leftpanel/LeftPanel';
+import NavBar                           from './components/main/navbar/NavBar'
+import NavNode 							from './model/NavNode';
+import PrevFolderButton                 from './components/content/container/control/PrevFolderButton';
+import RenameElementDialog 				from './components/content/elements/rename/RenameElementDialog';
+import RightPanel                       from './components/main/panel/rightpanel/RightPanel';
+import TrashContainer					from './components/content/trash/TrashContainer';
+import { FileEntity } from './model/entity/FileEntity';
+import { ContentContextType } from './context/ContentContext';
 
 type IState = {
-	folders			: FolderEntity[],
-	files			: FileEntity[],
 	bufferElement		: BufferElement | undefined,
 	elementSelected		: Entity	| undefined,
 	folderInfo		: FolderEntity,
@@ -38,64 +36,96 @@ type IState = {
 	notifications		: Notification[],
 	notificationKey 	: number,
 	foldersNavigation 	: NavNode[],
-	[fileUploadProgress : string] : any
+	[fileUploadProgress : string] : any,
 };
 
-export default class App extends Component<{}, IState> {
-	state: IState = {
-		folders             : [],
-		files               : [],
-		bufferElement       : undefined,
-		elementSelected     : undefined,
-		folderInfo          : {
-			id          : "",
-			name        : 'cloud',
-			parentId    : null,
-			timeCreated : undefined,
-			root        : true,
-			path        : '',
-			location    : null,
-			size		: "0",
-			type        : EntityType.FOLDER
+export let AppContentContext : ContentContextType; 
+
+export let ContentContext : Context<ContentContextType>;
+
+export default class App extends Component {
+	state : IState = {
+		bufferElement: undefined,
+		elementSelected: undefined,
+		folderInfo: {
+			id: "",
+			name: 'Cloud',
+			parentId: null,
+			timeCreated: undefined,
+			root: true,
+			path: '',
+			location: null,
+			size: "0",
+			type: EntityType.FOLDER
 		},
-		rootOpened          : true,
-		rootMemory          : {},
-		uploadingFiles      : [],
-		notifications       : [],
-		notificationKey		: 0,
-		foldersNavigation 	: []
+		rootOpened: true,
+		rootMemory: {},
+		uploadingFiles: [],
+		notifications: [],
+		notificationKey: 0,
+		foldersNavigation: [],
 	};
 
+	componentWillMount() {
+		AppContentContext = {
+			files		 : [],
+			folders		: [],
+			trashItems	: [],
+			setFiles: (newFiles: FileEntity[]) => {
+				AppContentContext.files = newFiles.slice(0);
+
+				this.forceUpdate();
+				
+				return AppContentContext.files },
+			setFolders: (newFolders: FolderEntity[]) => {
+				AppContentContext.folders = newFolders.slice(0);
+
+				this.forceUpdate();
+				
+				return AppContentContext.folders },
+			setTrashItems: (newTrashItems: Entity[]) => {
+				AppContentContext.trashItems = newTrashItems.slice(0);
+
+				this.forceUpdate();
+				
+				return AppContentContext.trashItems }
+		};
+		ContentContext = createContext(AppContentContext);
+	}
+
 	componentDidMount() {
-		API.getRootId()
-			.then(result => this.setState({
-				folderInfo : {
-					id          : result,
-					name        : 'cloud',
-					parentId    : null,
-					timeCreated : undefined,
-					root        : true,
-					path        : '',
-					location    : null,
-					size		: "0",
-					type        : EntityType.FOLDER
-				}
-			}))
+		API.getRootId().then(root => {
+				this.setState({
+					folderInfo: {
+						id: root,
+						name: '',
+						parentId: null,
+						timeCreated: undefined,
+						root: true,
+						path: '',
+						location: null,
+						size: "0",
+						type: EntityType.FOLDER
+					}
+				})
+				API.getTrashItems().then(items => AppContentContext.setTrashItems(items));
+			})
 			.then(() => {
-				API.getRootMemory().then(memory => {
-					this.setState({
-						rootMemory : memory,
-						rootOpened : true
+				API.getRootMemory()
+					.then(memory => {
+						this.setState({
+							rootMemory : memory,
+							rootOpened : true
+						});
 					});
-				});
 
 				this.addNavNode(this.state.folderInfo);
 
-				this.updateFolderInfo(this.state.folderInfo.id);
+				this.updateFolderInfo();
 			});
 	}
 
-	updateFolderInfo = (folderId: string) => {
+	updateFolderInfo = (folderId = this.state.folderInfo.id) => {
 		this.setState({ elementSelected : undefined });
 
 		API.getFolderData(folderId).then(data => {
@@ -105,9 +135,9 @@ export default class App extends Component<{}, IState> {
 			})
 		});
 
-		API.getFolderFiles(folderId).then(files => this.setState({ files : files }));
+		API.getFolderFiles(folderId).then(files => AppContentContext.setFiles(files));
 
-		API.getFolderFolders(folderId).then(folders => this.setState({ folders : folders }));	
+		API.getFolderFolders(folderId).then(folders => AppContentContext.setFolders(folders));
 	};
 
 	handleContextMenuAction = async (action: string, target: Entity) => {
@@ -122,9 +152,9 @@ export default class App extends Component<{}, IState> {
 						});
 				}
 				break;
-			case 'cut':
+			case 'move':
 				this.setState({bufferElement: {
-					action: 'cut',
+					action: 'move',
 					data: target
 				}});
 				break;
@@ -136,6 +166,10 @@ export default class App extends Component<{}, IState> {
 				break;
 			case 'delete':
 				this.sendDeleteRequest(target);
+				break;
+			case 'trash':
+				API.moveToTrash(target)
+					.then(result => result === "OK" ? this.updateFolderInfo() : console.log(result));
 				break;
 			default: break;
 		}
@@ -254,7 +288,7 @@ export default class App extends Component<{}, IState> {
 	createNewFolder = (folder: FolderEntity) => {
 		API.sendNewFolder(folder, this.state.folderInfo.path)
 			.then(response => response === 'OK' 
-				? this.updateFolderInfo(this.state.folderInfo.id) 
+				? this.updateFolderInfo() 
 				: console.log(response))
 			.catch(console.log);
 	};
@@ -263,7 +297,7 @@ export default class App extends Component<{}, IState> {
 		if (targetEntity !== undefined) {
 			API.sendPasteRequest(targetEntity.data, targetEntity.action, this.state.folderInfo.path)
 				.then(response => response === 'OK'
-					? this.updateFolderInfo(this.state.folderInfo.id)
+					? this.updateFolderInfo()
 					: console.log(response))
 				.catch(console.log);
 		}
@@ -272,7 +306,7 @@ export default class App extends Component<{}, IState> {
 	renameEntity = (target : Entity, newName: string) => {
 		API.sendRenameRequest(target, newName)
 			.then(response => {
-				if (response === 'OK') this.updateFolderInfo(this.state.folderInfo.id);
+				if (response === 'OK') this.updateFolderInfo();
 			})
 			.catch(console.log);
 	};
@@ -280,7 +314,7 @@ export default class App extends Component<{}, IState> {
 	sendDeleteRequest = (target: Entity) => {
 		API.sendDeleteRequest(target)
 			.then(response => response === 'OK'
-				? this.updateFolderInfo(this.state.folderInfo.id)
+				? this.updateFolderInfo()
 				: console.log(response))
 			.catch(console.log);
 	};
@@ -288,7 +322,7 @@ export default class App extends Component<{}, IState> {
 	sendDeleteAll() {
 		API.sendDeleteAll(this.state.folderInfo.path)
 			.then(response => response === 'OK'
-				? this.updateFolderInfo(this.state.folderInfo.id)
+				? this.updateFolderInfo()
 				: console.log(response))
 			.catch(console.log);
 	}
@@ -298,13 +332,6 @@ export default class App extends Component<{}, IState> {
 			API.uploadFile(file, this);
 		}
 	};
-
-	createFolderDialog() {
-		return 	<CreateFolderDialog
-			parent={this}
-			sendFolder={(folder: FolderEntity) => this.createNewFolder(folder)}
-		/>;
-	}
 
 	notificationDiv = (notification: Notification) => {
 		if (notification.type === NotificationType.ERROR) {
@@ -333,52 +360,56 @@ export default class App extends Component<{}, IState> {
 				<LeftPanel
 					memory={this.state.rootMemory}
 					folderInfo={this.state.folderInfo}
-					folders={this.state.folders.length}
-					files={this.state.files.length}
+					folders={AppContentContext.folders.length}
+					files={AppContentContext.files.length}
 				/>
 				<DragAndDrop className="drag-and-drop" handleDrop={this.uploadFiles}>                    
-					<ContentContainer
-						parent={this}
-						files={this.state.files}
-						folders={this.state.folders}
-					>
-						<Switch>
-							<Route path="/:type/:id/rename" render={props => 
-									<RenameElementDialog
-										onRename={(target : Entity, newName: string) => this.renameEntity(target, newName)}
-										{...props}/>}
-									/>
-							<Route path="/folder/create" component={() => this.createFolderDialog()}/>
-							<Route path="/:type/:id/info" render={props => <ElementInfoContainer parent={this} {...props}/>}/>
-						</Switch>
-						<PrevFolderButton
-							whenClicked={() => {
-								if (this.state.folderInfo.parentId !== null) {
-									this.removeNodeSuccessors(this.state.folderInfo.parentId);
-
-									this.updateFolderInfo(this.state.folderInfo.parentId);
-								}
-							}}
-							rootOpened={this.state.rootOpened}
+					<Switch>
+						<Route path="/:type/:id/rename" render={props =>
+							<RenameElementDialog
+								onRename={(target: Entity, newName: string) => this.renameEntity(target, newName)}
+								{...props} />}
 						/>
-						<Link to="/create-folder">
-							<button className='create-folder'><i className='fas fa-folder-plus'/></button>
-						</Link>
-						<button
-							className='upload-file-button'
-							onClick={() => {
-								const uploadInput = document.getElementById('select-upload-files');
+						<Route path="/folder/create" render={() =>
+							<CreateFolderDialog
+								parent={this}
+								sendFolder={(folder: FolderEntity) => this.createNewFolder(folder)}/>}/>
+						<Route path="/:type/:id/info" render={props => <ElementInfoContainer parent={this} {...props}/>}/>
+						<Route path="/trash" render={_ => <TrashContainer parent={this}/>}/>
+					</Switch>
+					<ContentContext.Provider value={AppContentContext}>
+						<ContentContainer
+							folderId={this.state.folderInfo.id}
+							parent={this}>
+							<PrevFolderButton
+								whenClicked={() => {
+									if (this.state.folderInfo.parentId !== null) {
+										this.removeNodeSuccessors(this.state.folderInfo.parentId);
 
-								if (uploadInput !== null) uploadInput.click();
-							}}
-						><i className='fas fa-file-upload'/></button>
-						{this.state.uploadingFiles.length > 0
-							&&
-							<FileUploadManager onClose={() => this.setState({ uploadingFiles : [] })}>
-								{this.state.uploadingFiles.map(file => <UploadFile key={file.name} data={file} parent={this}/>)}
-							</FileUploadManager>}    
-						{this.state.bufferElement !== undefined && <BufferElementIndicator element={this.state.bufferElement}/>}
-					</ContentContainer>
+										this.updateFolderInfo(this.state.folderInfo.parentId);
+									}
+								}}
+								rootOpened={this.state.rootOpened}
+							/>
+							<Link to="/folder/create">
+								<button className='create-folder'><i className='fas fa-folder-plus' /></button>
+							</Link>
+							<button
+								className='upload-file-button'
+								onClick={() => {
+									const uploadInput = document.getElementById('select-upload-files');
+
+									if (uploadInput !== null) uploadInput.click();
+								}}
+							><i className='fas fa-file-upload' /></button>
+							{this.state.uploadingFiles.length > 0
+								&&
+								<FileUploadManager onClose={() => this.setState({ uploadingFiles: [] })}>
+									{this.state.uploadingFiles.map(file => <UploadFile key={file.name} data={file} parent={this} />)}
+								</FileUploadManager>}
+							{this.state.bufferElement !== undefined && <BufferElementIndicator element={this.state.bufferElement} />}
+						</ContentContainer>
+					</ContentContext.Provider>
 					</DragAndDrop>
 					<RightPanel closePanel={() => {
 						const rightPanel = document.getElementById("right-panel");

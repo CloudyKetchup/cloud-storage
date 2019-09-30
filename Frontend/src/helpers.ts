@@ -4,7 +4,6 @@ import {Entity} 		from './model/entity/Entity';
 import App from './App';
 
 import axios from 'axios';
-import { FileEntity } from './model/entity/FileEntity';
 
 export const API_URL = 'http://localhost:8080';
 
@@ -63,8 +62,8 @@ export class APIHelpers {
 	static sendNewFolder = (folder: FolderEntity, path: string) : Promise<string> => (
 		axios.post(`${API_URL}/folder/create/`,
 			{
-				'name' 		: folder,
-				'folderPath': path
+				name		: folder,
+				folderPath	: path
 			})
 			.then(response => response.data)
 	);
@@ -75,6 +74,40 @@ export class APIHelpers {
 				oldPath: target.path,
 				newPath: newPath
 			})
+			.then(response => response.data)
+	);
+
+	static getTrashItems = () : Promise<[]> => (
+		axios.get(`${API_URL}/folder/trash/items`)
+			.then(response => response.data)
+	);
+
+	static moveToTrash = (target: Entity) : Promise<string> => (
+		axios.post(`${API_URL}/${target.type.toLowerCase()}/move-to-trash`,
+			{
+				id : target.id
+			})
+			.then(response => response.data)
+	);
+
+	static restoreFromTrash = (target: Entity) : Promise<string> => (
+		axios.post(`${API_URL}/${target.type.toLowerCase()}/restore-from-trash`,
+			{
+				id : target.id
+			})
+			.then(response => response.data)
+	);
+
+	static deleteFromTrash = (target: Entity) : Promise<string> => (
+		axios.post(`${API_URL}/${target.type.toLowerCase()}/delete-from-trash`,
+			{
+				id : target.id
+			})
+			.then(response => response.data)
+	);
+
+	static emptyTrash = () : Promise<string> => (
+		axios.delete(`${API_URL}/folder/empty-trash`)
 			.then(response => response.data)
 	);
 

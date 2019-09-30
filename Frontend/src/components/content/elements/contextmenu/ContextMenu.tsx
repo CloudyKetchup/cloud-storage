@@ -31,7 +31,7 @@ export default class ContextMenu extends Component<ContextMenuProps> {
 					</div>
 					<span>Download</span>
 				</div>
-				<div onClick={() => this.props.action("cut")}>
+				<div onClick={() => this.props.action("move")}>
 					<div className="context-menu-icon">
 						<i className="fas fa-cut"/>
 					</div>
@@ -51,9 +51,15 @@ export default class ContextMenu extends Component<ContextMenuProps> {
 				</Link>
 				<div onClick={() => this.props.action("delete")}>
 					<div className="context-menu-icon">
-						<i className="far fa-trash-alt"/>
+						<i className="fas fa-times"/>
 					</div>
 					<span>Delete</span>
+				</div>
+				<div onClick={() => this.props.action("trash")}>
+					<div className="context-menu-icon">
+						<i className="far fa-trash-alt"/>
+					</div>
+					<span>Move to trash</span>
 				</div>
 				<Link to={`/${this.props.parent.type.toLowerCase()}/${this.props.parent.id}/info`}>
 					<div className="context-menu-icon">
