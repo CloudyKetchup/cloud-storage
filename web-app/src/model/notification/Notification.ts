@@ -1,4 +1,4 @@
-import {NotificationType}   from "../../components/main/panel/rightpanel/notification/Notification";
+import {NotificationType}   from "../../components/Notification/Notification";
 import {EntityType}         from "../entity/EntityType";
 
 export type Notification = {

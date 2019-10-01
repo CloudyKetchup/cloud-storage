@@ -3,28 +3,28 @@ import React, {Component, Context, createContext} from 'react';
 
 import {APIHelpers as API} 				from './helpers';
 import {BufferElement}  				from './model/BufferElement';
-import {ElementInfoContainer}           from './components/content/elements/info/ElementInfoContainer';
+import {ElementInfoContainer}           from './components/ElementInfoContainer/ElementInfoContainer';
 import {Entity}         				from './model/entity/Entity';
 import {EntityType}     				from './model/entity/EntityType';
 import {FolderEntity}   				from './model/entity/FolderEntity';
-import {Notification}					 from './model/notification/Notification';
-import {NotificationType}                from './components/main/panel/rightpanel/notification/Notification';
-import BufferElementIndicator           from './components/bufferelement/BufferElementIndicator';
-import ContentContainer                 from './components/content/container/ContentContainer';
-import CreateFolderDialog               from './components/content/container/control/CreateFolderDialog';
-import DragAndDrop                      from './components/content/dragdrop/DragAndDrop';
-import ErrorNotification				 from './components/main/panel/rightpanel/notification/ErrorNotification/ErrorNotification';
-import FileUploadManager, { UploadFile} from './components/content/upload/UploadManager';
-import FolderZippingNotification		 from './components/main/panel/rightpanel/notification/FolderZippingNotification/FolderZippingNotification';
-import LeftPanel                        from './components/main/panel/leftpanel/LeftPanel';
-import NavBar                           from './components/main/navbar/NavBar'
+import {Notification}					from './model/notification/Notification';
+import {NotificationType}               from './components/Notification/Notification';
+import BufferElementIndicator           from './components/BufferElement/BufferElementIndicator';
+import ContentContainer                 from './components/ContentContainer/ContentContainer';
+import CreateFolderDialog               from './components/CreateFolderDialog/CreateFolderDialog';
+import DragAndDrop                      from './components/DragAndDrop/DragAndDrop';
+import ErrorNotification				from './components/ErrorNotification/ErrorNotification';
+import FileUploadManager, { UploadFile} from './components/UploadManager/UploadManager';
+import LeftPanel                        from './components/LeftPanel/LeftPanel';
+import NavBar                           from './components/NavBar/NavBar'
 import NavNode 							from './model/NavNode';
-import PrevFolderButton                 from './components/content/container/control/PrevFolderButton';
-import RenameElementDialog 				from './components/content/elements/rename/RenameElementDialog';
-import RightPanel                       from './components/main/panel/rightpanel/RightPanel';
-import TrashContainer					from './components/content/trash/TrashContainer';
-import { FileEntity } from './model/entity/FileEntity';
-import { ContentContextType } from './context/ContentContext';
+import PrevFolderButton                 from './components/PrevFolderButton/PrevFolderButton';
+import RenameEntityDialog 				from './components/RenameEntityDialog/RenameEntityDialog';
+import RightPanel                       from './components/RightPanel/RightPanel';
+import TrashContainer					from './components/TrashContainer/TrashContainer';
+import { FileEntity } 					from './model/entity/FileEntity';
+import { ContentContextType } 			from './context/ContentContext';
+import FolderZippingNotification 		from "./components/FolderZippingNotification/FolderZippingNotification";
 
 type IState = {
 	bufferElement		: BufferElement | undefined,
@@ -289,7 +289,7 @@ export default class App extends Component {
 						break;
 				}
 			})
-			.catch(_ => this.errorNotificationProcessing(key));
+			.catch(() => this.errorNotificationProcessing(key));
 	};
 
 	createNewFolder = (folder: FolderEntity) => {
@@ -373,7 +373,7 @@ export default class App extends Component {
 				<DragAndDrop className="drag-and-drop" handleDrop={this.uploadFiles}>                    
 					<Switch>
 						<Route path="/:type/:id/rename" render={props =>
-							<RenameElementDialog
+							<RenameEntityDialog
 								onRename={(target: Entity, newName: string) => this.renameEntity(target, newName)}
 								{...props} />}
 						/>
