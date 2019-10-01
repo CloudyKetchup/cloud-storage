@@ -26,12 +26,12 @@ public class Folder extends BaseEntity {
     @Column
     private Boolean root = false;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "parentId")
     @JsonIgnore
     private Set<Folder> folders = new HashSet<>();
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "parentId")
     @JsonIgnore
     private Set<File> files = new HashSet<>();
@@ -57,35 +57,19 @@ public class Folder extends BaseEntity {
         }
     }
 
-    public UUID getParentId() {
-        return parentId;
-    }
+    public UUID getParentId() { return parentId; }
 
-    public void setParentId(UUID parentId) {
-        this.parentId = parentId;
-    }
+    public void setParentId(UUID parentId) { this.parentId = parentId; }
 
-    public Boolean getRoot() {
-        return root;
-    }
+    public Boolean getRoot() { return root; }
 
-    public void setRoot(Boolean root) {
-        this.root = root;
-    }
+    public void setRoot(Boolean root) { this.root = root; }
 
-    public Set<Folder> getFolders() {
-        return folders;
-    }
+    public Set<Folder> getFolders() { return folders; }
 
-    public void setFolders(Set<Folder> folders) {
-        this.folders = folders;
-    }
+    public void setFolders(Set<Folder> folders) { this.folders = folders; }
 
-    public Set<File> getFiles() {
-        return files;
-    }
+    public Set<File> getFiles() { return files; }
 
-    public void setFiles(Set<File> files) {
-        this.files = files;
-    }
+    public void setFiles(Set<File> files) { this.files = files; }
 }
