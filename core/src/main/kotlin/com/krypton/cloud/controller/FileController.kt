@@ -16,9 +16,8 @@ import java.util.*
 @RestController
 @RequestMapping("/file")
 class FileController(
-        private val fileService : FileServiceImpl,
-        private val fileRecordService : FileRecordServiceImpl,
-        private val trashService: TrashService<File>
+    private val fileService : FileServiceImpl,
+    private val fileRecordService : FileRecordServiceImpl
 ) {
 
     /**
@@ -69,28 +68,5 @@ class FileController(
     @PostMapping("/delete")
     fun deleteFile(@RequestBody request : HashMap<String, String>) : HttpStatus = fileService.delete(request["path"]!!)
 
-    @PostMapping("/move-to-trash")
-    fun moveToTrash(@RequestBody request : HashMap<String, String>) : HttpStatus {
-        val file = fileRecordService.getById(UUID.fromString(request["id"]))
 
-        return if (trashService.moveToTrash(file)) {
-            HttpStatus.OK
-        } else HttpStatus.INTERNAL_SERVER_ERROR
-    }
-
-    @PostMapping("/delete-from-trash")
-    fun deleteFromTrash(@RequestBody request : HashMap<String, String>) : HttpStatus {
-        return if (trashService.deleteFromTrash(UUID.fromString(request["id"]))) {
-            HttpStatus.OK
-        } else HttpStatus.INTERNAL_SERVER_ERROR
-    }
-
-    @PostMapping("/restore-from-trash")
-	fun restoreFromTrash(@RequestBody request : HashMap<String, String>) : HttpStatus {
-		return if (trashService.restoreFromTrash(UUID.fromString(request["id"]))) {
-			HttpStatus.OK
-		} else {
-			HttpStatus.INTERNAL_SERVER_ERROR
-		}
-	}
 }

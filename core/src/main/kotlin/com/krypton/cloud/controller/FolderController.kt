@@ -20,8 +20,7 @@ import kotlin.collections.HashMap
 @RequestMapping("/folder")
 class FolderController(
 	private val folderService : FolderServiceImpl,
-	private val folderRecordService : FolderRecordServiceImpl,
-	private val trashService : TrashService<Folder>
+	private val folderRecordService : FolderRecordServiceImpl
 ) {
 
 	/**
@@ -43,8 +42,7 @@ class FolderController(
 	 @GetMapping("/root/id")
 	 fun rootId() : String = folderRecordService.getByPath(AppProperties.storageFolder.absolutePath).id.toString()
 
-	 @GetMapping("/trash/items")
-	 fun getTrashItems() : List<BaseEntity> = trashService.getAllItems()
+
 
 	 /**
 	  * get [Folder] entity data
@@ -139,35 +137,5 @@ class FolderController(
 	@PostMapping("/zip")
 	fun zipFolder(@RequestBody request : HashMap<String, String>) : String = folderService.zipFolder(File(request["path"]!!))
 
-	@PostMapping("/move-to-trash")
-	fun moveToTrash(@RequestBody request : HashMap<String, String>) : HttpStatus {
-		val folder = folderRecordService.getById(UUID.fromString(request["id"]))
 
-		return if (trashService.moveToTrash(folder)) {
-			HttpStatus.OK
-		} else HttpStatus.INTERNAL_SERVER_ERROR
-	}
-
-	@DeleteMapping("/empty-trash")
-	fun emptyTrash() : HttpStatus {
-		return if (trashService.emptyTrash())
-			HttpStatus.OK
-		else HttpStatus.INTERNAL_SERVER_ERROR
-	}
-
-	@PostMapping("/delete-from-trash")
-    fun deleteFromTrash(@RequestBody request : HashMap<String, String>) : HttpStatus {
-        return if (trashService.deleteFromTrash(UUID.fromString(request["id"]))) {
-            HttpStatus.OK
-        } else HttpStatus.INTERNAL_SERVER_ERROR
-    }
-
-	@PostMapping("/restore-from-trash")
-	fun restoreFromTrash(@RequestBody request : HashMap<String, String>) : HttpStatus {
-		return if (trashService.restoreFromTrash(UUID.fromString(request["id"]))) {
-			HttpStatus.OK
-		} else {
-			HttpStatus.INTERNAL_SERVER_ERROR
-		}
-	}
 }
