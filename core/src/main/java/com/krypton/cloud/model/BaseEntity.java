@@ -24,7 +24,7 @@ public class BaseEntity {
     @Column
     private String name;
 
-    @Column
+    @Column(unique = true)
     private String path;
 
     @Column
@@ -39,55 +39,29 @@ public class BaseEntity {
     @Column
     private String size;
 
-    public UUID getId() {
-        return id;
-    }
+    public UUID getId() { return id; }
 
-    public String getName() {
-        return name;
-    }
+    public String getName() { return name; }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+    public void setName(String name) { this.name = name; }
 
-    public String getPath() {
-        return path;
-    }
+    public String getPath() { return path; }
 
-    public void setPath(String path) {
-        this.path = path;
-    }
+    public void setPath(String path) { this.path = path; }
 
-    public String getLocation() {
-        return location;
-    }
+    public String getLocation() { return location; }
 
-    public void setLocation(String location) {
-        this.location = location;
-    }
+    public void setLocation(String location) { this.location = location; }
 
-    public EntityType getType() {
-        return type;
-    }
+    public EntityType getType() { return type; }
 
-    public void setType(EntityType type) {
-        this.type = type;
-    }
+    public void setType(EntityType type) { this.type = type; }
 
-    public String getTimeCreated() {
-        return timeCreated;
-    }
+    public String getTimeCreated() { return timeCreated; }
 
-    public void setTimeCreated(String timeCreated) {
-        this.timeCreated = timeCreated;
-    }
+    public void setTimeCreated(String timeCreated) { this.timeCreated = timeCreated; }
 
-    public String getSize() {
-        return size;
-    }
+    public String getSize() { return size; }
 
-    public void setSize(String size) {
-        this.size = size;
-    }
+    public void setSize(String size) { this.size = size; }
 }
