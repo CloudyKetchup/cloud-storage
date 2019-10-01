@@ -22,7 +22,7 @@ class Startup(
         private val fileRecordService   : FileRecordServiceImpl,
         private val folderRecordService : FolderRecordServiceImpl,
         private val folderRecordUtils   : FolderRecordUtils,
-        private val trashService : TrashService<Folder>
+        private val trashService : TrashService
 ) : CommandLineRunner {
 
     // folder used for storage
