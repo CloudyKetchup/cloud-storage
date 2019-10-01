@@ -12,7 +12,7 @@ task bootRun(type: GradleBuild) {
 
 // Run frontend with Node js
 task npm_start(type: GradleBuild) {
-	dir = "Frontend"
+	dir = "web-app"
 	tasks = ["npm_start"]
 }
 

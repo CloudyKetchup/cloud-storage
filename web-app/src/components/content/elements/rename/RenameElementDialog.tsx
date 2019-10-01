@@ -1,11 +1,11 @@
-import React, { Component, InputHTMLAttributes } from 'react';
+import React, { Component } from 'react';
 
-import { Link, match } from 'react-router-dom';
-import { FileEntity } from '../../../../model/entity/FileEntity';
+import { Link, match } 	from 'react-router-dom';
+import { FileEntity } 	from '../../../../model/entity/FileEntity';
 import { FolderEntity } from '../../../../model/entity/FolderEntity';
-import { EntityType } from '../../../../model/entity/EntityType';
-import { APIHelpers } from '../../../../helpers';
-import { Entity } from '../../../../model/entity/Entity';
+import { EntityType } 	from '../../../../model/entity/EntityType';
+import { APIHelpers } 	from '../../../../helpers';
+import { Entity } 		from '../../../../model/entity/Entity';
 
 interface IProps {
 	onRename : (target : Entity, newName : string) => void

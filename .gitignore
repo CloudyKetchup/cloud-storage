@@ -13,7 +13,7 @@ core/build
 core/gradle
 core/out
 core/src/test
-Frontend/.gradle
-Frontend/.project
-Frontend/node_modules
-Frontend/package-lock.json
+web-app/.gradle
+web-app/.project
+web-app/node_modules
+web-app/package-lock.json
