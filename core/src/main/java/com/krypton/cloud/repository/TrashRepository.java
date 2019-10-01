@@ -21,4 +21,7 @@ public interface TrashRepository extends JpaRepository<TrashEntity, UUID> {
 
 	@Query(value = "select * from trash_entity", nativeQuery = true)
     List<TrashEntity> getAll();
+
+	@Query(value = "delete * from trash_entity where trash_entity.path = :path", nativeQuery = true)
+	boolean deleteByPath(@Param("path") String path);
 }
