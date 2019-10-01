@@ -107,7 +107,7 @@ export default class App extends Component {
 						size: "0",
 						type: EntityType.FOLDER
 					}
-				})
+				});
 				API.getTrashItems().then(items => AppContentContext.setTrashItems(items));
 			})
 			.then(() => {
@@ -169,7 +169,14 @@ export default class App extends Component {
 				break;
 			case 'trash':
 				API.moveToTrash(target)
-					.then(result => result === "OK" ? this.updateFolderInfo() : console.log(result));
+					.then(result => {
+						if (result === "OK") {
+						    this.updateFolderInfo();
+
+							API.getTrashItems()
+								.then(items => AppContentContext.setTrashItems(items));
+						}
+					});
 				break;
 			default: break;
 		}
@@ -375,7 +382,7 @@ export default class App extends Component {
 								parent={this}
 								sendFolder={(folder: FolderEntity) => this.createNewFolder(folder)}/>}/>
 						<Route path="/:type/:id/info" render={props => <ElementInfoContainer parent={this} {...props}/>}/>
-						<Route path="/trash" render={_ => <TrashContainer parent={this}/>}/>
+						<Route path="/trash" render={() => <TrashContainer parent={this}/>}/>
 					</Switch>
 					<ContentContext.Provider value={AppContentContext}>
 						<ContentContainer

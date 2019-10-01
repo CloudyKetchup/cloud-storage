@@ -78,12 +78,12 @@ export class APIHelpers {
 	);
 
 	static getTrashItems = () : Promise<[]> => (
-		axios.get(`${API_URL}/folder/trash/items`)
+		axios.get(`${API_URL}/trash/items`)
 			.then(response => response.data)
 	);
 
 	static moveToTrash = (target: Entity) : Promise<string> => (
-		axios.post(`${API_URL}/${target.type.toLowerCase()}/move-to-trash`,
+		axios.post(`${API_URL}/trash/${target.type.toLowerCase()}/move-to-trash`,
 			{
 				id : target.id
 			})
@@ -91,7 +91,7 @@ export class APIHelpers {
 	);
 
 	static restoreFromTrash = (target: Entity) : Promise<string> => (
-		axios.post(`${API_URL}/${target.type.toLowerCase()}/restore-from-trash`,
+		axios.post(`${API_URL}/trash/restore-from-trash`,
 			{
 				id : target.id
 			})
@@ -99,15 +99,12 @@ export class APIHelpers {
 	);
 
 	static deleteFromTrash = (target: Entity) : Promise<string> => (
-		axios.post(`${API_URL}/${target.type.toLowerCase()}/delete-from-trash`,
-			{
-				id : target.id
-			})
+		axios.delete(`${API_URL}/trash/delete/${target.id}`)
 			.then(response => response.data)
 	);
 
 	static emptyTrash = () : Promise<string> => (
-		axios.delete(`${API_URL}/folder/empty-trash`)
+		axios.delete(`${API_URL}/trash/empty-trash`)
 			.then(response => response.data)
 	);
 
