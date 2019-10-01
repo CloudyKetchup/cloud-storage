@@ -1,4 +1,4 @@
-package common.exception.entity.backup
+package common.exception.trash.backup
 
 import common.exception.entity.basic.CustomException
 
