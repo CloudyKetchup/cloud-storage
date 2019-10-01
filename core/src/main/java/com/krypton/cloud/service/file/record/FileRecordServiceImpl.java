@@ -1,18 +1,13 @@
 package com.krypton.cloud.service.file.record;
 
 import com.krypton.cloud.service.record.IOEntityRecordService;
-import common.exception.entity.database.FileDatabaseException;
 import com.krypton.cloud.model.File;
 import com.krypton.cloud.repository.FileRepository;
 import com.krypton.cloud.service.folder.record.FolderPersistenceHelper;
 import com.krypton.cloud.service.folder.record.FolderRecordServiceImpl;
 import com.krypton.cloud.service.folder.record.updater.FolderRecordUpdaterImpl;
-import common.model.LogType;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import util.log.LogFolder;
-import util.log.LoggingService;
 
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -68,24 +63,6 @@ public class FileRecordServiceImpl implements IOEntityRecordService<File> {
         return !exists(path);
     }
 
-    /**
-     * If file was not deleted properly, handle error
-     *
-     * @param path  file path
-     * @return {@link HttpStatus}
-     * */
-    private HttpStatus handleDeleteError(String path) {
-        if (!exists(path)) {
-            return HttpStatus.OK;
-        } else {
-            // save error log
-            LoggingService.INSTANCE.saveLog(new FileDatabaseException("Error deleting file " + path + " entity").stackTraceToString(),
-                    LogType.ERROR,
-                    LogFolder.DATABASE.getType() + LogFolder.DATABASE.getType());
-            return HttpStatus.INTERNAL_SERVER_ERROR;
-        }
-    }
-
     @Override
     public boolean exists(String path) {
         return fileRepository.getByPath(path) != null;
@@ -104,10 +81,13 @@ public class FileRecordServiceImpl implements IOEntityRecordService<File> {
      */
     public void addAllFilesToDatabase(List<java.io.File> files) {
         files.parallelStream().forEach(file -> {
-            // if file is file and don't already exist in database
-            if (file.isFile() && !exists(file.getPath())) {
+            if (file.isFile()
+                    &&
+                    !exists(file.getPath())             // if file already does not exist in database
+                    &&
+                    !file.getName().startsWith(".")     // if file is not ignored, like(.DS_STORE, .vimrc, ...)
+            ) {
                 save(new File(file));
-                // if is a folder
             } else if (file.isDirectory()) {
                 var insideContent = Arrays.asList(file.listFiles());
                 // add all files inside
