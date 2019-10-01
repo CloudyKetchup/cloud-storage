@@ -36,6 +36,7 @@ public class FolderServiceImpl implements FolderService, ErrorHandler {
 	private final FolderRecordUtils folderRecordUtils;
 
 	private final FolderRecordUpdaterImpl folderRecordUpdater;
+	
 
 	@Override
 	public HttpStatus createFolder(String folderName, String folderPath) {
@@ -84,7 +85,6 @@ public class FolderServiceImpl implements FolderService, ErrorHandler {
 	public HttpStatus rename(String folderPath, String newName) {
 	    var folder 		= new File(folderPath);
 		var parentPath 	= Paths.get(folderPath).getParent().toFile().getPath();
-
 	    // rename folder locally on file system
 	    if (folder.renameTo(new File(parentPath + "/" + newName))) {
 			// update folder name in database
@@ -117,7 +117,7 @@ public class FolderServiceImpl implements FolderService, ErrorHandler {
 	        for (var file : folder.listFiles()) {
 	            // if file is directory delete content inside it
 				if (file.isDirectory()) {
-					delete (file.getPath());
+					delete(file.getPath());
 				} else {
 					file.delete();
 					// delete file from database

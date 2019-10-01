@@ -61,8 +61,6 @@ public class FolderRecordServiceImpl implements IOEntityRecordService<Folder>, E
     public boolean delete(String folderPath) {
         var folder = getByPath(folderPath);
 
-        folderPersistenceHelper.removeAllFolderChilds(folder);
-
         folderRepository.delete(folder);
 
         return !exists(folderPath);

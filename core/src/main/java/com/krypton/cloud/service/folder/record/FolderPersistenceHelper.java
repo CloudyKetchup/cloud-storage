@@ -18,10 +18,6 @@ public class FolderPersistenceHelper {
 
     private final FolderRecordUpdaterImpl folderRecordUpdater;
 
-    private final FolderRepository folderRepository;
-
-    private final FileRepository fileRepository;
-
     /**
      * Add {@link File} as child to {@link Folder}
      *
@@ -86,46 +82,5 @@ public class FolderPersistenceHelper {
         return parent.getFiles()
                 .parallelStream()
                 .anyMatch(fileInside -> fileInside.getId().equals(child.getId()));
-    }
-
-    /**
-     * remove all {@link Folder} child's records from database
-     *
-     * @param folder        parent folder
-     */
-    void removeAllFolderChilds(Folder folder) {
-        folder.getFolders().parallelStream().forEach(childFolder -> {
-            removeChildFolders(childFolder);
-
-            removeChildFiles(childFolder);
-
-            folderRepository.delete(childFolder);
-        });
-        removeChildFiles(folder);
-
-        folderRecordUpdater.updateSize(folder);
-    }
-
-    /**
-     * remove all {@link Folder}'s records inside {@link Folder},
-     * will run recursive for all folders inside
-     *
-     * @param folder        parent folder
-     */
-    private void removeChildFolders(Folder folder) {
-        folder.getFolders()
-                .parallelStream()
-                .forEach(this::removeAllFolderChilds);
-    }
-
-    /**
-     * remove all {@link File}'s records inside {@link Folder}
-     *
-     * @param folder        parent folder
-     */
-    private void removeChildFiles(Folder folder) {
-        folder.getFiles()
-                .parallelStream()
-                .forEach(fileRepository::delete);
     }
 }
