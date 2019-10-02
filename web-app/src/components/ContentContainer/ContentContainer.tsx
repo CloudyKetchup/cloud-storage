@@ -87,8 +87,8 @@ export default class ContentContainer extends Component<{ folderId : string, par
 				this.setState({
 					contextMenuShow: true,
 					contextMenuStyle: {
-						top: e.y,
-						left: e.x
+						top: e.y - 20,
+						left: e.x - 73
 					}
 				})
 			});

@@ -368,12 +368,10 @@ input:focus {
 }
 
 #content-container {
-	height: calc(100% - 50px);
+	float: right;
+	height: 100%;
 	width: calc(100% - 200px);
-	position: absolute;
 	overflow-y: auto;
-	top: 50px;
-	right: 0;
 }
 
 .elements {

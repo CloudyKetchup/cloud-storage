@@ -66,18 +66,16 @@ export default class DragAndDrop extends Component {
 		div.removeEventListener('drop', this.handleDrop);
 	}
 
-	render() {
-		return (
-			<div ref={this.dropRef}>
-				{this.state.dragging &&
-				<div className={this.props.className} style={{ display : this.state.dragging ? 'block' : 'none' }}>
-					<div className="drag-and-drop-text">
-						<div>Drop it here to upload</div>
-					</div>
+	render = () => (
+		<div style={this.props.style} ref={this.dropRef}>
+			{this.state.dragging &&
+			<div className={this.props.className} style={{ display : this.state.dragging ? 'block' : 'none' }}>
+				<div className="drag-and-drop-text">
+					<div>Drop it here to upload</div>
 				</div>
-				}
-				{this.props.children}
 			</div>
-		)
-	}
+			}
+			{this.props.children}
+		</div>
+	);
 }

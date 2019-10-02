@@ -7,9 +7,9 @@ const contextMenuListener = async (e: MouseEvent, obj: Folder) => {
 	e.preventDefault();
 	obj.setState({
 		contextMenuShow : true,
-		contextMenuStyle: {
-			top : e.y - 70,
-			left: e.x - 275
+		contextMenuStyle : {
+			top : e.clientY - 20,
+			left : e.clientX - 73
 		}
 	});
 
@@ -34,7 +34,7 @@ export default class Folder extends EntityComponent<FolderProps> {
 	componentDidMount = () => {
 		const div = document.getElementById(`folder-${this.props.data.id}`);
 			
-		if (div !== null )div.addEventListener('contextmenu', e => contextMenuListener(e, this), false);
+		if (div !== null ) div.addEventListener('contextmenu', e => contextMenuListener(e, this), false);
 	};
 
 	componentWillUnmount = () => {

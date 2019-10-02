@@ -1,11 +1,11 @@
 import React from 'react';
 
-import {Link}							from "react-router-dom";
-import {FileEntity}						from '../../model/entity/FileEntity';
-import EntityComponent, {EntityProps} 	from '../EntityComponent/EntityComponent';
+import { Link }							from "react-router-dom";
+import { FileEntity }					from '../../model/entity/FileEntity';
+import EntityComponent, { EntityProps } from '../EntityComponent/EntityComponent';
 import {FileExtensionIcons}				from "./FileExtensionIcons";
-import { APIHelpers as API } from '../../helpers';
-import { AppContentContext } from '../../App';
+import { APIHelpers as API } 			from '../../helpers';
+import { AppContentContext } 			from '../../App';
 
 const contextMenuListener = async (e: MouseEvent, obj: File) => {
 	e.preventDefault();
@@ -13,8 +13,8 @@ const contextMenuListener = async (e: MouseEvent, obj: File) => {
 	obj.setState({
 		contextMenuShow: true,
 		contextMenuStyle: {
-			top: e.clientY,
-			left: e.clientX
+			top: e.clientY - 20,
+			left: e.clientX - 72
 		}
 	});
 	obj.props.parent.setState({ disableContextMenu : true });
