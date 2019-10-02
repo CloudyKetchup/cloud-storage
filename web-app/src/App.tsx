@@ -68,7 +68,7 @@ export default class App extends Component {
 
 	componentWillMount() {
 		AppContentContext = {
-			files		 : [],
+			files		: [],
 			folders		: [],
 			trashItems	: [],
 			setFiles: (newFiles: FileEntity[]) => {
@@ -131,7 +131,7 @@ export default class App extends Component {
 		API.getFolderData(folderId).then(data => {
 			this.setState({
 				folderInfo : data,
-				rootOpened : data.root,			
+				rootOpened : data.root,
 			})
 		});
 
@@ -370,7 +370,7 @@ export default class App extends Component {
 					folders={AppContentContext.folders.length}
 					files={AppContentContext.files.length}
 				/>
-				<DragAndDrop className="drag-and-drop" handleDrop={this.uploadFiles}>                    
+				<DragAndDrop className="drag-and-drop" style={{ height : "100%" }} handleDrop={this.uploadFiles}>
 					<Switch>
 						<Route path="/:type/:id/rename" render={props =>
 							<RenameEntityDialog
