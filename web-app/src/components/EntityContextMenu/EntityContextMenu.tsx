@@ -7,10 +7,7 @@ type ContextMenuProps = {
 	onStart: () => void,
 	action: (action: string) => void
 	parent: Entity
-	style: {
-		top: string,
-		left: string
-	}
+	style: any
 };
 
 export default class EntityContextMenu extends Component<ContextMenuProps> {
@@ -24,7 +21,7 @@ export default class EntityContextMenu extends Component<ContextMenuProps> {
 
 	render() {
 		return (
-			<div className="context-menu" style={{ top : this.props.style.top, left : this.props.style.left }}>
+			<div className="context-menu" style={this.props.style}>
 				<div onClick={() => this.props.action("download")}>
 					<div className="context-menu-icon">
 						<i className="fas fa-download"/>
