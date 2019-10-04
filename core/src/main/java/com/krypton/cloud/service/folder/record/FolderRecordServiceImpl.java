@@ -7,6 +7,7 @@ import com.krypton.cloud.model.Folder;
 import com.krypton.cloud.repository.FolderRepository;
 import com.krypton.cloud.service.handler.http.ErrorHandler;
 import common.model.LogType;
+import reactor.core.publisher.Mono;
 import util.log.LogFolder;
 import util.log.LoggingService;
 import lombok.AllArgsConstructor;
@@ -15,7 +16,9 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -77,6 +80,18 @@ public class FolderRecordServiceImpl implements IOEntityRecordService<Folder>, E
                 LogType.ERROR,
                 LogFolder.DATABASE.getType() + LogFolder.FOLDER.getType());
         return HttpStatus.INTERNAL_SERVER_ERROR;
+    }
+
+    public void getPredecessors(Folder folder, List<Folder> predecessors) {
+        if (folder.getParentId() != null) {
+            var predecessor = folderRepository.findById(folder.getParentId()).orElse(null);
+
+            if (predecessor != null) {
+                predecessors.add(predecessor);
+
+                getPredecessors(predecessor, predecessors);
+            }
+        }
     }
 
     /**

@@ -2,10 +2,8 @@ package com.krypton.cloud.controller
 
 import common.config.AppProperties
 import com.krypton.cloud.model.Folder
-import com.krypton.cloud.model.BaseEntity
 import com.krypton.cloud.service.folder.FolderServiceImpl
 import com.krypton.cloud.service.folder.record.FolderRecordServiceImpl
-import com.krypton.cloud.service.trash.TrashService
 import lombok.AllArgsConstructor
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
@@ -13,6 +11,7 @@ import reactor.core.publisher.Flux
 
 import java.io.File
 import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
 @RestController
@@ -42,8 +41,28 @@ class FolderController(
 	 @GetMapping("/root/id")
 	 fun rootId() : String = folderRecordService.getByPath(AppProperties.storageFolder.absolutePath).id.toString()
 
+	@GetMapping("/root/data")
+	fun getRootData() : HashMap<String, Any> {
+		val rootFolder = folderRecordService.getById(UUID.fromString(rootId()))
 
+		return HashMap<String, Any>().apply {
+			put("id", rootFolder.id)
+			put("memory", rootMemory())
+			put("files", rootFolder.files)
+			put("folders", rootFolder.folders)
+		}
+	}
 
+	@GetMapping("/{id}/predecessors")
+	fun getPredecessors(@PathVariable id : String) : List<Folder> {
+		val predecessors = ArrayList<Folder>()
+
+		val folder = folderRecordService.getById(UUID.fromString(id))
+
+		folderRecordService.getPredecessors(folder, predecessors)
+
+		return predecessors.reversed()
+	}
 	 /**
 	  * get [Folder] entity data
 	  *
