@@ -30,7 +30,7 @@ html, body {
 
 nav {
 	line-height: unset;
-	width: calc(100% - 200px);
+	width: calc(100% - 250px);
 	height: 50px;
 	background: #181818;
 	float: right;
@@ -94,7 +94,7 @@ input:focus {
 	color: #fff;
 	top: 0;
 	height: 100%;
-	width: 200px;
+	width: 250px;
 	z-index: 2;
 	position: absolute;
 	box-shadow: 1px 2px 5px 2px rgba(0,0,0,0.55);
@@ -149,7 +149,7 @@ input:focus {
 	display: grid;
 	padding: 5px;
 	z-index: 99;
-	position: absolute;
+	position: fixed;
 	animation-name: contextMenuSlide;
 	animation-duration: 0.1s;
 }
@@ -370,7 +370,7 @@ input:focus {
 #content-container {
 	float: right;
 	height: 100%;
-	width: calc(100% - 200px);
+	width: calc(100% - 250px);
 	overflow-y: auto;
 }
 
@@ -518,9 +518,54 @@ input:focus {
 	color: #fff;
 }
 
+.content-tree-view {
+	overflow: auto;
+	width: 100% !important;
+	height: 45%;
+}
+
+.content-tree-node {
+	animation-name: tree-entity ;
+	animation-duration: 0.2s;
+	position: relative;
+	width: 200px;
+}
+
+.content-tree-node-self {
+	display: flex;
+	padding: 0 5px 0 5px;
+	line-height: 35px;
+}
+
+.content-tree-node-self:hover {
+	cursor: pointer;
+}
+
+.content-tree-node-childs {
+	margin-left: 30px;
+}
+
+.content-tree-node-icon {
+	display: flex;
+	color: gray;
+}
+
+.tree-node-arrow {
+	transform: unset;
+}
+
+.content-tree-node-name {
+	line-height: 40px;
+	width : 100%;
+	text-align: left;
+}
+
+.content-tree-node-name > span {
+	margin-left: 5px;
+}
+
 .element-info {
-	margin-top: 10%;
-    height: 78%;
+    height: 36%;
     padding: 10px;
     overflow-y: auto;
 }
@@ -617,11 +662,11 @@ input:focus {
 }
 
 .create-folder {
-	left: 210px;
+	left: 260px;
 }
 
 .upload-file-button {
-	left: 275px;
+	left: 325px;
 }
 
 .dialog-input-container {
@@ -791,6 +836,7 @@ input:focus {
 }
 
 .right-panel {
+	top: 0;
 	right: -300px;
 	width: 280px;
 	height: 100%;
@@ -895,16 +941,9 @@ input:focus {
 }
 
 .empty-content-banner {
-	width: 200px;
-	margin: auto;
-	height: 150px;
 	text-align: center;
-	color: grey;
-	top: 0;
-	left: 0;
-	bottom: 50px;
-	right: 0;
-	position: absolute;
+    margin-top: 35%;
+    color: grey;
 }
 
 .empty-content-banner-icon {
@@ -936,6 +975,17 @@ input:focus {
 	height: calc(100% - 20px);		
 }
 
+@keyframes tree-entity {
+	from {
+		margin-top: -20px;
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+		margin-top: 0px;
+	}
+}
+
 @keyframes fade {
 	from {
 		opacity: 0;
@@ -956,7 +1006,6 @@ input:focus {
 	}
 }
 
-
 @keyframes slideLeft {
 	from {
 		margin-left: -50px;
@@ -969,10 +1018,10 @@ input:focus {
 @keyframes slideTop {
 	from {
 		opacity: 0;
-		top: 10%;
+		top: -10%;
 	}
 	to {
-		top: 25%;
+		top: 0;
 		opacity: 1;
 	}
 }

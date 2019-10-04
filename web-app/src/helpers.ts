@@ -15,6 +15,12 @@ export class APIHelpers {
 			.catch(console.log)
 	);
 
+	static getRootData = () : Promise<any> => (
+		axios.get(`${API_URL}/folder/root/data`)
+			.then(response => response.data)
+			.catch(console.log)
+	);
+
 	static getRootMemory = () : Promise<object> => (
 		axios.get(`${API_URL}/folder/root/memory`)
 			.then(memory => memory.data)
@@ -25,6 +31,12 @@ export class APIHelpers {
 		axios.get(`${API_URL}/folder/${id}/content_info`)
 			.then(response => response.data.folderCount > 0 || response.data.filesCount > 0)
 			.catch(_ => false)
+	);
+
+	static getFolderPredecessors = (id : string) : Promise<FolderEntity[]> => (
+		axios.get(`${API_URL}/folder/${id}/predecessors`)
+			.then(response => response.data)
+			.catch(console.log)
 	);
 
 	static getFileData = (id: string) : Promise<Entity> => (

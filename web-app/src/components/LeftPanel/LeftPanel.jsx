@@ -26,29 +26,40 @@ export default class LeftPanel extends Component {
 		}
 	}
 
+	separatorStyle = {
+		float: 'left',
+		marginLeft: '-10px',
+		background: 'gray',
+		height: 2,
+		width: '100%'
+	};
+
 	render = () => (
 		<div className="side-panel">
 			<div className="side-panel-content">
-				{this.props.folderInfo !== undefined
-					&&
-					<div className="element-info">
-						<div>
-							<span className="description-text">Location</span>
-							<span className="element-info-text">{this.props.folderInfo.name}</span>
-						</div>
-						<div>
-							<span className="description-text">Folders</span>
-							<span className="element-info-text">{this.props.folders}</span>
-						</div>
-						<div>
-							<span className="description-text">Files</span>
-							<span className="element-info-text">{this.props.files}</span>
-						</div>
-						<div>
-							<span className="description-text">Size</span>
-							<span className="element-info-text">{this.props.folderInfo.size}</span>
-						</div>
-					</div>}
+				{this.props.currentFolder !== undefined
+				&&
+				<div className="element-info">
+					<div>
+						<span className="description-text">Location</span>
+						<span className="element-info-text">{this.props.currentFolder.name}</span>
+					</div>
+					<div>
+						<span className="description-text">Folders</span>
+						<span className="element-info-text">{this.props.folders}</span>
+					</div>
+					<div>
+						<span className="description-text">Files</span>
+						<span className="element-info-text">{this.props.files}</span>
+					</div>
+					<div>
+						<span className="description-text">Size</span>
+						<span className="element-info-text">{this.props.currentFolder.size}</span>
+					</div>
+				</div>}
+				<div style={this.separatorStyle}></div>
+				{this.props.children}
+				<div style={this.separatorStyle}></div>
 				<Link to={"/trash"}>
 					<div className="trash-button">
 						<span>Trash</span>

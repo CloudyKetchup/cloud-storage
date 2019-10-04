@@ -132,8 +132,6 @@ export default class ContentContainer extends Component<{ folderId : string, par
 						mainParent.state.elementSelected.id === data.id
 				) {
 						mainParent.updateFolderInfo(data.id);
-
-						mainParent.addNavNode(data);
 					} else {
 						mainParent.setState({ elementSelected : data });
 					}
