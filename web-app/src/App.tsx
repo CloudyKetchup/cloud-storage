@@ -129,9 +129,12 @@ export default class App extends Component {
 
 		API.getFolderFolders(folderId).then(AppContentContext.setFolders)
 
+		const nodes : NavNode[] = [];
+
 		API.getFolderPredecessors(folderId).then(predecessors => {
-			this.setState({ foldersNavigation : [...predecessors, this.state.currentFolder] });
-		});
+			predecessors.forEach(p => nodes.push(this.createNavNode(p, nodes[nodes.length -1])));
+		})
+		.then(() => this.setState({ foldersNavigation : [...nodes, this.state.currentFolder] }));
 	};
 
 	handleContextMenuAction = async (action: string, target: Entity) => {
@@ -174,26 +177,16 @@ export default class App extends Component {
 		}
 	};
 
-	addNavNode = async (entity: FolderEntity) => {
-		const nodes = this.state.foldersNavigation;
-
-		const prevNode = nodes.slice(-1).pop();
-
-		const node = new NavNode(
+	createNavNode = (entity : FolderEntity, prevNode : NavNode | undefined) => {
+		return new NavNode(
 			entity.id,
-			entity.root ? '/' : entity.name,
+			entity.name,
 			prevNode,
 			() => {
 				this.updateFolderInfo(entity.id);
 
 				this.removeNodeSuccessors(entity.id);
 			});
-
-		if (prevNode !== undefined) prevNode.next = node;
-
-		nodes.push(node);
-
-		this.setState({ foldersNavigation : nodes });
 	};
 
 	removeNodeSuccessors = async (id: string) => {
