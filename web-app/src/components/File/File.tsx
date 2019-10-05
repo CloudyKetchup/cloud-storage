@@ -2,10 +2,11 @@ import React from 'react';
 
 import { Link }							from "react-router-dom";
 import { FileEntity }					from '../../model/entity/FileEntity';
-import EntityComponent, { EntityProps } from '../EntityComponent/EntityComponent';
+import EntityComponent, { EntityProps, EntityState } from '../EntityComponent/EntityComponent';
 import {FileExtensionIcons}				from "./FileExtensionIcons";
 import { APIHelpers as API } 			from '../../helpers';
 import { AppContentContext } 			from '../../App';
+import CircularProgress from "@material-ui/core/CircularProgress";
 
 const contextMenuListener = async (e: MouseEvent, obj: File) => {
 	e.preventDefault();
@@ -13,8 +14,8 @@ const contextMenuListener = async (e: MouseEvent, obj: File) => {
 	obj.setState({
 		contextMenuShow: true,
 		contextMenuStyle: {
-			top: e.clientY - 20,
-			left: e.clientX - 72
+			top: `${e.clientY - 20}`,
+			left: `${e.clientX - 72}`
 		}
 	});
 	obj.props.parent.setState({ disableContextMenu : true });
@@ -30,7 +31,19 @@ const windowClickListener = async (obj: File) => {
 
 interface FileProps extends EntityProps { data : FileEntity }
 
-export default class File extends EntityComponent<FileProps> {
+interface FileState extends EntityState {
+	imageLoaded : boolean
+}
+
+export default class File extends EntityComponent<FileProps, FileState> {
+	state : FileState = {
+		imageLoaded : false,
+	    contextMenuShow : false,
+		contextMenuStyle : {
+	    	top : "",
+			left : ""
+		}
+	};
 
 	componentDidMount = () => {
 		const div = document.getElementById(`file-${this.props.data.id}`);
@@ -48,13 +61,21 @@ export default class File extends EntityComponent<FileProps> {
 		API.moveToTrash(this.props.data)
 			.then(response => {
 				if (response === "OK") {
-					this.props.mainParent.updateFolderInfo()
+					this.props.mainParent.updateFolderInfo();
 
 					API.getTrashItems()
 						.then(items => AppContentContext.setTrashItems(items));
 				}
 			});
 	};
+
+	imagePreloader = () => (
+		<div key={this.props.data.id} style={{
+			height: "40px",
+			lineHeight: "110px" }}>
+			<CircularProgress style={{ color : "#F32C2C" }}/>
+		</div>
+	);
 
 	render = () => (
 		<div
@@ -66,7 +87,16 @@ export default class File extends EntityComponent<FileProps> {
 			{this.contextMenu(this.props.data, this.props.handleAction, this.props.mainParent)}
 			<div className="file-icon">
 				{this.props.data.extension === "IMAGE_JPG"
-					? <img src={`http://localhost:8080/file/${this.props.data.path.replace(/[/]/g, '%2F')}/image`} alt=""/>
+					? [
+						!this.state.imageLoaded
+						&&
+						this.imagePreloader(),
+						<img
+							key={this.props.data.path}
+							style={{ display : this.state.imageLoaded ? "unset" : "none" }}
+							onLoad={() => this.setState({ imageLoaded : true } as FileState)}
+							src={`http://localhost:8080/file/${this.props.data.path.replace(/[/]/g, '%2F')}/image`}
+							alt="..."/>]
 					: <i className={FileExtensionIcons[this.props.data.extension as any]}/>}
 			</div>
 			<div className="file-footer">

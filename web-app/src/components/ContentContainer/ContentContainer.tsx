@@ -8,6 +8,7 @@ import File 				from '../File/File';
 import Folder 				from '../Folder/Folder';
 import { APIHelpers as API } from '../../helpers';
 import {Link} from "react-router-dom";
+import LazyLoad from 'react-lazyload';
 
 type ContextMenuProps = {
 	parent : App,
@@ -96,23 +97,26 @@ export default class ContentContainer extends Component<{ folderId : string, par
 		window.addEventListener('click', () => this.setState({ contextMenuShow : false }), false);
 	}
 
-
-
 	createFile = (data: FileEntity) => {
 		const mainParent = this.props.parent;
 
 		return (
-			<File
-				key={data.path}
-				data={data}
-				mainParent={mainParent}
-				parent={this}
-				handleAction={(action: string) => {
-					mainParent.setState({ elementSelected : data });
+			<LazyLoad
+				key={data.id}
+				offset={30}
+				overflow>
+				<File
+					key={data.path}
+					data={data}
+					mainParent={mainParent}
+					parent={this}
+					handleAction={(action: string) => {
+						mainParent.setState({ elementSelected: data });
 
-					mainParent.handleContextMenuAction(action, data);
-				}}
-			/>
+						mainParent.handleContextMenuAction(action, data);
+					}}
+				/>
+			</LazyLoad>
 		);
 	};
 
@@ -120,22 +124,27 @@ export default class ContentContainer extends Component<{ folderId : string, par
 		const mainParent = this.props.parent;
 
 		return (
-			<Folder
-				key={data.path}
-				data={data}
-				mainParent={mainParent}
-				parent={this}
-				handleAction={(action: string) => mainParent.handleContextMenuAction(action, data)}
-				whenClicked={() => {
-					if (mainParent.state.elementSelected !== undefined
-						&&
-						mainParent.state.elementSelected.id === data.id
-				) {
-						mainParent.updateFolderInfo(data.id);
-					} else {
-						mainParent.setState({ elementSelected : data });
-					}
-				}}/>
+			<LazyLoad
+				key={data.id}
+				offset={30}
+				overflow>
+				<Folder
+					key={data.path}
+					data={data}
+					mainParent={mainParent}
+					parent={this}
+					handleAction={(action: string) => mainParent.handleContextMenuAction(action, data)}
+					whenClicked={() => {
+						if (mainParent.state.elementSelected !== undefined
+							&&
+							mainParent.state.elementSelected.id === data.id
+						) {
+							mainParent.updateFolderInfo(data.id);
+						} else {
+							mainParent.setState({ elementSelected: data });
+						}
+					}} />
+			</LazyLoad>
 		);
 	};
 
