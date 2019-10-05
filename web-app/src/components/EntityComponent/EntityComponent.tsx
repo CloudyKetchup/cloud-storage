@@ -3,15 +3,23 @@ import React, { Component } from 'react';
 import { Entity } 		from '../../model/entity/Entity';
 import App 				from '../../App';
 import ContentContainer from '../ContentContainer/ContentContainer';
-import EntityContextMenu 		from "../EntityContextMenu/EntityContextMenu";
+import EntityContextMenu from "../EntityContextMenu/EntityContextMenu";
 
-export type EntityProps = {
+export interface EntityProps {
 	parent: ContentContainer
 	mainParent: App
 	handleAction: (action: string) => void
 }
 
-export default abstract class EntityComponent<EntityProps> extends Component<EntityProps> {
+export interface EntityState {
+	contextMenuShow: boolean,
+	contextMenuStyle: {
+		top: string,
+		left: string
+	}
+}
+
+export default abstract class EntityComponent<P, S> extends Component<P, EntityState> {
 	state = {
 		contextMenuShow : false,
 		contextMenuStyle : {

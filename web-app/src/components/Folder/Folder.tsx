@@ -1,15 +1,15 @@
 import React from 'react';
 
 import { FolderEntity } from '../../model/entity/FolderEntity';
-import EntityComponent, { EntityProps } from '../EntityComponent/EntityComponent';
+import EntityComponent, {EntityProps, EntityState} from '../EntityComponent/EntityComponent';
 
 const contextMenuListener = async (e: MouseEvent, obj: Folder) => {
 	e.preventDefault();
 	obj.setState({
 		contextMenuShow : true,
 		contextMenuStyle : {
-			top : e.clientY - 20,
-			left : e.clientX - 73
+			top : `${e.clientY - 20}`,
+			left : `${e.clientX - 73}`
 		}
 	});
 
@@ -29,7 +29,7 @@ interface FolderProps extends EntityProps {
 	data: FolderEntity
 }
 
-export default class Folder extends EntityComponent<FolderProps> {
+export default class Folder extends EntityComponent<FolderProps, EntityState> {
 
 	componentDidMount = () => {
 		const div = document.getElementById(`folder-${this.props.data.id}`);
