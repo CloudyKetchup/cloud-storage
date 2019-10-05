@@ -151,7 +151,7 @@ export class APIHelpers {
 		const formData = new FormData();
 
 		formData.append('file', file);
-		formData.append('path', appContext.state.folderInfo.path);
+		formData.append('path', appContext.state.currentFolder.path);
 
 		const uploadingFiles = appContext.state.uploadingFiles;
 
@@ -168,7 +168,7 @@ export class APIHelpers {
 				})
 			})
 			.then(response => response.data === 'OK'
-					? appContext.updateFolderInfo(appContext.state.folderInfo.id)
+					? appContext.updateFolderInfo(appContext.state.currentFolder.id)
 					: console.log(response.data))
 			.catch(console.log);
 	};
