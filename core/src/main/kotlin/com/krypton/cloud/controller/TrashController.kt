@@ -1,30 +1,33 @@
 package com.krypton.cloud.controller
 
-import com.krypton.cloud.model.BaseEntity
-import com.krypton.cloud.model.File
-import com.krypton.cloud.model.Folder
-import com.krypton.cloud.service.record.IOEntityRecordService
+import com.krypton.databaselayer.model.BaseEntity
+import com.krypton.databaselayer.model.File
+import com.krypton.databaselayer.model.Folder
+import com.krypton.databaselayer.service.IOEntityRecordService
 import com.krypton.cloud.service.trash.TrashService
+import com.krypton.databaselayer.service.trash.TrashRecordService
 import lombok.AllArgsConstructor
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
 import java.util.*
 import kotlin.collections.HashMap
 
+@CrossOrigin
 @RestController
 @RequestMapping("/trash")
 @AllArgsConstructor
 class TrashController(
 	private val trashService: TrashService,
+	private val trashRecordService: TrashRecordService,
 	private val folderRecordService: IOEntityRecordService<Folder>,
 	private val fileRecordService: IOEntityRecordService<File>
 ) {
 
 	@GetMapping("/items")
-	fun getTrashItems() : List<BaseEntity> = trashService.getAllItems()
+	fun getTrashItems() : List<BaseEntity> = trashRecordService.getAllItems()
 
 	@GetMapping("/info")
-	fun getInfo() : HashMap<String, String> = trashService.getInfo()
+	fun getInfo() : HashMap<String, String> = trashRecordService.getInfo()
 
 	@DeleteMapping("/empty-trash")
 	fun emptyTrash() : HttpStatus {

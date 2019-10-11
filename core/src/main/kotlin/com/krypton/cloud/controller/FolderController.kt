@@ -1,9 +1,9 @@
 package com.krypton.cloud.controller
 
 import common.config.AppProperties
-import com.krypton.cloud.model.Folder
+import com.krypton.databaselayer.model.Folder
 import com.krypton.cloud.service.folder.FolderServiceImpl
-import com.krypton.cloud.service.folder.record.FolderRecordServiceImpl
+import com.krypton.databaselayer.service.folder.FolderRecordServiceImpl
 import lombok.AllArgsConstructor
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
@@ -14,6 +14,7 @@ import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
+@CrossOrigin
 @RestController
 @AllArgsConstructor
 @RequestMapping("/folder")
@@ -88,7 +89,7 @@ class FolderController(
 	 * @return [com.krypton.cloud.model.File]'s list
 	 */
 	@GetMapping("/{id}/files")
-	fun getFolderFiles(@PathVariable id : String) : Flux<com.krypton.cloud.model.File> = folderRecordService.getFolderFiles(UUID.fromString(id))
+	fun getFolderFiles(@PathVariable id : String) : Flux<com.krypton.databaselayer.model.File> = folderRecordService.getFolderFiles(UUID.fromString(id))
 
 	/**
 	 * get information about inside content of folder

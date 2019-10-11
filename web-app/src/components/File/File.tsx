@@ -95,7 +95,7 @@ export default class File extends EntityComponent<FileProps, FileState> {
 							key={this.props.data.path}
 							style={{ display : this.state.imageLoaded ? "unset" : "none" }}
 							onLoad={() => this.setState({ imageLoaded : true } as FileState)}
-							src={`http://localhost:8080/file/${this.props.data.path.replace(/[/]/g, '%2F')}/image`}
+							src={`http://localhost:8080/file/${this.props.data.id}/image`}
 							alt="..."/>]
 					: <i className={FileExtensionIcons[this.props.data.extension as any]}/>}
 			</div>

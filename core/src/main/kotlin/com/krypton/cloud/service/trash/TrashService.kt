@@ -4,18 +4,19 @@ package com.krypton.cloud.service.trash
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.krypton.cloud.model.*
-import com.krypton.cloud.repository.*
+import com.krypton.databaselayer.model.*
 import com.krypton.cloud.service.file.FileServiceImpl
 import com.krypton.cloud.service.folder.FolderServiceImpl
-import com.krypton.cloud.service.record.RecordService
+import com.krypton.databaselayer.service.file.FileRecordServiceImpl
+import com.krypton.databaselayer.service.folder.FolderRecordServiceImpl
+import com.krypton.databaselayer.service.folder.FolderRecordUtils
 import common.config.AppProperties
 import common.model.EntityType
 import lombok.AllArgsConstructor
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 
-import com.krypton.cloud.service.folder.record.FolderRecordUtils
+import com.krypton.databaselayer.service.trash.TrashRecordService
 import common.exception.ExceptionTools
 import common.exception.trash.backup.BackupDontExistException
 import common.exception.trash.backup.BackupReadException
@@ -23,9 +24,7 @@ import common.exception.trash.backup.BackupWriteException
 import common.model.LogType
 import util.log.*
 import java.io.IOException
-import java.lang.Exception
 import java.util.*
-import kotlin.collections.ArrayList
 
 /**
  * Service handling logic related to trash folder
@@ -33,115 +32,41 @@ import kotlin.collections.ArrayList
 @Service
 @AllArgsConstructor
 class TrashService(
-	private val trashRepository : TrashRepository,
-	private val fileService     : FileServiceImpl,
-	private val fileRepository  : FileRepository,
-	private val folderRepository: FolderRepository,
-	private val folderService   : FolderServiceImpl,
-	private val trashErrorHandler: TrashErrorHandler
-) : RecordService<TrashEntity> {
+	private val trashRecordService	: TrashRecordService,
+	private val fileService     	: FileServiceImpl,
+	private val fileRecordService	: FileRecordServiceImpl,
+	private val folderService   	: FolderServiceImpl,
+	private val folderRecordService : FolderRecordServiceImpl,
+	private val trashErrorHandler	: TrashErrorHandler
+) {
 
-	override fun getById(id : UUID) : TrashEntity? = trashRepository.findById(id).orElse(null)
-
-	override fun save(entity : TrashEntity) : TrashEntity? {
-		val savedEntity = trashRepository.save(entity) ?: null
-
-		return if (savedEntity != null) {
-			return try {
-				BackupService.writeBackup(entity)
-
-				savedEntity
-			} catch (e : BackupWriteException) {
-				delete(savedEntity.id)
-				LoggingService.saveLog(e.stackTraceToString(), LogType.ERROR, LogFolder.ROOT.toString())
-				return null
-			}
-		} else null
-	}
-
-	@Deprecated(message = "using path for finding entity, use delete(id : UUID) instead of this one")
-	override fun delete(path : String) : Boolean {
-		trashRepository.deleteByPath(path)
-
-		return !exists(path)
-	}
-
-	override fun exists(path : String) : Boolean = trashRepository.findByEntityPath(path).isPresent
+	private val backupService = BackupService()
 
 	/**
-	 * delete [TrashEntity] by id
+	 * Delete [TrashEntity] record from database, then delete its backup
 	 *
-	 * @param id    uuid of [TrashEntity]
-	 * @return boolean depending on success
+	 * @param entity 	[TrashEntity] target
+	 * @return boolean depending on result
 	 * */
-	private fun delete(id : UUID) : Boolean {
-		val entity = trashRepository.findById(id).orElse(null)
-
+	private fun deleteRecordCompletely(entity: TrashEntity?) : Boolean {
 		if (entity != null) {
-			trashRepository.deleteById(id)
+			trashRecordService.delete(entity.id)
 
-			if (!exists(id)) {
-				try {
-					BackupService.deleteBackup(entity)
-				} catch (e : Exception) {
+			if (!trashRecordService.exists(entity.id)) {
+				return try {
+					backupService.deleteBackup(entity)
+					true
+				} catch (e: Exception) {
 					e.printStackTrace()
-					LoggingService.saveLog(ExceptionTools.stackTraceToString(e), LogType.ERROR, LogFolder.ROOT.toString())
+					LoggingService.saveLog(
+						ExceptionTools.stackTraceToString(e),
+						LogType.ERROR,
+						LogFolder.ROOT.type)
+					false
 				}
-				return true
 			}
 		}
 		return false
-	}
-
-	/**
-	 * check if [TrashEntity] exists by id
-	 *
-	 * @param id    uuid of [TrashEntity]
-	 * @return boolean depending on success
-	 * */
-	private fun exists(id : UUID) : Boolean = trashRepository.findById(id).isPresent
-
-    fun getInfo() : HashMap<String, String> {
-		val items = getAllItems()
-
-		return HashMap<String, String>().apply {
-			put("foldersCount", filterFolders(items).size.toString())
-			put("filesCount", filterFiles(items).size.toString())
-			put("totalItems", items.size.toString())
-		}
-	}
-
-	/**
-	 * return all items entities located in trash folder
-	 *
-	 * @return list of items in trash folder
-	 * */
-	fun getAllItems() : List<BaseEntity> {
-		val items = ArrayList<BaseEntity>()
-
-		trashRepository.all.forEach {
-			val entity : BaseEntity? = when (it.type) {
-				EntityType.FOLDER -> folderRepository.findById(it.entityId).orElse(null)
-				EntityType.FILE -> fileRepository.findById(it.entityId).orElse(null)
-				else -> null
-			}
-			if (entity != null) items.add(entity)
-		}
-		return items
-	}
-
-	/**
-	 * move [BaseEntity] to trash folder, and add a record of its abstract trash representation = [TrashEntity]
-	 *
-	 * @param entity    entity extending from [BaseEntity]
-	 * @return boolean depending on result success
-	 * */
-	fun moveToTrash(entity : BaseEntity) : Boolean {
-		return when (entity.type) {
-			EntityType.FILE -> moveFileToTrash(entity as File)
-			EntityType.FOLDER -> moveFolderToTrash(entity as Folder)
-			else -> false
-		}
 	}
 
 	/**
@@ -154,7 +79,7 @@ class TrashService(
 		val trashItems = AppProperties.trashFolder.listFiles()
 		// delete every trash item
 		listOf(*trashItems!!).parallelStream().forEach {
-			val trashEntity = trashRepository.findByEntityPath(it.path).orElse(null)
+			val trashEntity = trashRecordService.getByPath(it.path)
 
 			if (trashEntity != null) {
 				// deleting result
@@ -163,28 +88,48 @@ class TrashService(
 					it.isDirectory -> folderService.delete(it.path) == HttpStatus.OK
 					else -> false
 				}
-				if (success) delete(trashEntity.id)
+				if (success) deleteRecordCompletely(trashEntity)
 			}
 		}
 		return trashIsEmpty()
 	}
-
-	private fun filterFolders(folders : List<BaseEntity>) = folders.filter { it.type == EntityType.FOLDER }.map { it as Folder }
-
-	private fun filterFiles(files : List<BaseEntity>) = files.filter { it.type == EntityType.FILE }.map { it as File }
 
 	/**
 	 * check if trash folder is empty
 	 *
 	 * @return true if is empty, otherwise false
 	 * */
-	private fun trashIsEmpty() : Boolean {
+	fun trashIsEmpty() : Boolean {
 		val trashItems = AppProperties.trashFolder.listFiles()
 
 		trashItems?.forEach {
 			if (it.exists()) return false
 		} ?: return true
 		return true
+	}
+
+	/**
+	 * move [BaseEntity] to trash folder, and add a record of its abstract
+	 * trash representation = [TrashEntity]
+	 *
+	 * @param entity    entity extending from [BaseEntity]
+	 * @return boolean depending on result success
+	 * */
+	fun moveToTrash(entity : BaseEntity) : Boolean {
+		val result = when (entity.type) {
+			EntityType.FILE -> moveFileToTrash(entity as File)
+			EntityType.FOLDER -> moveFolderToTrash(entity as Folder)
+			else -> false
+		}
+		if (result) {
+			return try {
+				backupService.writeBackup(TrashEntity(entity, entity.path))
+			} catch (e : BackupWriteException) {
+				e.printStackTrace()
+				false
+			}
+		}
+		return false
 	}
 
 	/**
@@ -195,23 +140,23 @@ class TrashService(
 	 * */
 	fun restoreFromTrash(id : UUID) : Boolean {
 		// abstract representation of entity from trash
-		val trashEntity = trashRepository.findByEntityId(id).orElse(null)
+		val trashEntity = trashRecordService.getByEntityId(id)
 
 		if (trashEntity != null) {
 			val result : Boolean = when (trashEntity.type!!) {
 				EntityType.FOLDER -> {
-					val folder = folderRepository.findById(id).orElse(null)
+					val folder = folderRecordService.getById(id)
 					// restore folder
 					moveFolderBack(folder, trashEntity.restoreFolder)
 				}
 				EntityType.FILE -> {
-					val file = fileRepository.findById(id).orElse(null)
+					val file = fileRecordService.getById(id)
 					// restore file
 					moveFileBack(file, trashEntity.restoreFolder)
 				}
 			}
 			// if restored with success, delete trash entity
-			if (result) return delete(trashEntity.id)
+			if (result) return deleteRecordCompletely(trashEntity)
 		}
 		return false
 	}
@@ -223,26 +168,26 @@ class TrashService(
 	 * @return boolean depending on result
 	 * */
 	fun deleteFromTrash(id : UUID) : Boolean {
-		val trashEntity : TrashEntity? = trashRepository.findByEntityId(id).orElse(null)
+		val trashEntity : TrashEntity? = trashRecordService.getByEntityId(id)
 
 		if (trashEntity != null) {
 			val result : Boolean = when (trashEntity.type!!) {
 				EntityType.FOLDER -> {
-					val folder = folderRepository.findById(id).orElse(null)
+					val folder = folderRecordService.getById(id)
 					// delete folder
 					if (folder != null)
 						folderService.delete(folder.path) == HttpStatus.OK
 					else false
 				}
 				EntityType.FILE -> {
-					val file = fileRepository.findById(id).orElse(null)
+					val file = fileRecordService.getById(id)
 					// delete file
 					if (file != null)
 						fileService.delete(file.path) == HttpStatus.OK
 					else false
 				}
 			}
-			if (result) return delete(trashEntity.id)
+			if (result) return deleteRecordCompletely(trashEntity)
 		}
 		return false
 	}
@@ -281,12 +226,12 @@ class TrashService(
 	 * */
 	private fun moveFileToTrash(file : File) : Boolean {
 		if (fileService.move(file.path, AppProperties.trashFolder.path) == HttpStatus.OK) {
-			val updatedFile : File? = fileRepository.getByPath("${AppProperties.trashFolder.path}/${file.name}")
+			val updatedFile : File? = fileRecordService.getByPath("${AppProperties.trashFolder.path}/${file.name}")
 
 			val restorePoint = java.io.File(file.path).parent
 
 			if (updatedFile != null) {
-				val trashEntity = save(TrashEntity(updatedFile, restorePoint))
+				val trashEntity = trashRecordService.save(TrashEntity(updatedFile, restorePoint))
 
 				return if (trashEntity != null) {
 					true
@@ -312,13 +257,13 @@ class TrashService(
 	 * @return boolean depending on success
 	 * */
 	private fun moveFolderToTrash(folder : Folder) : Boolean {
-		val restorePoint = folderRepository.findById(folder.parentId).orElse(null)
+		val restorePoint = folderRecordService.getById(folder.parentId)
 
 		if (folderService.move(folder.path, AppProperties.trashFolder.path) == HttpStatus.OK) {
-			val updatedFolder : Folder? = folderRepository.getByPath("${AppProperties.trashFolder.path}/${folder.name}")
+			val updatedFolder : Folder? = folderRecordService.getByPath("${AppProperties.trashFolder.path}/${folder.name}")
 
-			if (updatedFolder != null) {
-				val trashEntity = save(TrashEntity(updatedFolder, restorePoint.path))
+			if (updatedFolder != null && restorePoint != null) {
+				val trashEntity = trashRecordService.save(TrashEntity(updatedFolder, restorePoint.path))
 
 				return if (trashEntity != null) {
 					true
@@ -346,14 +291,14 @@ class TrashService(
 	fun addAllTrashEntities(files : List<java.io.File>) {
 		files.parallelStream().forEach {
 			val entity: BaseEntity? = when {
-				it.isDirectory -> folderRepository.getByPath(it.absolutePath) ?: null
-				it.isFile -> fileRepository.getByPath(it.absolutePath) ?: null
+				it.isDirectory -> folderRecordService.getByPath(it.absolutePath) ?: null
+				it.isFile -> fileRecordService.getByPath(it.absolutePath) ?: null
 				else -> null
 			}
 			if (entity != null)
 				try {
-					// save trash entity with restore point backup from trash entity saved earlier to database
-					save(TrashEntity(entity, BackupService.readBackup(it).restoreFolder))
+					// save trash entity with restore point backup from trash entity saved earlier to backup file
+					trashRecordService.save(TrashEntity(entity, backupService.readBackup(it).restoreFolder))
 				} catch (e : BackupReadException) {
 					// if file with backup was deleted or damaged, move file from trash to root of storage folder
 					trashErrorHandler.restoreToDefaultPath(entity)
@@ -371,7 +316,7 @@ class TrashService(
 	 * witch will be used on startup to set restore path for all files and folders
 	 * from trash folder
 	 * */
-	private object BackupService {
+	private class BackupService {
 
 		private val backupFolder = java.io.File("${AppProperties.root}/Backup")
 
@@ -473,4 +418,3 @@ class TrashService(
 		}
 	}
 }
-

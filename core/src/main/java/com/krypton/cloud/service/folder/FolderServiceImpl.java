@@ -1,14 +1,14 @@
 package com.krypton.cloud.service.folder;
 
-import com.krypton.cloud.model.Folder;
+import com.krypton.databaselayer.model.Folder;
 import common.exception.entity.io.FolderIOException;
 import com.krypton.cloud.service.handler.http.ErrorHandler;
 import common.model.LogType;
 import lombok.AllArgsConstructor;
-import com.krypton.cloud.service.folder.record.updater.FolderRecordUpdaterImpl;
-import com.krypton.cloud.service.folder.record.FolderRecordServiceImpl;
-import com.krypton.cloud.service.folder.record.FolderRecordUtils;
-import com.krypton.cloud.service.file.record.FileRecordServiceImpl;
+import com.krypton.databaselayer.service.folder.updater.FolderRecordUpdaterImpl;
+import com.krypton.databaselayer.service.folder.FolderRecordServiceImpl;
+import com.krypton.databaselayer.service.folder.FolderRecordUtils;
+import com.krypton.databaselayer.service.file.FileRecordServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 

@@ -4,10 +4,13 @@
   "private": true,
   "dependencies": {
     "@material-ui/core": "latest",
+    "@types/react-dom": "^16.9.1",
+    "@types/react-lazyload": "^2.5.0",
     "axios": "^0.19.0",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
     "react-draggable": "^4.0.3",
+    "react-lazyload": "latest",
     "react-redux": "^7.1.1",
     "react-router-dom": "latest",
     "react-scripts": "3.0.1",
