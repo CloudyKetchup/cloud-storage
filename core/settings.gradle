@@ -13,5 +13,4 @@ pluginManagement {
 	}
 }
 
-include ":util"
-include ":common"
+include ":util", ":common", ":database-layer"
