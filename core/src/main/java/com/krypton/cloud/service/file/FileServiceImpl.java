@@ -1,8 +1,8 @@
 package com.krypton.cloud.service.file;
 
 import common.exception.entity.io.FileIOException;
-import com.krypton.cloud.service.file.record.FileRecordServiceImpl;
-import com.krypton.cloud.service.file.record.updater.FileRecordUpdaterImpl;
+import com.krypton.databaselayer.service.file.FileRecordServiceImpl;
+import com.krypton.databaselayer.service.file.updater.FileRecordUpdaterImpl;
 import com.krypton.cloud.service.handler.http.ErrorHandler;
 import common.model.LogType;
 import common.exception.ExceptionTools;
@@ -53,7 +53,7 @@ public class FileServiceImpl implements FileService, IOErrorHandler, ErrorHandle
 			// remove file with old path from database
 			fileRecordService.delete(oldPath);
 			// add file with new path to database
-			fileRecordService.save(new com.krypton.cloud.model.File(fileCopy));
+			fileRecordService.save(new com.krypton.databaselayer.model.File(fileCopy));
 
 			return HttpStatus.OK;
 		}
@@ -69,7 +69,7 @@ public class FileServiceImpl implements FileService, IOErrorHandler, ErrorHandle
 		try {
 			FileUtils.copyFile(file, fileCopy);
 			// check if file was copied successful
-			if (fileCopy.exists() && fileRecordService.save(new com.krypton.cloud.model.File(fileCopy)) != null)
+			if (fileCopy.exists() && fileRecordService.save(new com.krypton.databaselayer.model.File(fileCopy)) != null)
 				return HttpStatus.OK;
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -127,7 +127,7 @@ public class FileServiceImpl implements FileService, IOErrorHandler, ErrorHandle
 			if (file.createNewFile()) {
 				// transfer incoming file data to local file
 				return filePart.transferTo(file)
-						.doOnSuccess(result -> fileRecordService.save(new com.krypton.cloud.model.File(file)))
+						.doOnSuccess(result -> fileRecordService.save(new com.krypton.databaselayer.model.File(file)))
 						.doOnError(Throwable::printStackTrace)
 						.thenReturn(true);
 			}

@@ -1,5 +1,6 @@
 package com.krypton.cloud.controller
 
+import com.krypton.databaselayer.service.file.FileRecordServiceImpl
 import lombok.AllArgsConstructor
 import org.springframework.core.io.InputStreamResource
 
@@ -9,10 +10,12 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*;
 import java.io.File
+import java.util.*
 
+@CrossOrigin
 @RestController
 @AllArgsConstructor
-class TransferController {
+class TransferController(private val fileRecordServiceImpl: FileRecordServiceImpl) {
 
 	/**
 	 * Download file from input stream
@@ -31,10 +34,12 @@ class TransferController {
 				.body(InputStreamResource(inputStream))
 	 }
 
-	 @GetMapping("/file/{path}/image")
-	 fun getImage(@PathVariable path : String) : ResponseEntity<ByteArray> {
-		val file = File(path)
+	 @GetMapping("/file/{id}/image")
+	 fun getImage(@PathVariable id : String) : ResponseEntity<ByteArray> {
+		 val fileEntity = fileRecordServiceImpl.getById(UUID.fromString(id))
 
-		return ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).body(file.readBytes())
+		 val file = File(fileEntity.path)
+
+		 return ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).body(file.readBytes())
 	 }
  }

@@ -1,26 +1,24 @@
 package com.krypton.cloud.service.trash
 
-import com.krypton.cloud.model.BaseEntity
-import com.krypton.cloud.model.File
-import com.krypton.cloud.model.Folder
-import com.krypton.cloud.model.TrashEntity
-import com.krypton.cloud.repository.FileRepository
-import com.krypton.cloud.repository.FolderRepository
+import com.krypton.databaselayer.model.*
 import com.krypton.cloud.service.file.FileService
 import com.krypton.cloud.service.folder.FolderService
+import com.krypton.databaselayer.service.file.FileRecordServiceImpl
+import com.krypton.databaselayer.service.folder.FolderRecordServiceImpl
 import common.config.AppProperties
 import common.model.EntityType
 import lombok.AllArgsConstructor
 import org.springframework.stereotype.Service
 import java.util.*
+import kotlin.NoSuchElementException
 
 @AllArgsConstructor
 @Service
 class TrashErrorHandler(
-	private val fileRepository: FileRepository,
-	private val folderRepository: FolderRepository,
-	private val fileService: FileService,
-	private val folderService: FolderService
+	private val fileRecordService 	: FileRecordServiceImpl,
+	private val folderRecordService	: FolderRecordServiceImpl,
+	private val fileService			: FileService,
+	private val folderService		: FolderService
 ) {
 
 	/**
@@ -46,7 +44,7 @@ class TrashErrorHandler(
 	 * */
 	@Throws(NoSuchElementException::class)
 	internal fun moveFileBackIfError(fileId : UUID, restorePoint : String) {
-		val file = fileRepository.findById(fileId).orElseThrow()
+		val file = fileRecordService.getById(fileId) ?: throw NoSuchElementException()
 
 		fileService.move(file.path, restorePoint)
 	}
@@ -60,7 +58,7 @@ class TrashErrorHandler(
 	 * */
 	@Throws(NoSuchElementException::class)
 	internal fun moveFolderBackIfError(folderId : UUID, restorePoint : String) {
-		val folder = folderRepository.findById(folderId).orElseThrow()
+		val folder = folderRecordService.getById(folderId) ?: throw NoSuchElementException()
 
 		folderService.move(folder.path, restorePoint)
 	}

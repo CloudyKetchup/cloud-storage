@@ -1,10 +1,10 @@
 package com.krypton.cloud.config
 
-import com.krypton.cloud.model.Folder
-import com.krypton.cloud.service.file.record.FileRecordServiceImpl
-import com.krypton.cloud.service.folder.record.FolderRecordServiceImpl
-import com.krypton.cloud.service.folder.record.FolderRecordUtils
 import com.krypton.cloud.service.trash.TrashService
+import com.krypton.databaselayer.model.Folder
+import com.krypton.databaselayer.service.file.FileRecordServiceImpl
+import com.krypton.databaselayer.service.folder.FolderRecordServiceImpl
+import com.krypton.databaselayer.service.folder.FolderRecordUtils
 import common.config.AppProperties
 import lombok.AllArgsConstructor
 import org.springframework.boot.CommandLineRunner
@@ -19,10 +19,10 @@ import org.springframework.stereotype.Service
 @Service
 @AllArgsConstructor
 class Startup(
-        private val fileRecordService   : FileRecordServiceImpl,
-        private val folderRecordService : FolderRecordServiceImpl,
-        private val folderRecordUtils   : FolderRecordUtils,
-        private val trashService : TrashService
+    private val fileRecordService   : FileRecordServiceImpl,
+    private val folderRecordService : FolderRecordServiceImpl,
+    private val folderRecordUtils   : FolderRecordUtils,
+    private val trashService        : TrashService
 ) : CommandLineRunner {
 
     // folder used for storage

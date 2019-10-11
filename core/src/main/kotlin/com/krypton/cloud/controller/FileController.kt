@@ -1,10 +1,9 @@
 package com.krypton.cloud.controller
 
-import com.krypton.cloud.model.File
+import com.krypton.databaselayer.model.File
 import lombok.AllArgsConstructor
 import com.krypton.cloud.service.file.FileServiceImpl
-import com.krypton.cloud.service.file.record.FileRecordServiceImpl
-import com.krypton.cloud.service.trash.TrashService
+import com.krypton.databaselayer.service.file.FileRecordServiceImpl
 import org.springframework.http.*
 import org.springframework.http.codec.multipart.FilePart
 import org.springframework.http.codec.multipart.FormFieldPart
@@ -12,6 +11,7 @@ import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Mono
 import java.util.*
 
+@CrossOrigin
 @AllArgsConstructor
 @RestController
 @RequestMapping("/file")
