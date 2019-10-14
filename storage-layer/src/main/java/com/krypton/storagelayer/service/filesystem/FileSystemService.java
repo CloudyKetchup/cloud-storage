@@ -1,38 +1,36 @@
-package com.krypton.cloud.service
+package com.krypton.storagelayer.service.filesystem;
 
-import org.springframework.http.HttpStatus
+import java.io.File;
+import java.io.IOException;
 
 /**
  * service for file and folder on filesystem
  */
-interface IOEntityService {
+public interface FileSystemService {
 
     /**
      * move entity from one folder to another
      * 
-     * @param oldPath   path where entity is located
      * @param newPath   path where entity needs to be moved
      * @return http status depending on success
      */
-    fun move(oldPath: String, newPath: String) : HttpStatus
+    boolean move(File file, String newPath);
 
     /**
      * copy entity from one folder to another
      * 
-     * @param oldPath   path where entity is located
-     * @param newPath   path for entity copy
      * @return http status depending on success
      */
-    fun copy(oldPath: String, newPath: String) : HttpStatus
+    boolean copy(File file, File destFile) throws IOException;
 
     /**
      * rename entity
      * 
-     * @param path      entity path
+     * @param file      file or folder to remove
      * @param newName   new entity name
      * @return http status depending on success
      */
-    fun rename(path: String, newName: String) : HttpStatus
+    boolean rename(File file, String newName);
 
     /**
      * delete entity, find by path
@@ -40,5 +38,5 @@ interface IOEntityService {
      * @param   path    entity path
      * @return http status depending on success
      */
-    fun delete(path: String) : HttpStatus
+    boolean delete(String path);
 }

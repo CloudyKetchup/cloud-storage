@@ -107,7 +107,7 @@ class FolderController(
 	 * @return http status
 	 */
 	@PostMapping("/create")
-	fun createFolder(@RequestBody request : HashMap<String, String>) : HttpStatus = folderService.createFolder(request["name"], request["folderPath"])
+	fun createFolder(@RequestBody request : HashMap<String, String>) : HttpStatus = folderService.create(request["name"], request["folderPath"])
 
 	/**
 	 * move folder from one location to another
@@ -132,21 +132,21 @@ class FolderController(
 	 * @return http status
 	 */
 	@PostMapping("/rename")
-	fun renameFolder(@RequestBody request: HashMap<String, String>) : HttpStatus = folderService.rename(request["path"]!!, request["newName"]!!)
+	fun renameFolder(@RequestBody request: HashMap<String, String>) : HttpStatus = folderService.rename(UUID.fromString(request["id"]!!), request["newName"]!!)
+
+	/**
+	 * @param id	folder entity id
+	 * @return http status
+	 */
+	@DeleteMapping("/{id}/delete")
+	fun deleteFolder(@PathVariable id : String) : HttpStatus = folderService.delete(UUID.fromString(id))
 
 	/**
 	 * @param request    request containing folder path
 	 * @return http status
 	 */
-	@PostMapping("/delete")
-	fun deleteFolder(@RequestBody request : HashMap<String, String>) : HttpStatus = folderService.delete(request["path"]!!)
-
-	/**
-	 * @param request    request containing folder path
-	 * @return http status
-	 */
-	@PostMapping("/delete-all")
-	fun deleteFolderContent(@RequestBody request : HashMap<String, String>) : HttpStatus = folderService.deleteFolderContent(request["path"])
+	@DeleteMapping("/{id}/delete-all")
+	fun deleteFolderContent(@PathVariable id : String) : HttpStatus = folderService.deleteContent(UUID.fromString(id))
 
 	/**
 	 * zip folder into temporary folder and return path to it
@@ -156,6 +156,5 @@ class FolderController(
 	 */
 	@PostMapping("/zip")
 	fun zipFolder(@RequestBody request : HashMap<String, String>) : String = folderService.zipFolder(File(request["path"]!!))
-
 
 }
