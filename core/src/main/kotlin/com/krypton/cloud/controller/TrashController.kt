@@ -65,8 +65,11 @@ class TrashController(
 	fun moveFileToTrash(@RequestBody request : java.util.HashMap<String, String>) : HttpStatus {
 		val file = fileRecordService.getById(UUID.fromString(request["id"]))
 
-		return if (trashService.moveToTrash(file)) {
-			HttpStatus.OK
-		} else HttpStatus.INTERNAL_SERVER_ERROR
+		if (file != null) {
+			return if (trashService.moveToTrash(file))
+				HttpStatus.OK
+			else HttpStatus.INTERNAL_SERVER_ERROR
+		}
+		return HttpStatus.INTERNAL_SERVER_ERROR
 	}
 }

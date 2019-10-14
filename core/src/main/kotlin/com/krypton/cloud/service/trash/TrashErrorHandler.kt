@@ -9,6 +9,7 @@ import common.config.AppProperties
 import common.model.EntityType
 import lombok.AllArgsConstructor
 import org.springframework.stereotype.Service
+import java.io.File
 import java.util.*
 import kotlin.NoSuchElementException
 
