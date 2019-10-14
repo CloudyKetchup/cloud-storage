@@ -34,7 +34,7 @@ class FileController(
     ) : Mono<HttpStatus> = filePart.flatMap { fileService.saveFile(it, path.value()) }
 
     @GetMapping("/{id}/data")
-    fun getData(@PathVariable id : String) : File = fileRecordService.getById(UUID.fromString(id))
+    fun getData(@PathVariable id : String) : File = fileRecordService.getById(UUID.fromString(id))!!
 
     /**
      * move folder from one location to another
@@ -59,14 +59,12 @@ class FileController(
      * @return http status
      */
     @PostMapping("/rename")
-    fun renameFile(@RequestBody request : HashMap<String, String>) : HttpStatus = fileService.rename(request["path"]!!, request["newName"]!!)
+    fun renameFile(@RequestBody request : HashMap<String, String>) : HttpStatus = fileService.rename(UUID.fromString(request["id"]!!), request["newName"]!!)
 
     /**
      * @param request   file path
      * @return http status
      */
-    @PostMapping("/delete")
-    fun deleteFile(@RequestBody request : HashMap<String, String>) : HttpStatus = fileService.delete(request["path"]!!)
-
-
+    @DeleteMapping("/{id}/delete")
+    fun deleteFile(@PathVariable id : String) : HttpStatus = fileService.delete(UUID.fromString(id))
 }

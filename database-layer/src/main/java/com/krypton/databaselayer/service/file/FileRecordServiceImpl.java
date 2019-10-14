@@ -8,6 +8,7 @@ import com.krypton.databaselayer.model.File;
 import com.krypton.databaselayer.repository.FileRepository;
 import com.krypton.databaselayer.service.folder.FolderPersistenceHelper;
 import lombok.AllArgsConstructor;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.Paths;
@@ -28,8 +29,9 @@ public class FileRecordServiceImpl implements IOEntityRecordService<File> {
     private final FolderRecordUpdaterImpl folderRecordUpdater;
 
     @Override
+    @Nullable
     public File getById(UUID id) {
-        return fileRepository.findById(id).get();
+        return fileRepository.findById(id).orElse(null);
     }
 
     @Override

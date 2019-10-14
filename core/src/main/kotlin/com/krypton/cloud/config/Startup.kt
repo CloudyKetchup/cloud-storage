@@ -57,7 +57,7 @@ class Startup(
 
             fileRecordService.addAllFilesToDatabase(trashContent)
 
-            trashService.addAllTrashEntities(trashContent)
+            trashService.restoreItems()
         }
     }
 

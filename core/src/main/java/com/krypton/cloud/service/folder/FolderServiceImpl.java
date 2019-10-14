@@ -1,5 +1,6 @@
 package com.krypton.cloud.service.folder;
 
+import com.krypton.storagelayer.service.filesystem.FileSystemLayer;
 import com.krypton.databaselayer.model.Folder;
 import common.exception.entity.io.FolderIOException;
 import com.krypton.cloud.service.handler.http.ErrorHandler;
@@ -20,10 +21,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-import org.apache.commons.io.FileUtils;
 import common.exception.ExceptionTools;
 import util.log.LogFolder;
 import util.log.LoggingService;
+
+import static java.util.Objects.requireNonNull;
 
 @Service
 @AllArgsConstructor
@@ -36,11 +38,12 @@ public class FolderServiceImpl implements FolderService, ErrorHandler {
 	private final FolderRecordUtils folderRecordUtils;
 
 	private final FolderRecordUpdaterImpl folderRecordUpdater;
-	
 
+	private final FileSystemLayer fileSystemLayer;
+	
 	@Override
-	public HttpStatus createFolder(String folderName, String folderPath) {
-		var folder = new File(folderPath + "/" + folderName);
+	public HttpStatus create(String name, String path) {
+		var folder = new File(path + "/" + name);
 		// create folder locally on file system
 		if (folder.mkdir()) {
 			// add folder to database and return http status > ok
@@ -54,15 +57,14 @@ public class FolderServiceImpl implements FolderService, ErrorHandler {
 
 	@Override
 	public HttpStatus copy(String folderPath, String copyPath) {
-		var folder 		= new File(folderPath);
-		var folderCopy 	= new File(copyPath + "/" + folder.getName());
-		// copy folder to new path
+		var folder 	= new File(folderPath);
+		var copy	= new File(copyPath + "/" + folder.getName());
+
 		try {
-			FileUtils.copyDirectory(folder, folderCopy);
-			// check if file was copied successful
-			if (folderCopy.exists())
-				// add copied folder record to database and return http status
-				return folderRecordUtils.copyFolder(folderCopy);
+			// create folder copy on filesystem
+			if (fileSystemLayer.copy(folder, copy))
+				// add folder copy to database
+				return folderRecordUtils.copyFolder(copy);
 			else throw new FolderIOException("Error when coping folder " + folder.getPath());
 		} catch (IOException | FolderIOException e) {
 			e.printStackTrace();
@@ -71,64 +73,63 @@ public class FolderServiceImpl implements FolderService, ErrorHandler {
 	}
 
 	@Override
-	public HttpStatus move(String oldPath, String newPath) {
-		var folder 		= new File(oldPath);
-		var folderCopy 	= new File(newPath + "/" + folder.getName());
+	public HttpStatus move(String oldPath, String newFolder) {
+		var folder 	= new File(oldPath);
+		var newPath = newFolder + "/" + folder.getName();
 		// move folder to new location
-		if (folder.renameTo(folderCopy)) {
-			return folderRecordUtils.moveFolder(oldPath, folderCopy);
+		if (fileSystemLayer.move(folder, newPath)) {
+			return folderRecordUtils.moveFolder(oldPath, new File(newPath));
 		}
 		return httpError(new FolderIOException("Error when moving folder " + folder.getPath()).stackTraceToString());
 	}
 
 	@Override
-	public HttpStatus rename(String folderPath, String newName) {
-	    var folder 		= new File(folderPath);
-		var parentPath 	= Paths.get(folderPath).getParent().toFile().getPath();
+	public HttpStatus rename(UUID id, String newName) {
+	    var folderEntity = folderRecordService.getById(id);
+	    var folder 		 = new File(folderEntity.getPath());
+		var newPath 	 = Paths.get(folderEntity.getPath()).getParent().toAbsolutePath() + "/" + newName;
 	    // rename folder locally on file system
-	    if (folder.renameTo(new File(parentPath + "/" + newName))) {
+	    if (fileSystemLayer.rename(folder, newName)) {
 			// update folder name in database
-			folderRecordUpdater.updateName(folderPath, newName);
-			// update folder path in database because it contains name
-			return folderRecordUpdater.updatePath(folder, parentPath + "/" + newName);
+			folderRecordUpdater.updateName(folderEntity.getPath(), newName);
+			// update folder path in database
+			return folderRecordUpdater.updatePath(folder, newPath);
 		}
 		return httpError(new FolderIOException("Error when renaming folder " + folder.getPath()).stackTraceToString());
 	}
 
 	@Override
-	public HttpStatus delete(String folderPath) {
-        var folder = new File(folderPath);
+	public HttpStatus delete(UUID id) {
+		var path = folderRecordService.getById(id).getPath();
 
-        deleteFolderContent(folderPath);
+		deleteContent(id);
 
-        folderRecordService.delete(folder.getPath());
+		folderRecordService.delete(path);
 
-        return folder.delete()
-				? HttpStatus.OK
-				: httpError(new FolderIOException("Error while deleting folder" + folder.getPath()).stackTraceToString());
+		if (folderRecordService.getByPath(path) == null && fileSystemLayer.delete(path))
+			return HttpStatus.OK;
+		return HttpStatus.INTERNAL_SERVER_ERROR;
 	}
 
 	@Override
-	public HttpStatus deleteFolderContent(String folderPath) {
-		var folder = new File(folderPath);
+	public HttpStatus deleteContent(UUID id) {
+		var folder = folderRecordService.getById(id);
 		// check if folder is not empty
-		if (folder.listFiles() != null) {
-			// delete inside content
-	        for (var file : folder.listFiles()) {
-	            // if file is directory delete content inside it
-				if (file.isDirectory()) {
-					delete(file.getPath());
-				} else {
-					file.delete();
-					// delete file from database
-					fileRecordService.delete(file.getPath());
-				}
-	        }
-    	}
+		folder.getFiles().parallelStream().forEach(f -> {
+			var path = f.getPath();
+
+			if (new File(path).delete()) fileRecordService.delete(path);
+		});
+		folder.getFolders().parallelStream().forEach(f -> {
+			deleteContent(f.getId());
+
+			delete(f.getId());
+		});
+		var folderFiles = new File(folder.getPath()).list();
         // check if folder is now empty
-		return new File(folderPath).list().length == 0
+		return folderFiles != null && folderFiles.length == 0
 				? HttpStatus.OK
-				: httpError(new FolderIOException("Error while deleting folder " + folderPath + " content").stackTraceToString());
+				: httpError(new FolderIOException("Error while deleting folder " + folder.getPath() + " content").stackTraceToString());
 	}
 
 	@Override
@@ -162,14 +163,15 @@ public class FolderServiceImpl implements FolderService, ErrorHandler {
 	public String zipFolder(File folder) {
 		Path zip;
 
-		if (folder.listFiles() == null || folder.listFiles().length == 0) {
-			return "folder is empty";
-		}
 		try {
+		    if (requireNonNull(folder.listFiles()).length == 0) return "folder is empty";
+
 			zip = Files.createTempFile(folder.getName(), ".zip");
 		} catch (IOException e) {
 			e.printStackTrace();
-			return httpError(e.getLocalizedMessage()).toString();
+			return httpError(ExceptionTools.INSTANCE.stackTraceToString(e)).toString();
+		} catch (NullPointerException e) {
+			return "folder is empty";
 		}
 		// zip folder to file created in temp folder
 		ZipUtil.pack(folder, new File(zip.toString()));
