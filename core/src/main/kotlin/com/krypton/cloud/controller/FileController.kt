@@ -31,7 +31,7 @@ class FileController(
     fun uploadFile(
             @RequestPart("file") filePart : Mono<FilePart>,
             @RequestPart("path") path : FormFieldPart
-    ) : Mono<HttpStatus> = filePart.flatMap { fileService.saveFile(it, path.value()) }
+    ) : Mono<HttpStatus> = filePart.flatMap { fileService.saveFile(it, path.value() + "/" + it.filename()) }
 
     @GetMapping("/{id}/data")
     fun getData(@PathVariable id : String) : File = fileRecordService.getById(UUID.fromString(id))!!
