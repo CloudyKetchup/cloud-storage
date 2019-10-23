@@ -1,22 +1,13 @@
 package com.krypton.databaselayer.model;
 
 import common.model.EntityType;
-import org.hibernate.annotations.GenericGenerator;
+import lombok.ToString;
 
 import javax.persistence.*;
-import java.util.UUID;
 
 @MappedSuperclass
-public class BaseEntity {
-
-    @Id
-    @GeneratedValue(generator = "UUID")
-    @GenericGenerator(
-            name = "id",
-            strategy = "org.hibernate.id.UUIDGenerator"
-    )
-    @Column(columnDefinition = "BINARY(16)")
-    private UUID id;
+@ToString
+public abstract class BaseEntity extends Entity {
 
     @Column
     private String name;
@@ -35,8 +26,6 @@ public class BaseEntity {
 
     @Column
     private String size;
-
-    public UUID getId() { return id; }
 
     public String getName() { return name; }
 

@@ -1,6 +1,7 @@
 package com.krypton.cloud.controller
 
 import com.krypton.databaselayer.service.file.FileRecordServiceImpl
+import com.krypton.medialayer.service.MediaService
 import lombok.AllArgsConstructor
 import org.springframework.core.io.InputStreamResource
 
@@ -8,14 +9,16 @@ import org.springframework.core.io.Resource
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.*
 import java.io.File
 import java.util.*
 
 @CrossOrigin
 @RestController
 @AllArgsConstructor
-class TransferController(private val fileRecordServiceImpl: FileRecordServiceImpl) {
+class TransferController(
+	private val fileRecordServiceImpl: FileRecordServiceImpl
+) {
 
 	/**
 	 * Download file from input stream
@@ -36,10 +39,15 @@ class TransferController(private val fileRecordServiceImpl: FileRecordServiceImp
 
 	 @GetMapping("/file/{id}/image")
 	 fun getImage(@PathVariable id : String) : ResponseEntity<ByteArray> {
-		 val fileEntity = fileRecordServiceImpl.getById(UUID.fromString(id))
+		 val file = fileRecordServiceImpl.getById(UUID.fromString(id))
 
-		 val file = File(fileEntity.path)
+		 if (file != null && file.image != null) {
+			 val thumbnail = MediaService.getThumbnail(file.image.thumbnailPath)
 
-		 return ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).body(file.readBytes())
+			 if (thumbnail != null && thumbnail.body != null) {
+				return thumbnail
+			 }
+		 }
+		 return ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).body(File(file!!.path).readBytes())
 	 }
  }

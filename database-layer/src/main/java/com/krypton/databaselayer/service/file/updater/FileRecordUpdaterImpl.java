@@ -6,7 +6,6 @@ import common.exception.entity.database.FileDatabaseException;
 import com.krypton.databaselayer.repository.FileRepository;
 import com.krypton.databaselayer.service.file.FileRecordServiceImpl;
 import common.model.LogType;
-import org.springframework.context.annotation.Bean;
 import util.log.LogFolder;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;

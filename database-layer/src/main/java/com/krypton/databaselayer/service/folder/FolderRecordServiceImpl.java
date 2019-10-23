@@ -67,8 +67,22 @@ public class FolderRecordServiceImpl implements IOEntityRecordService<Folder> {
     }
 
     @Override
+    public boolean delete(UUID id) {
+        var folder = getById(id);
+
+        folderRepository.delete(folder);
+
+        return !exists(id);
+    }
+
+    @Override
     public boolean exists(String path) {
         return folderRepository.getByPath(path) != null;
+    }
+
+    @Override
+    public boolean exists(UUID id) {
+        return folderRepository.findById(id).isPresent();
     }
 
     private HttpStatus logError(String message) {
