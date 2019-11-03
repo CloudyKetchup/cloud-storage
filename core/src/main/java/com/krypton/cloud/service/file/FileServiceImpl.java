@@ -44,11 +44,12 @@ public class FileServiceImpl implements FileService {
 		// move file to new location
 		if (filesystemLayer.move(file, newPath)) {
 			// remove file with old path from database
-			recordService.delete(oldPath);
-			// add file with new path to database
-			recordService.save(new com.krypton.databaselayer.model.File(new File(newPath)));
+			if (recordService.delete(oldPath)) {
+				// add file with new path to database
+				recordService.createAndSave(new File(newPath)).subscribe();
 
-			return HttpStatus.OK;
+				return HttpStatus.OK;
+			}
 		}
 		return HttpStatus.INTERNAL_SERVER_ERROR;
 	}
@@ -61,7 +62,7 @@ public class FileServiceImpl implements FileService {
 		try {
 			filesystemLayer.copy(file, copy);
 			// check if file was copied successful
-			if (copy.exists() && recordService.save(new com.krypton.databaselayer.model.File(copy)) != null)
+			if (copy.exists() && recordService.createAndSave(copy).block())
 				return HttpStatus.OK;
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -71,7 +72,11 @@ public class FileServiceImpl implements FileService {
 
 	@Override
 	public HttpStatus rename(UUID id, String newName) {
-	    var path 		 = recordService.getById(id).getPath();
+		var file = recordService.getById(id);
+
+		if (file == null) return HttpStatus.INTERNAL_SERVER_ERROR;
+
+	    var path 		 = file.getPath();
 		var parentFolder = Paths.get(path).getParent().toFile().getPath();
 
 		return filesystemLayer.rename(new File(path), newName)
@@ -81,7 +86,11 @@ public class FileServiceImpl implements FileService {
 
 	@Override
 	public HttpStatus delete(UUID id) {
-		var path = recordService.getById(id).getPath();
+	    var file = recordService.getById(id);
+
+	    if (file == null) return HttpStatus.INTERNAL_SERVER_ERROR;
+
+		var path = file.getPath();
 
 		if (filesystemLayer.delete(path)) {
 			return recordService.delete(path)
