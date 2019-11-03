@@ -9,6 +9,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.util.annotation.Nullable;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.UUID;
 
@@ -23,6 +25,7 @@ public class ImageRecordService implements RecordService<Image> {
     public Image getById(UUID id) {
         return imageRepository.findById(id).orElse(null);
     }
+
     @Override
     public Image save(Image entity) {
         return imageRepository.save(entity);
@@ -42,14 +45,17 @@ public class ImageRecordService implements RecordService<Image> {
     @Nullable
     private Image create(File file) {
         java.io.File thumbnail = null;
+        BufferedImage bufferedImage = null;
 
         try {
             thumbnail = MediaService.createThumbnail(new java.io.File(file.getPath()), file.getId().toString());
+
+            bufferedImage = ImageIO.read(new java.io.File(file.getPath()));
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if (thumbnail != null) {
-            return new Image(file.getPath(), thumbnail.getPath());
+        if (bufferedImage != null) {
+            return new Image(file.getPath(), thumbnail.getPath(), bufferedImage.getHeight(), bufferedImage.getWidth());
         }
         return null;
     }
