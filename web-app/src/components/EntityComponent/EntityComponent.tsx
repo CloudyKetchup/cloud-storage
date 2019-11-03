@@ -28,18 +28,16 @@ export default abstract class EntityComponent<P, S> extends Component<P, EntityS
 		}
 	};
 
-	contextMenu = (data: Entity, handleAction: (action: string) => void, app : App) => {
-		if (this.state.contextMenuShow) {
-			return 	<EntityContextMenu
-				parent={data}
-				action={handleAction}
-				onStart={() => app.setState({ elementSelected : data })}
-				style={this.state.contextMenuStyle}
-			/>
-		}
-	};
+	contextMenu = (data: Entity, handleAction: (action: string) => void, app : App) => (
+		this.state.contextMenuShow
+		&&
+		<EntityContextMenu
+			parent={data}
+			action={handleAction}
+			onStart={() => app.setState({ elementSelected: data })}
+			style={this.state.contextMenuStyle}
+		/>
+	);
 
-	name = (name: string) => {
-		return name.length > 14 ? `${name.substring(0, 13)}...` : name;
-	};
+	name = (name: string) =>  name.length > 14 ? `${name.substring(0, 13)}...` : name;
 }
