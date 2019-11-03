@@ -18,7 +18,7 @@ public class File extends BaseEntity {
 	@Column
 	private FileType extension;
 
-	@OneToOne
+	@OneToOne(orphanRemoval = true)
 	private Image image = null;
 
 	public File() {}
@@ -47,4 +47,5 @@ public class File extends BaseEntity {
 	public Image getImage() { return image; }
 
 	public void setImage(Image image) { this.image = image; }
+
 }

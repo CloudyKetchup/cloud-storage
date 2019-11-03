@@ -4,10 +4,14 @@ import common.model.EntityType;
 import lombok.ToString;
 
 import javax.persistence.*;
+import java.util.UUID;
 
 @MappedSuperclass
 @ToString
 public abstract class BaseEntity extends Entity {
+
+    @Column(columnDefinition = "BINARY(16)")
+    private UUID parentId;
 
     @Column
     private String name;
@@ -50,4 +54,8 @@ public abstract class BaseEntity extends Entity {
     public String getSize() { return size; }
 
     public void setSize(String size) { this.size = size; }
+
+    public UUID getParentId() { return parentId; }
+
+    public void setParentId(UUID parentId) { this.parentId = parentId; }
 }

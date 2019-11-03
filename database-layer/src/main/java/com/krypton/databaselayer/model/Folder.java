@@ -16,11 +16,8 @@ import java.util.Set;
 import java.util.UUID;
 
 @Entity
-@ToString
+@ToString(callSuper = true)
 public class Folder extends BaseEntity {
-
-    @Column(columnDefinition = "BINARY(16)")
-    private UUID parentId;
 
     @Column
     private Boolean root = false;
@@ -55,10 +52,6 @@ public class Folder extends BaseEntity {
             root = true;
         }
     }
-
-    public UUID getParentId() { return parentId; }
-
-    public void setParentId(UUID parentId) { this.parentId = parentId; }
 
     public Boolean getRoot() { return root; }
 
