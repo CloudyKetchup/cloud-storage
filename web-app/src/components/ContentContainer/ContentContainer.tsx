@@ -1,14 +1,14 @@
 import React, { Component } from 'react';
 
-import { EmptyContentBanner } from '../EmptyContentBanner/EmptyContentBanner';
-import { FileEntity } 		from '../../model/entity/FileEntity';
-import { FolderEntity } 	from '../../model/entity/FolderEntity';
-import App, { ContentContext } from '../../App';
-import File 				from '../File/File';
-import Folder 				from '../Folder/Folder';
-import { APIHelpers as API } from '../../helpers';
-import {Link} from "react-router-dom";
-import LazyLoad from 'react-lazyload';
+import { EmptyContentBanner }	from '../EmptyContentBanner/EmptyContentBanner';
+import { FileEntity } 			from '../../model/entity/FileEntity';
+import { FolderEntity } 		from '../../model/entity/FolderEntity';
+import App, { ContentContext }	from '../../App';
+import File 					from '../File/File';
+import Folder 					from '../Folder/Folder';
+import { APIHelpers as API } 	from '../../helpers';
+import { Link }					from "react-router-dom";
+import LazyLoad					from 'react-lazyload';
 
 type ContextMenuProps = {
 	parent : App,
@@ -173,15 +173,13 @@ export default class ContentContainer extends Component<{ folderId : string, par
 		background: 'gray'
 	};
 
-	getContent = (
+	getContent = async (
 		setFiles : (newFiles : FileEntity[]) => FileEntity[],
 		setFolders : (newFolders : FolderEntity[]) => FolderEntity[]
 	) => {
-		API.getFolderFiles(this.props.folderId)
-			.then(files => setFiles(files));
+		setFiles(await API.getFolderFiles(this.props.folderId));
 
-		API.getFolderFolders(this.props.folderId)
-			.then(folders => setFolders(folders));
+		setFolders(await API.getFolderFolders(this.props.folderId));
 	};
 
 	render = () => (
