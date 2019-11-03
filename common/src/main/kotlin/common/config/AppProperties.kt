@@ -11,8 +11,17 @@ object AppProperties {
         false -> "${System.getProperty("user.home")}/Cloud"
     }
 
+    val backupsFolder   = File("$root/Backup")
     val storageFolder   = File("$root/Storage")
     val trashFolder     = File("$root/Trash")
     val logsFolder      = File("$root/Logs")
+    val thumbnailsFolder= File("$root/Thumbnails")
 
+    val allFolders = listOf(
+        backupsFolder,
+        storageFolder,
+        trashFolder,
+        logsFolder,
+        thumbnailsFolder
+    )
 }

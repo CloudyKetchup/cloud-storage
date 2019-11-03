@@ -41,6 +41,10 @@ a {
 	text-decoration:none;
 }
 
+button {
+	background: transparent;
+}
+
 button, input {
 	border: none;
 	outline: none;
@@ -973,6 +977,94 @@ input:focus {
 	display: inline-flex;
 	width: 90%;
 	height: calc(100% - 20px);		
+}
+
+.media-view-overlay {
+	height: 100%;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    position: absolute;
+    z-index: 99999;
+    color: white;
+    text-align: center;
+}
+
+.media-view-title {
+	height : 50px;
+	line-height: 50px;
+}
+
+.media-view-container {
+    justify-content: center;
+    height: 100%;
+    width: 100%;	
+}
+
+.media-view-control {
+    margin-top: -60px;
+}
+
+.media-view-control i {
+	padding: 5px 15px 5px 15px;
+	color: white;
+}
+
+.media-view-control * {
+	animation-name: fade;
+	animation-duration: 0.2s;
+}
+
+.media-view-control-button {
+	font-size: 25px;
+	display: none;
+}
+
+.image-view {
+	position: fixed;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	right: 0;
+	margin: auto;
+    border-radius: 5px;
+    height: auto;
+    width: auto;
+	animation-name: image-view-slide;
+	animation-duration: 0.3s;
+    transition: unset;
+}
+
+.image-view:hover {
+	cursor: pointer;
+}
+
+.image-view img {
+	border-radius: 5px;
+	max-width: 100%;
+}
+
+.close-button {
+    right: 20px;
+    top: 20px;
+    color: white;
+	transition: 0.01s;
+    z-index: 99999;
+	position: fixed;
+}
+
+.close-button:hover {
+	color: grey;
+}
+
+@keyframes image-view-slide {
+	from {
+		opacity: 0;
+		bottom: -150px;
+	}
+	to {
+		opacity: 1;
+		bottom: 0;
+	}
 }
 
 @keyframes tree-entity {

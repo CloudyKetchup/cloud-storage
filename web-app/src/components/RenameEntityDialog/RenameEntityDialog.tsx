@@ -3,7 +3,6 @@ import React, { Component } from 'react';
 import { Link, match } 	from 'react-router-dom';
 import { FileEntity } 	from '../../model/entity/FileEntity';
 import { FolderEntity } from '../../model/entity/FolderEntity';
-import { EntityType } 	from '../../model/entity/EntityType';
 import { APIHelpers } 	from '../../helpers';
 import { Entity } 		from '../../model/entity/Entity';
 
@@ -12,21 +11,10 @@ interface IProps {
 	match : match<{ id : string, type : string }>
 }
 
-interface IState { data : FileEntity | FolderEntity }
+interface IState { data : FileEntity | FolderEntity | null}
 
 export default class RenameEntityDialog extends Component<IProps, IState> {
-	state : IState = {
-		data : {
-			id : "",
-			name : "",
-			path : "",
-			location : "",
-			timeCreated : "",
-			size : "",
-			extension : "",
-			type : EntityType.FILE
-		}
-	}
+	state : IState = { data : null }
 
 	componentDidMount() {
 		const entityType = this.props.match.params.type;
@@ -53,11 +41,11 @@ export default class RenameEntityDialog extends Component<IProps, IState> {
 					</button>
 				</Link>
 				<i className="fas fa-folder"/>
-				<span>Rename {this.state.data.name}</span>
+				<span>Rename {this.state.data && this.state.data.name}</span>
 			</div>
 			<div className="dialog-input-container">
 				<input
-					defaultValue={this.state.data.name}
+					defaultValue={`${this.state.data && this.state.data.name}`}
 					autoComplete="off"
 					placeholder="Name"
 					id="folder-name"
@@ -74,7 +62,7 @@ export default class RenameEntityDialog extends Component<IProps, IState> {
 					<Link  onClick={() => {
 							const field = document.getElementById('folder-name') as HTMLInputElement
 							
-							if (field !== null) this.props.onRename(this.state.data, field.value)
+							if (field && this.state.data) this.props.onRename(this.state.data, field.value)
 						}} to={'/'}>
 						Rename
 					</Link>

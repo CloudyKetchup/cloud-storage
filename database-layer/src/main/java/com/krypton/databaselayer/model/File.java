@@ -8,14 +8,18 @@ import util.file.FileTools;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.OneToOne;
 import java.time.LocalDateTime;
 
 @Entity
-@ToString
+@ToString(callSuper = true)
 public class File extends BaseEntity {
 
 	@Column
 	private FileType extension;
+
+	@OneToOne(orphanRemoval = true)
+	private Image image = null;
 
 	public File() {}
 
@@ -39,4 +43,9 @@ public class File extends BaseEntity {
 	public void setExtension(FileType extension) {
 		this.extension = extension;
 	}
+
+	public Image getImage() { return image; }
+
+	public void setImage(Image image) { this.image = image; }
+
 }

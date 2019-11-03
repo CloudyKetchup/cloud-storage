@@ -1,16 +1,16 @@
 import {BrowserRouter as Router, Link, Route, Switch} from 'react-router-dom';
 import React, {Component, Context, createContext} from 'react';
 
-import {APIHelpers as API} 				from './helpers';
-import {BufferElement}  				from './model/BufferElement';
-import { ContentContextInterface } from './context/ContentContext';
-import {ElementInfoContainer}           from './components/ElementInfoContainer/ElementInfoContainer';
-import {Entity}         				from './model/entity/Entity';
-import {EntityType}     				from './model/entity/EntityType';
+import { APIHelpers as API } 			from './helpers';
+import { BufferElement }  				from './model/BufferElement';
+import { ContentContextInterface } 		from './context/ContentContext';
+import { ElementInfoContainer }         from './components/ElementInfoContainer/ElementInfoContainer';
+import { Entity }         				from './model/entity/Entity';
+import { EntityType }     				from './model/entity/EntityType';
 import { FileEntity } 					from './model/entity/FileEntity';
-import {FolderEntity}   				from './model/entity/FolderEntity';
-import {Notification}					from './model/notification/Notification';
-import {NotificationType}               from './components/Notification/Notification';
+import { FolderEntity }   				from './model/entity/FolderEntity';
+import { Notification }					from './model/notification/Notification';
+import { NotificationType }             from './components/Notification/Notification';
 import BufferElementIndicator           from './components/BufferElement/BufferElementIndicator';
 import ContentContainer                 from './components/ContentContainer/ContentContainer';
 import { ContentTreeView }				from './components/ContentTreeView/ContentTreeView';
@@ -26,6 +26,7 @@ import PrevFolderButton                 from './components/PrevFolderButton/Prev
 import RenameEntityDialog 				from './components/RenameEntityDialog/RenameEntityDialog';
 import RightPanel                       from './components/RightPanel/RightPanel';
 import TrashContainer					from './components/TrashContainer/TrashContainer';
+import ImageViewOverlay 				from './components/ImageViewOverlay/ImageViewOverlay';
 
 type IState = {
 	bufferElement		: BufferElement | undefined,
@@ -72,19 +73,19 @@ export default class App extends Component {
 			files		: [],
 			folders		: [],
 			trashItems	: [],
-			setFiles: (newFiles: FileEntity[]) => {
+			setFiles: (newFiles: FileEntity[] = []) => {
 				AppContentContext.files = [...newFiles];
 
 				this.forceUpdate();
 				
 				return AppContentContext.files },
-			setFolders: (newFolders: FolderEntity[]) => {
+			setFolders: (newFolders: FolderEntity[] = []) => {
 				AppContentContext.folders = [...newFolders];
 
 				this.forceUpdate();
 				
 				return AppContentContext.folders },
-			setTrashItems: (newTrashItems: Entity[]) => {
+			setTrashItems: (newTrashItems: Entity[] = []) => {
 				AppContentContext.trashItems = [...newTrashItems];
 
 				this.forceUpdate();
@@ -347,7 +348,7 @@ export default class App extends Component {
 
 	render = () => (
 		<Router>
-			<div style={{height : '100%'}}>
+			<div style={{ height : '100%' }}>
 				<NavBar notifications={this.state.notifications} navNodes={this.state.foldersNavigation}/>
 				<LeftPanel
 					memory={this.state.rootMemory}
@@ -361,17 +362,18 @@ export default class App extends Component {
 				</LeftPanel>
 				<DragAndDrop className="drag-and-drop" style={{ height : "100%" }} handleDrop={this.uploadFiles}>
 					<Switch>
-						<Route path="/:type/:id/rename" render={props =>
+						<Route exact path="/:type/:id/rename" render={props =>
 							<RenameEntityDialog
 								onRename={(target: Entity, newName: string) => this.renameEntity(target, newName)}
 								{...props} />}
 						/>
-						<Route path="/folder/create" render={() =>
+						<Route exact path="/folder/create" render={() =>
 							<CreateFolderDialog
 								parent={this}
 								sendFolder={(folder: FolderEntity) => this.createNewFolder(folder)}/>}/>
-						<Route path="/:type/:id/info" render={props => <ElementInfoContainer parent={this} {...props}/>}/>
-						<Route path="/trash" render={() => <TrashContainer parent={this}/>}/>
+						<Route path="/:type/:id/info" render={props => <ElementInfoContainer key={`${props.match.params.id}`} {...props}/>}/>
+						<Route exact path="/trash" render={() => <TrashContainer parent={this}/>}/>
+						<Route path="/file/image/:id/view" render={props => <ImageViewOverlay id={props.match.params.id}/>}/>
 					</Switch>
 					<ContentContext.Provider value={AppContentContext}>
 						<ContentContainer

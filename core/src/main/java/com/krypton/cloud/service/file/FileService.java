@@ -7,6 +7,5 @@ import reactor.core.publisher.Mono;
 
 public interface FileService extends EntityService  {
 
-    Mono<HttpStatus> saveFile(FilePart file, String folder);
-
+    Mono<HttpStatus> saveFile(FilePart file, String path);
 }

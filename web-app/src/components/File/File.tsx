@@ -4,9 +4,11 @@ import { Link }							from "react-router-dom";
 import { FileEntity }					from '../../model/entity/FileEntity';
 import EntityComponent, { EntityProps, EntityState } from '../EntityComponent/EntityComponent';
 import {FileExtensionIcons}				from "./FileExtensionIcons";
-import { APIHelpers as API } 			from '../../helpers';
-import { AppContentContext } 			from '../../App';
+import { APIHelpers as API, API_URL } 	from '../../helpers';
+import App, { AppContentContext } 			from '../../App';
 import CircularProgress from "@material-ui/core/CircularProgress";
+import { Entity } from '../../model/entity/Entity';
+import EntityContextMenu, { ContextMenuItem } from '../EntityContextMenu/EntityContextMenu';
 
 const contextMenuListener = async (e: MouseEvent, obj: File) => {
 	e.preventDefault();
@@ -63,18 +65,39 @@ export default class File extends EntityComponent<FileProps, FileState> {
 				if (response === "OK") {
 					this.props.mainParent.updateFolderInfo();
 
-					API.getTrashItems()
-						.then(items => AppContentContext.setTrashItems(items));
+					API.getTrashItems().then(AppContentContext.setTrashItems);
 				}
 			});
 	};
 
 	imagePreloader = () => (
-		<div key={this.props.data.id} style={{
-			height: "40px",
-			lineHeight: "110px" }}>
+		<div 
+			key={this.props.data.id}
+			style={{
+				height: "40px",
+				lineHeight: "110px"
+			}}>
 			<CircularProgress style={{ color : "#F32C2C" }}/>
 		</div>
+	);
+
+	contextMenu = (data: Entity, handleAction: (action: string) => void, app: App) => (
+		this.state.contextMenuShow
+		&&
+		<EntityContextMenu
+			parent={data}
+			action={handleAction}
+			onStart={() => app.setState({ elementSelected : data })}
+			style={this.state.contextMenuStyle}
+		>
+			<Link to={`/file/image/${this.props.data.id}/view`}>
+				<ContextMenuItem
+					key={`context-menu-item-${this.props.data.id}`}
+					icon={<i className="fas fa-eye"></i>}
+					text="View"
+				/>
+			</Link>
+		</EntityContextMenu>
 	);
 
 	render = () => (
@@ -95,7 +118,7 @@ export default class File extends EntityComponent<FileProps, FileState> {
 							key={this.props.data.path}
 							style={{ display : this.state.imageLoaded ? "unset" : "none" }}
 							onLoad={() => this.setState({ imageLoaded : true } as FileState)}
-							src={`http://localhost:8080/file/${this.props.data.id}/image`}
+							src={`${API_URL}/file/${this.props.data.id}/thumbnail`}
 							alt="..."/>]
 					: <i className={FileExtensionIcons[this.props.data.extension as any]}/>}
 			</div>

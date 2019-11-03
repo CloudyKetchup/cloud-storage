@@ -3,25 +3,16 @@ package com.krypton.databaselayer.model;
 import common.model.EntityType;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
+import javax.persistence.Entity;
 import java.util.UUID;
 
 @Entity
 @ToString
 @Table(name = "trash_entity")
 @EqualsAndHashCode(callSuper = false)
-public class TrashEntity {
-
-	@Id
-	@GeneratedValue(generator = "UUID")
-	@GenericGenerator(
-			name = "id",
-			strategy = "org.hibernate.id.UUIDGenerator"
-	)
-	@Column(columnDefinition = "BINARY(16)")
-	private UUID id;
+public class TrashEntity extends com.krypton.databaselayer.model.Entity {
 
 	@Column(columnDefinition = "BINARY(16)")
 	private UUID entityId;
@@ -47,10 +38,6 @@ public class TrashEntity {
 		this.type 			= entity.getType();
 		this.restoreFolder 	= restoreFolder;
 	}
-
-	public UUID getId() { return id; }
-
-	public void setId(UUID id) { this.id = id; }
 
 	public UUID getEntityId() { return entityId; }
 

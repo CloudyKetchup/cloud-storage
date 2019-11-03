@@ -13,4 +13,4 @@ pluginManagement {
 	}
 }
 
-include ":util", ":common", ":database-layer"
+include ":util", ":common", ":database-layer", "storage-layer", "media-layer"

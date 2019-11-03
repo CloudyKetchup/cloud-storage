@@ -25,19 +25,15 @@ class TrashRecordService(
 
 	override fun save(entity : TrashEntity) : TrashEntity? = trashRepository.save(entity) ?: null
 
-	override fun delete(path : String?) : Boolean = false
+	override fun delete(path : String) : Boolean {
+		val entity = getByPath(path)
 
-	override fun exists(path : String?) : Boolean = false
+		if (entity != null) trashRepository.delete(entity)
 
-	fun getByEntityId(id : UUID) : TrashEntity? = trashRepository.findByEntityId(id).orElse(null)
+		return !exists(path)
+	}
 
-	/**
-	 * check if [TrashEntity] exists by id
-	 *
-	 * @param id    uuid of [TrashEntity]
-	 * @return boolean depending on success
-	 * */
-	fun exists(id : UUID) : Boolean = trashRepository.findById(id).isPresent
+	override fun exists(path : String) : Boolean = trashRepository.findByPath(path).isPresent
 
 	/**
 	 * delete [TrashEntity] by id
@@ -45,16 +41,21 @@ class TrashRecordService(
 	 * @param id    uuid of [TrashEntity]
 	 * @return boolean depending on success
 	 * */
-	fun delete(id : UUID) : Boolean {
-		val entity = trashRepository.findById(id).orElse(null)
+	override fun delete(id : UUID) : Boolean {
+		trashRepository.deleteById(id)
 
-		if (entity != null) {
-			trashRepository.deleteById(id)
-
-			return !exists(id)
-		}
-		return false
+		return !exists(id)
 	}
+
+	/**
+	 * check if [TrashEntity] exists by id
+	 *
+	 * @param id    uuid of [TrashEntity]
+	 * @return boolean depending on success
+	 * */
+	override fun exists(id : UUID) : Boolean = trashRepository.findById(id).isPresent
+
+	fun getByEntityId(id : UUID) : TrashEntity? = trashRepository.findByEntityId(id).orElse(null)
 
 	fun getInfo() : HashMap<String, String> {
 		val items = getAllItems()

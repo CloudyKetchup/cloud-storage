@@ -1,32 +1,19 @@
 import React, { Component } from 'react';
 
-import App 				from '../../App';
 import { Link, match } 	from "react-router-dom";
 import { FileEntity } 	from '../../model/entity/FileEntity';
 import { FolderEntity } from '../../model/entity/FolderEntity';
-import { EntityType } 	from '../../model/entity/EntityType';
 import { APIHelpers } 	from '../../helpers';
 
 interface IProps {
-	parent : App
+	prevLink? : string,
 	match : match<{ id : string, type : string }>
 }
 
-interface IState {  data : FileEntity | FolderEntity }
+interface IState {  data : FileEntity | FolderEntity | null}
 
 export class ElementInfoContainer extends Component<IProps, IState> {
-	state : IState = {
-		 data : {
-			id : "",
-			name : "",
-			path : "",
-			location : "",
-			timeCreated : "",
-			size : "",
-			extension : "",
-			type : EntityType.FILE
-		}
-	}
+	state : IState = { data : null }
 
 	componentDidMount() {
 		const entityType = this.props.match.params.type;
@@ -51,36 +38,44 @@ export class ElementInfoContainer extends Component<IProps, IState> {
 				right: 0,
 				left: 0
 			}}>
-				<Link to="/">
+				<Link 
+					style={{ float : "left" }}
+					to={ this.props.prevLink != null ? this.props.prevLink : "/" }>
 					<button
 						className="prev-button"
 					>
 						<i className="fas fa-chevron-left"/>
 					</button>
 				</Link>
-				<span>{this.state.data.type.toLowerCase()} info</span>
+				<span>{this.state.data && this.state.data.type.toLowerCase()} info</span>
 			</div>
 			<div className="element-info" style={{
 				height: 'calc(100% - 60px)',
 				width: '95%',
 				bottom: '0px'
 			}}>
-				<div>
-					<span className="description-text">Name</span>
-					<span className="element-info-text">{this.state.data.name}</span>
-				</div>
-				<div>
-					<span className="description-text">Location</span>
-					<span className="element-info-text">{this.state.data.location}</span>
-				</div>
-				<div>
-					<span className="description-text">Time created</span>
-					<span className="element-info-text">{this.state.data.timeCreated}</span>
-				</div>
-				<div>
-					<span className="description-text">Size</span>
-					<span className="element-info-text">{this.state.data.size}</span>
-				</div>
+				{
+					this.state.data
+					&&
+					[
+						<div>
+							<span className="description-text">Name</span>
+							<span className="element-info-text">{this.state.data.name}</span>
+						</div>,
+						<div>
+							<span className="description-text">Location</span>
+							<span className="element-info-text">{this.state.data.location}</span>
+						</div>,
+						<div>
+							<span className="description-text">Time created</span>
+							<span className="element-info-text">{this.state.data.timeCreated}</span>
+						</div>,
+						<div>
+							<span className="description-text">Size</span>
+							<span className="element-info-text">{this.state.data.size}</span>
+						</div>
+					]
+				}
 			</div>
 		</div>
 	);

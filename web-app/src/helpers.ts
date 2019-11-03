@@ -1,7 +1,7 @@
 import {FolderEntity} 	from './model/entity/FolderEntity';
 import {Entity} 		from './model/entity/Entity';
 
-import App from './App';
+import App, { AppContentContext } from './App';
 
 import axios from 'axios';
 
@@ -130,10 +130,7 @@ export class APIHelpers {
 	);
 
 	static sendDeleteRequest = (target: Entity) : Promise<string> => (
-		axios.post(`${API_URL}/${target.type.toLowerCase()}/delete`,
-			{
-				'path' : target.path
-			})
+		axios.delete(`${API_URL}/${target.type.toLowerCase()}/${target.id}/delete`)
 			.then(response => response.data)
 	);
 
@@ -183,5 +180,23 @@ export class APIHelpers {
 		document.body.appendChild(link);
 		
 		link.click();
+	};
+}
+
+export class ContentHelpers {
+
+	static updateFiles = async (folderId : string) =>  AppContentContext.setFiles(await APIHelpers.getFolderFiles(folderId));
+
+	static updateFolders = async (folderId : string) => AppContentContext.setFolders(await APIHelpers.getFolderFolders(folderId));
+
+	static updateTrash = async () => AppContentContext.setTrashItems(await APIHelpers.getTrashItems());
+
+	static updateContent = async (folderId : string) : Promise<Boolean> => {
+		if (folderId === undefined) return false;
+
+		ContentHelpers.updateFiles(folderId);
+		ContentHelpers.updateFolders(folderId);
+
+		return true;
 	};
 }
