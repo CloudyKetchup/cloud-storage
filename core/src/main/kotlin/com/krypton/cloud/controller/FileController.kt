@@ -62,7 +62,7 @@ class FileController(
     fun renameFile(@RequestBody request : HashMap<String, String>) : HttpStatus = fileService.rename(UUID.fromString(request["id"]!!), request["newName"]!!)
 
     /**
-     * @param request   file path
+     * @param id    file id
      * @return http status
      */
     @DeleteMapping("/{id}/delete")
