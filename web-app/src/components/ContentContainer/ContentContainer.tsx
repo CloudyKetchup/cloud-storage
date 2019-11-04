@@ -6,7 +6,6 @@ import { FolderEntity } 		from '../../model/entity/FolderEntity';
 import App, { ContentContext }	from '../../App';
 import File 					from '../File/File';
 import Folder 					from '../Folder/Folder';
-import { APIHelpers as API } 	from '../../helpers';
 import { Link }					from "react-router-dom";
 import LazyLoad					from 'react-lazyload';
 
@@ -110,10 +109,10 @@ export default class ContentContainer extends Component<{ folderId : string, par
 					data={data}
 					mainParent={mainParent}
 					parent={this}
-					handleAction={(action: string) => {
+					handleAction={async (action: string) => {
 						mainParent.setState({ elementSelected: data });
 
-						mainParent.handleContextMenuAction(action, data);
+						await mainParent.handleContextMenuAction(action, data);
 					}}
 				/>
 			</LazyLoad>
@@ -134,12 +133,12 @@ export default class ContentContainer extends Component<{ folderId : string, par
 					mainParent={mainParent}
 					parent={this}
 					handleAction={(action: string) => mainParent.handleContextMenuAction(action, data)}
-					whenClicked={() => {
+					whenClicked={async () => {
 						if (mainParent.state.elementSelected !== undefined
 							&&
 							mainParent.state.elementSelected.id === data.id
 						) {
-							mainParent.updateFolderInfo(data.id);
+							await mainParent.updateFolder(data.id);
 						} else {
 							mainParent.setState({ elementSelected: data });
 						}
@@ -148,7 +147,7 @@ export default class ContentContainer extends Component<{ folderId : string, par
 		);
 	};
 
-	handleContextMenu = (action: string) => {
+	handleContextMenu = async (action: string) => {
 		switch (action) {
 			case 'upload-files':
 				const input = document.getElementById("select-upload-files");
@@ -156,10 +155,10 @@ export default class ContentContainer extends Component<{ folderId : string, par
 				if (input !== null) input.click();
 				break;
 			case 'paste':
-				this.props.parent.pasteEntity(this.props.parent.state.bufferElement);
+				await this.props.parent.pasteEntity(this.props.parent.state.bufferElement);
 				break;
 			case 'delete-all':
-				this.props.parent.sendDeleteAll();
+				await this.props.parent.deleteAllInFolder();
 				break;
 			default: break;
 		}
@@ -171,15 +170,6 @@ export default class ContentContainer extends Component<{ folderId : string, par
 		marginTop: '10px',
 		marginLeft: '-20px',
 		background: 'gray'
-	};
-
-	getContent = async (
-		setFiles : (newFiles : FileEntity[]) => FileEntity[],
-		setFolders : (newFolders : FolderEntity[]) => FolderEntity[]
-	) => {
-		setFiles(await API.getFolderFiles(this.props.folderId));
-
-		setFolders(await API.getFolderFolders(this.props.folderId));
 	};
 
 	render = () => (

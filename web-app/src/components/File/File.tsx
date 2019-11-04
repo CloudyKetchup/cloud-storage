@@ -1,14 +1,14 @@
 import React from 'react';
 
-import { Link }							from "react-router-dom";
-import { FileEntity }					from '../../model/entity/FileEntity';
-import EntityComponent, { EntityProps, EntityState } from '../EntityComponent/EntityComponent';
-import {FileExtensionIcons}				from "./FileExtensionIcons";
-import { APIHelpers as API, API_URL } 	from '../../helpers';
-import App, { AppContentContext } 			from '../../App';
-import CircularProgress from "@material-ui/core/CircularProgress";
-import { Entity } from '../../model/entity/Entity';
-import EntityContextMenu, { ContextMenuItem } from '../EntityContextMenu/EntityContextMenu';
+import { Link }											from "react-router-dom";
+import { FileEntity }									from '../../model/entity/FileEntity';
+import EntityComponent, { EntityProps, EntityState } 	from '../EntityComponent/EntityComponent';
+import {FileExtensionIcons}								from "./FileExtensionIcons";
+import { APIHelpers as API, API_URL } 					from '../../helpers';
+import App, { AppContentContext } 						from '../../App';
+import CircularProgress 								from "@material-ui/core/CircularProgress";
+import { Entity } 										from '../../model/entity/Entity';
+import EntityContextMenu, { ContextMenuItem } 			from '../EntityContextMenu/EntityContextMenu';
 
 const contextMenuListener = async (e: MouseEvent, obj: File) => {
 	e.preventDefault();
@@ -59,15 +59,12 @@ export default class File extends EntityComponent<FileProps, FileState> {
 		if (div !== null) div.removeEventListener('contextmenu', e => contextMenuListener(e, this));
 	};
 
-	moveToTrash = () => {
-		API.moveToTrash(this.props.data)
-			.then(response => {
-				if (response === "OK") {
-					this.props.mainParent.updateFolderInfo();
+	moveToTrash = async () => {
+		const result = await API.moveToTrash(this.props.data);
 
-					API.getTrashItems().then(AppContentContext.setTrashItems);
-				}
-			});
+		if (result === "OK") {
+			this.props.mainParent.updateFolder().then(() => API.getTrashItems().then(AppContentContext.setTrashItems));
+		}
 	};
 
 	imagePreloader = () => (
@@ -93,7 +90,7 @@ export default class File extends EntityComponent<FileProps, FileState> {
 			<Link to={`/file/image/${this.props.data.id}/view`}>
 				<ContextMenuItem
 					key={`context-menu-item-${this.props.data.id}`}
-					icon={<i className="fas fa-eye"></i>}
+					icon={<i className="fas fa-eye"/>}
 					text="View"
 				/>
 			</Link>

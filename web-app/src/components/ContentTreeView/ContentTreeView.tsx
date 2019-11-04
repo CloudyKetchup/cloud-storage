@@ -1,13 +1,13 @@
 import React, { Component } from 'react';
-import ReactDOM from "react-dom";
+import ReactDOM 			from "react-dom";
 
-import App	from '../../App';
+import App						from '../../App';
 import { APIHelpers as API }	from '../../helpers';
 import { Entity }				from "../../model/entity/Entity";
 import { EntityType }			from '../../model/entity/EntityType';
 import { FileEntity }			from '../../model/entity/FileEntity';
 import { FolderEntity }			from '../../model/entity/FolderEntity';
-import EntityContextMenu from '../EntityContextMenu/EntityContextMenu';
+import EntityContextMenu 		from '../EntityContextMenu/EntityContextMenu';
 
 const cutNames = (nodes : Entity[]) : Entity[] => {
 	nodes.forEach(node => {
@@ -61,14 +61,14 @@ class TreeNode extends Component<{ data : Entity, app : App }, TreeNodeState> {
 		contextMenuStyle : {} 
     };
 
-	componentDidMount() {
+	componentWillMount() {
 		const div = ReactDOM.findDOMNode(this);
 
 		if (div !== null) {
-			div.addEventListener("contextmenu", e => {
+			div.addEventListener("contextmenu", async e => {
 				e.preventDefault();
 
-				contextMenuListener(e as MouseEvent, this)
+				await contextMenuListener(e as MouseEvent, this)
 			});
 		}
 	}
@@ -89,7 +89,7 @@ class TreeNode extends Component<{ data : Entity, app : App }, TreeNodeState> {
         return <i className="fas fa-file" style={style}/>
     };
 
-	name = () => cutNames([this.props.data])[0].name
+	name = () => cutNames([this.props.data])[0].name;
 
     onToggle = async () => {
 		const arrow = document.getElementById(`${this.state.id}-tree-node-arrow`);
@@ -119,10 +119,10 @@ class TreeNode extends Component<{ data : Entity, app : App }, TreeNodeState> {
 			<EntityContextMenu
 				parent={this.props.data}
 				onStart={() => this.props.app.setState({ elementSelected : this.props.data })}
-				action={(action : string) => {
-					this.props.app.setState({ elementSelected : this.props.data })
+				action={async (action : string) => {
+					this.props.app.setState({ elementSelected : this.props.data });
 
-					this.props.app.handleContextMenuAction(action, this.props.data);
+					await this.props.app.handleContextMenuAction(action, this.props.data);
 				}}
 				style={this.state.contextMenuStyle}
 			/>}
@@ -136,9 +136,9 @@ class TreeNode extends Component<{ data : Entity, app : App }, TreeNodeState> {
 			<div 
 				className="content-tree-node-self"
 				style={{ paddingLeft : this.state.type === EntityType.FILE ? "25px" : "unset" }}
-				onClick={() => {
+				onClick={async () => {
 					if (this.state.type === EntityType.FOLDER) {
-						this.props.app.updateFolderInfo(this.state.id);
+						await this.props.app.updateFolder(this.state.id);
 					}
 				}}
 			>
@@ -154,7 +154,7 @@ class TreeNode extends Component<{ data : Entity, app : App }, TreeNodeState> {
 			&&
 			this.state.toggled
 			&&
-			<div className="content-tree-node-childs">
+			<div className="content-tree-node-children">
 				{this.state.folders.map(folder => <TreeNode app={this.props.app} data={folder} key={folder.id}/>)}
 				{this.state.files.map(file => <TreeNode app={this.props.app} data={file} key={file.id}/>)}
 			</div>}
@@ -166,9 +166,9 @@ export class ContentTreeView extends Component<{ app: App }> {
 	state = {
 		files : [] as FileEntity[],
 		folders : [] as FolderEntity[]
-	}
+	};
 
-	componentWillMount = () => this.getContent().then(content => this.setState(content))
+	componentWillMount = () => this.getContent().then(content => this.setState(content));
 
 	getContent = async () : Promise<object> => {
 		const rootId = await API.getRootId();
@@ -186,4 +186,4 @@ export class ContentTreeView extends Component<{ app: App }> {
 			{this.state.files.map(file => <TreeNode data={file} key={file.id} app={this.props.app}/>)}
 		</div>
 	)
-};
+}

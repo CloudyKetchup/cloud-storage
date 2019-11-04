@@ -1,5 +1,6 @@
-import {FolderEntity} 	from './model/entity/FolderEntity';
-import {Entity} 		from './model/entity/Entity';
+import { FolderEntity }	from './model/entity/FolderEntity';
+import { Entity }		from './model/entity/Entity';
+import NavNode			from './model/NavNode';
 
 import App, { AppContentContext } from './App';
 
@@ -25,12 +26,6 @@ export class APIHelpers {
 		axios.get(`${API_URL}/folder/root/memory`)
 			.then(memory => memory.data)
 			.catch(console.log)
-	);
-
-	static folderHasContent = (id: string) : Promise<boolean> => (
-		axios.get(`${API_URL}/folder/${id}/content_info`)
-			.then(response => response.data.folderCount > 0 || response.data.filesCount > 0)
-			.catch(_ => false)
 	);
 
 	static getFolderPredecessors = (id : string) : Promise<FolderEntity[]> => (
@@ -63,7 +58,18 @@ export class APIHelpers {
 			.catch(console.log)
 	);
 
-	static folderZipRequest = (folderPath: string) : Promise<string> => (
+	static getTrashItems = (): Promise<[]> => (
+		axios.get(`${API_URL}/trash/items`)
+			.then(response => response.data)
+	);
+
+	static folderHasContent = (id: string): Promise<boolean> => (
+		axios.get(`${API_URL}/folder/${id}/content_info`)
+			.then(response => response.data.folderCount > 0 || response.data.filesCount > 0)
+			.catch(() => false)
+	);
+
+	static zipFolder = (folderPath: string) : Promise<string> => (
 		axios.post(`${API_URL}/folder/zip`,
 			{
 				path: folderPath
@@ -71,7 +77,7 @@ export class APIHelpers {
 			.then(response => response.data)
 	);
 
-	static sendNewFolder = (folder: FolderEntity, path: string) : Promise<string> => (
+	static createNewFolder = (folder: FolderEntity, path: string) : Promise<string> => (
 		axios.post(`${API_URL}/folder/create/`,
 			{
 				name		: folder,
@@ -80,17 +86,12 @@ export class APIHelpers {
 			.then(response => response.data)
 	);
 
-	static sendPasteRequest = (target: Entity, action: string, newPath: string) : Promise<string> => (
+	static pasteEntity = (target: Entity, action: string, newPath: string) : Promise<string> => (
 		axios.post(`${API_URL}/${target.type.toLowerCase()}/${action}`,
 			{
 				oldPath: target.path,
 				newPath: newPath
 			})
-			.then(response => response.data)
-	);
-
-	static getTrashItems = () : Promise<[]> => (
-		axios.get(`${API_URL}/trash/items`)
 			.then(response => response.data)
 	);
 
@@ -120,21 +121,21 @@ export class APIHelpers {
 			.then(response => response.data)
 	);
 
-	static sendRenameRequest = (target: Entity, newName: string) : Promise<string> => (
+	static renameEntity = (target: Entity, newName: string) : Promise<string> => (
 		axios.post(`${API_URL}/${target.type.toLowerCase()}/rename`,
 			{
-				'path': target.path,
+				'id': target.id,
 				'newName': newName
 			})
 			.then(response => response.data)
 	);
 
-	static sendDeleteRequest = (target: Entity) : Promise<string> => (
+	static deleteEntity = (target: Entity) : Promise<string> => (
 		axios.delete(`${API_URL}/${target.type.toLowerCase()}/${target.id}/delete`)
 			.then(response => response.data)
 	);
 
-	static sendDeleteAll = (path: string) : Promise<string> => (
+	static deleteAllFromFolder = (path: string) : Promise<string> => (
 		axios.post(`${API_URL}/folder/delete-all`,
 			{
 				path: path
@@ -142,7 +143,7 @@ export class APIHelpers {
 			.then(response => response.data)
 	);
 
-	static uploadFile = async (file: File, appContext: App) => {
+	private static uploadFile = async (file: File, appContext: App) => {
 		const URL = `${API_URL}/file/upload/one`;
 
 		const formData = new FormData();
@@ -165,10 +166,12 @@ export class APIHelpers {
 				})
 			})
 			.then(response => response.data === 'OK'
-					? appContext.updateFolderInfo(appContext.state.currentFolder.id)
+					? appContext.updateFolder(appContext.state.currentFolder.id)
 					: console.log(response.data))
 			.catch(console.log);
 	};
+
+	static uploadFiles = async (files: Array<File>, app: App) => files.forEach(file => APIHelpers.uploadFile(file, app));
 
 	static downloadFile = async (path: string, name: string) => {
 		const link = document.createElement("a");
@@ -180,6 +183,14 @@ export class APIHelpers {
 		document.body.appendChild(link);
 		
 		link.click();
+	};
+
+	static downloadFolder = async (target: FolderEntity) => {
+		const zip = await APIHelpers.zipFolder(target.path);
+
+		if (zip !== "folder is empty" && await APIHelpers.folderHasContent(target.id)) {
+			await APIHelpers.downloadFile(zip, target.name);
+		}
 	};
 }
 
@@ -194,9 +205,29 @@ export class ContentHelpers {
 	static updateContent = async (folderId : string) : Promise<Boolean> => {
 		if (folderId === undefined) return false;
 
-		ContentHelpers.updateFiles(folderId);
-		ContentHelpers.updateFolders(folderId);
+		await ContentHelpers.updateFiles(folderId);
+		await ContentHelpers.updateFolders(folderId);
 
 		return true;
+	};
+}
+
+export class NavigationNodesHelpers {
+
+	static createNavNode = (entity: FolderEntity, prevNode: NavNode | undefined, app: App) => {
+		return new NavNode(
+			entity.id,
+			entity.name,
+			prevNode,
+			async () => await app.updateFolder(entity.id)
+				.then(() => NavigationNodesHelpers.removeNodeSuccessors(entity.id, app)));
+	};
+
+	static removeNodeSuccessors = async (id: string, app: App) => {
+		const nodes = app.state.foldersNavigation;
+
+		nodes.splice(nodes.findIndex(node => node.id === id) + 1, 9e9);
+
+		app.setState({ foldersNavigation : nodes });
 	};
 }

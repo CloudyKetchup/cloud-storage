@@ -131,7 +131,7 @@ export default class ImageViewOverlay extends Component<ImageViewInterface> {
         );
     };
 
-    delete = async () : Promise<Boolean | null> => this.state.data && await API.sendDeleteRequest(this.state.data) === "OK";
+    delete = async () : Promise<Boolean | null> => this.state.data && await API.deleteEntity(this.state.data) === "OK";
 
     moveToTrash = async () : Promise<Boolean | null> => this.state.data && await API.moveToTrash(this.state.data) === "OK";
 

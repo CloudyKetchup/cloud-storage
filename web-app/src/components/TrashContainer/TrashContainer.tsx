@@ -1,12 +1,12 @@
-import { Link } from 'react-router-dom';
 import React, { Component } from 'react';
 
-import { APIHelpers as API } 	from '../../helpers';
-import { Entity } 				from '../../model/entity/Entity';
-import { EntityType } 			from '../../model/entity/EntityType';
-import { FileEntity } 			from '../../model/entity/FileEntity';
-import { FileExtensionIcons }	from '../File/FileExtensionIcons';
-import App, { AppContentContext } from '../../App';
+import { Link } 					from 'react-router-dom';
+import { APIHelpers as API } 		from '../../helpers';
+import { Entity } 					from '../../model/entity/Entity';
+import { EntityType } 				from '../../model/entity/EntityType';
+import { FileEntity } 				from '../../model/entity/FileEntity';
+import { FileExtensionIcons }		from '../File/FileExtensionIcons';
+import App, { AppContentContext } 	from '../../App';
 
 type TrashItemProps = {
 	data : Entity
@@ -22,7 +22,7 @@ class TrashItem extends Component<TrashItemProps> {
 
 		if (div !== null) {
 			div.addEventListener("contextmenu", e => {
-				e.preventDefault()
+				e.preventDefault();
 
 				this.setState({ backgroundOverlay : !this.state.backgroundOverlay });
 			})
@@ -31,16 +31,16 @@ class TrashItem extends Component<TrashItemProps> {
 
 	icon = () => {
 		if (this.props.data.type === EntityType.FILE) {
-			const data = this.props.data as FileEntity
+			const data = this.props.data as FileEntity;
 
 			return <i className={`${FileExtensionIcons[data.extension as any]}`}/>;
 		} else if (this.props.data.type === EntityType.FOLDER) {
 			return <i className="fas fa-folder"/>;
 		}
-	}
+	};
 
 	name = () => {
-		const name = this.props.data.name
+		const name = this.props.data.name;
 
 		return name.length > 23 ? `${name.substring(0, 24)}...` : name;
 	};
@@ -76,33 +76,31 @@ class TrashItem extends Component<TrashItemProps> {
 	);
 }
 
-export default class TrashContainer extends Component<{ parent : App }> {
+export default class TrashContainer extends Component<{ app : App }> {
 
-	getItems = () => API.getTrashItems().then(items => AppContentContext.setTrashItems(items));
+	getItems = () => API.getTrashItems().then(AppContentContext.setTrashItems);
 
-	emptyTrash = () => {
+	emptyTrash = async () => {
 		if (AppContentContext.trashItems.length > 0)
 			API.emptyTrash().then(response => { if (response === "OK") this.getItems(); })
-	}
+	};
 
-	restoreFromTrash = (target : Entity) => {
-		API.restoreFromTrash(target)
-			.then(response => { if (response === "OK") {
-					this.props.parent.updateFolderInfo();
-					this.getItems();
-				}
-			});
-	}
+	restoreFromTrash = async (target : Entity) => {
+		const result = await API.restoreFromTrash(target);
 
-	deleteFromTrash = (target : Entity) => {
-		API.deleteFromTrash(target)
-				.then(response => { if (response === "OK") this.getItems()});
-	}
+		if (result === "OK") {
+			this.props.app.updateFolder().then(() => this.getItems());
+		}
+	};
+
+	deleteFromTrash = async (target : Entity) => {
+		API.deleteFromTrash(target).then(response => { if (response === "OK") this.getItems()});
+	};
 
 	render = () => (
 		<div className="trash-container">
 			<div className="trash-container-header">
-				<div className="trash-container-top-pad"></div>
+				<div className="trash-container-top-pad"/>
 				<Link to={"/"}>
 					<button className="trash-container-close-button">
 						<i className="fas fa-times"/>
@@ -115,7 +113,8 @@ export default class TrashContainer extends Component<{ parent : App }> {
 						key={item.id}
 						data={item}
 						deleteFromTrash={() => this.deleteFromTrash(item)}
-						restoreFromTrash={() => this.restoreFromTrash(item)}/>)}
+						restoreFromTrash={() => this.restoreFromTrash(item)}
+					/>)}
 			</div>
 			<div className="trash-side-buttons">
 				<div className="trash-control-button" style={{ background: "#F32C2C" }} onClick={this.emptyTrash}>
