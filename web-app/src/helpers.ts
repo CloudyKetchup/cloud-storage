@@ -13,13 +13,13 @@ export class APIHelpers {
 	static getRootId = () : Promise<string> => (
 		axios.get(`${API_URL}/folder/root/id`)
 			.then(id => id.data)
-			.catch(console.log)
+			.catch(() => {})
 	);
 
 	static getRootData = () : Promise<any> => (
 		axios.get(`${API_URL}/folder/root/data`)
 			.then(response => response.data)
-			.catch(console.log)
+			.catch(() => {})
 	);
 
 	static getRootMemory = () : Promise<object> => (

@@ -39,21 +39,11 @@ export let AppContentContext : ContentContextInterface;
 
 export let ContentContext : Context<ContentContextInterface>;
 
-export default class App extends Component {
+export default class App extends Component<{ data : FolderEntity }> {
 	state : IState = {
 		bufferElement: undefined,
 		elementSelected: undefined,
-		currentFolder: {
-			id: "",
-			name: 'Cloud',
-			parentId: null,
-			timeCreated: undefined,
-			root: true,
-			path: '',
-			location: null,
-			size: "0",
-			type: EntityType.FOLDER
-		},
+		currentFolder: this.props.data,
 		rootOpened: true,
 		rootMemory: {},
 		uploadingFiles: [],
@@ -89,17 +79,6 @@ export default class App extends Component {
 
 	componentDidMount = async () => {
 		this.setState({ 
-			currentFolder: {
-				id: await API.getRootId(),
-				name: '',
-				parentId: null,
-				timeCreated: undefined,
-				root: true,
-				path: '',
-				location: null,
-				size: "0",
-				type: EntityType.FOLDER
-			},
 			rootMemory : await API.getRootMemory(),
 			rootOpened : true
 		});
@@ -225,10 +204,10 @@ export default class App extends Component {
 						<Route exact path="/folder/create" render={() =>
 							<CreateFolderDialog
 								parent={this}
-								sendFolder={(folder: FolderEntity) => this.createNewFolder(folder)} />} />
-						<Route path="/:type/:id/info" render={props => <ElementInfoContainer key={`${props.match.params.id}`} {...props} />} />
-						<Route exact path="/trash" render={() => <TrashContainer app={this} />} />
-						<Route path="/file/image/:id/view" render={props => <ImageViewOverlay id={props.match.params.id} />} />
+								sendFolder={(folder: FolderEntity) => this.createNewFolder(folder)}/>}/>
+						<Route path="/:type/:id/info" render={props => <ElementInfoContainer key={props.match.params.id} {...props}/>}/>
+						<Route exact path="/trash" render={() => <TrashContainer app={this}/>}/>
+						<Route path="/file/image/:id/view" render={props => <ImageViewOverlay id={props.match.params.id}/>}/>
 					</Switch>
 					<ContentContext.Provider value={AppContentContext}>
 						<ContentContainer
@@ -245,7 +224,7 @@ export default class App extends Component {
 								rootOpened={this.state.rootOpened}
 							/>
 							<Link to="/folder/create">
-								<button className='create-folder'><i className='fas fa-folder-plus' /></button>
+								<button className='create-folder'><i className='fas fa-folder-plus'/></button>
 							</Link>
 							<button
 								className='upload-file-button'
@@ -254,7 +233,7 @@ export default class App extends Component {
 
 									if (uploadInput) uploadInput.click();
 								}}
-							><i className='fas fa-file-upload' /></button>
+							><i className='fas fa-file-upload'/></button>
 							{this.state.uploadingFiles.length > 0
 								&&
 								<FileUploadManager onClose={() => this.setState({ uploadingFiles: [] })}>
