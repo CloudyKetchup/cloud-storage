@@ -1,8 +1,8 @@
 import React, { Component, SFC } from 'react'
 
-import { Link }       from "react-router-dom";
-import { Entity }     from "../../model/entity/Entity";
-import { API_URL } from "../../helpers";
+import { Link }       	from "react-router-dom";
+import { Entity }     	from "../../model/entity/Entity";
+import { API_URL } 		from "../../helpers";
 
 type ContextMenuProps = {
 	onStart: () => void,
@@ -34,7 +34,7 @@ export default class EntityContextMenu extends Component<ContextMenuProps> {
 	componentDidMount = () => this.props.onStart();
 
 	render = () => (
-		<div className="context-menu" style={this.props.style}>
+		<div className="context-menu" id={`entity-${this.props.parent.id}-context-menu`} style={this.props.style}>
 			{this.props.children}
 			<div onClick={() => this.props.action("download")}>
 				<div className="context-menu-icon">

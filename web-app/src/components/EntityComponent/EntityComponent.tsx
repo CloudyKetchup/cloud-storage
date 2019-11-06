@@ -6,15 +6,15 @@ import ContentContainer from '../ContentContainer/ContentContainer';
 import EntityContextMenu from "../EntityContextMenu/EntityContextMenu";
 
 export interface EntityProps {
-	parent: ContentContainer
-	mainParent: App
+	container 	: ContentContainer
+	mainParent 	: App
 	handleAction: (action: string) => void
 }
 
 export interface EntityState {
-	contextMenuShow: boolean,
+	contextMenuShow : boolean,
 	contextMenuStyle: {
-		top: string,
+		top : string,
 		left: string
 	}
 }

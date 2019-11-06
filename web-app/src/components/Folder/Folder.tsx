@@ -5,6 +5,7 @@ import EntityComponent, {EntityProps, EntityState} from '../EntityComponent/Enti
 
 const contextMenuListener = async (e: MouseEvent, obj: Folder) => {
 	e.preventDefault();
+
 	obj.setState({
 		contextMenuShow : true,
 		contextMenuStyle : {
@@ -13,15 +14,23 @@ const contextMenuListener = async (e: MouseEvent, obj: Folder) => {
 		}
 	});
 
-	obj.props.parent.setState({ disableContextMenu : true });
+	window.addEventListener('click', () => {
+		const contextMenu = document.getElementById(`entity-${obj.props.data.id}-context-menu`);
 
-	window.addEventListener('click', () => windowClickListener(obj), false);
+		if (contextMenu && contextMenu.style) {
+			contextMenu.style.marginLeft = "75px";
+			contextMenu.style.opacity = "0";
+		}
+		setTimeout(() => windowClickListener(obj), 100);
+	});
+
+	obj.props.container.setState({ disableContextMenu : true });
 };
 
 const windowClickListener = async (obj: Folder) => {
 	obj.setState({ contextMenuShow : false });
 
-	obj.props.parent.setState({ disableContextMenu : false });
+	obj.props.container.setState({ disableContextMenu : false });
 };
 
 interface FolderProps extends EntityProps {

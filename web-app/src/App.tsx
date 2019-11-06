@@ -171,6 +171,14 @@ export default class App extends Component<{ data : FolderEntity }> {
 		if (result === "OK") this.updateFolder()
 	};
 
+	moveToTrash = async (target: Entity) => {
+		const result = await API.moveToTrash(target);
+
+		if (result === "OK") {
+			this.updateFolder().then(() => API.getTrashItems().then(AppContentContext.setTrashItems));
+		}
+	};
+
 	deleteAllInFolder = async () => {
 		const result = await API.deleteAllFromFolder(this.state.currentFolder.path);
 
