@@ -18,9 +18,7 @@ export default class DragAndDrop extends Component {
 
 		this.dragCounter++;
 
-		if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
-			this.setState({dragging: true})
-		}
+		if (e.dataTransfer.items && e.dataTransfer.items.length > 0) this.setState({ dragging: true });
 	};
 
 	handleDragOut = e => {
@@ -29,9 +27,7 @@ export default class DragAndDrop extends Component {
 
 		this.dragCounter--;
 
-		if (this.dragCounter === 0) {
-			this.setState({dragging: false})
-		}
+		if (this.dragCounter === 0) this.setState({ dragging: false });
 	};
 
 	handleDrop = e => {
@@ -41,9 +37,10 @@ export default class DragAndDrop extends Component {
 		this.setState({dragging: false});
 
 		if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-			this.props.handleDrop(e.dataTransfer.files);
+			this.props.handleDrop(Array.from(e.dataTransfer.files));
 
 			e.dataTransfer.clearData();
+
 			this.dragCounter = 0
 		}
 	};
