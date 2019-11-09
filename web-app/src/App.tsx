@@ -1,14 +1,9 @@
 import {BrowserRouter as Router, Link, Route, Switch}	from 'react-router-dom';
 import React, {Component, Context, createContext} 		from 'react';
 
-import { APIHelpers as API, NavigationNodesHelpers }	from './helpers';
-import { BufferElement }  				from './model/BufferElement';
+import {APIHelpers as API, NavigationNodesHelpers, ContextHelpers, APIHelpers, EntityHelpers} from './helpers';
 import { ContentContextInterface } 		from './context/ContentContext';
 import { ElementInfoContainer }         from './components/ElementInfoContainer/ElementInfoContainer';
-import { Entity }         				from './model/entity/Entity';
-import { EntityType }     				from './model/entity/EntityType';
-import { FileEntity } 					from './model/entity/FileEntity';
-import { FolderEntity }   				from './model/entity/FolderEntity';
 import BufferElementIndicator           from './components/BufferElement/BufferElementIndicator';
 import ContentContainer                 from './components/ContentContainer/ContentContainer';
 import { ContentTreeView }				from './components/ContentTreeView/ContentTreeView';
@@ -17,12 +12,17 @@ import DragAndDrop                      from './components/DragAndDrop/DragAndDr
 import FileUploadManager, { UploadFile} from './components/UploadManager/UploadManager';
 import LeftPanel                        from './components/LeftPanel/LeftPanel';
 import NavBar                           from './components/NavBar/NavBar'
-import NavNode 							from './model/NavNode';
 import PrevFolderButton                 from './components/PrevFolderButton/PrevFolderButton';
 import RenameEntityDialog 				from './components/RenameEntityDialog/RenameEntityDialog';
-import RightPanel                       from './components/RightPanel/RightPanel';
 import TrashContainer					from './components/TrashContainer/TrashContainer';
 import ImageViewOverlay 				from './components/ImageViewOverlay/ImageViewOverlay';
+import { BufferElement }  				from './model/BufferElement';
+import { Entity }         				from './model/entity/Entity';
+import { EntityType }     				from './model/entity/EntityType';
+import { FolderEntity }   				from './model/entity/FolderEntity';
+import NavNode 							from './model/NavNode';
+import NotificationComponentFactory 	from './factory/NotificationComponentFactory';
+import { NotificationsContextInterface }from './context/NotificationContext';
 
 type IState = {
 	bufferElement		: BufferElement | undefined,
@@ -32,54 +32,37 @@ type IState = {
 	rootMemory			: object,
 	uploadingFiles		: File[],
 	foldersNavigation 	: NavNode[],
-	[fileUploadProgress : string] : any,
+	[fileUploadProgress : string] : any
 };
 
 export let AppContentContext : ContentContextInterface; 
+
+export let AppNotificationContext : NotificationsContextInterface;
 
 export let ContentContext : Context<ContentContextInterface>;
 
 export default class App extends Component<{ data : FolderEntity }> {
 	state : IState = {
-		bufferElement: undefined,
-		elementSelected: undefined,
-		currentFolder: this.props.data,
-		rootOpened: true,
-		rootMemory: {},
-		uploadingFiles: [],
-		foldersNavigation: [],
+		bufferElement		: undefined,
+		elementSelected		: undefined,
+		currentFolder		: this.props.data,
+		rootOpened			: true,
+		rootMemory			: {},
+		uploadingFiles		: [],
+		foldersNavigation	: []
 	};
 
-	componentWillMount() {
-		AppContentContext = {
-			files		: [],
-			folders		: [],
-			trashItems	: [],
-			setFiles: (newFiles: FileEntity[] = []) => {
-				AppContentContext.files = [...newFiles];
+	UNSAFE_componentWillMount = () => {
+		AppContentContext = ContextHelpers.createContentContext(this);
 
-				this.forceUpdate();
-				
-				return AppContentContext.files },
-			setFolders: (newFolders: FolderEntity[] = []) => {
-				AppContentContext.folders = [...newFolders];
-
-				this.forceUpdate();
-				
-				return AppContentContext.folders },
-			setTrashItems: (newTrashItems: Entity[] = []) => {
-				AppContentContext.trashItems = [...newTrashItems];
-
-				this.forceUpdate();
-				
-				return AppContentContext.trashItems }
-		};
 		ContentContext = createContext(AppContentContext);
-	}
+
+		AppNotificationContext = ContextHelpers.createNotificationContext(this);
+	};
 
 	componentDidMount = async () => {
-		this.setState({ 
-			rootMemory : await API.getRootMemory(),
+		this.setState({
+			rootMemory : await API.getRootMemory() || "",
 			rootOpened : true
 		});
 		API.getTrashItems().then(AppContentContext.setTrashItems);
@@ -91,8 +74,8 @@ export default class App extends Component<{ data : FolderEntity }> {
 		API.getFolderData(folderId).then(data => {
 			this.setState({
 				elementSelected : undefined,
-				currentFolder: data,
-				rootOpened : data.root,
+				currentFolder	: data,
+				rootOpened 		: data.root,
 			});
 		});
 
@@ -111,11 +94,10 @@ export default class App extends Component<{ data : FolderEntity }> {
 	handleContextMenuAction = async (action: string, target: Entity) => {
 		switch (action) {
 			case 'download':
-				if (target.type === EntityType.FILE) {
+				if (target.type === EntityType.FILE)
 					await API.downloadFile(target.path, target.name);
-				} else if (target.type === EntityType.FOLDER) {
+				else if (target.type === EntityType.FOLDER)
 					await API.downloadFolder(target as FolderEntity);
-				}
 				break;
 			case 'move':
 				this.setState({ bufferElement: {
@@ -133,56 +115,70 @@ export default class App extends Component<{ data : FolderEntity }> {
 				this.deleteEntity(target);
 				break;
 			case 'trash':
-				const result = await API.moveToTrash(target);
-
-				if (result === "OK") {
+				if (await API.moveToTrash(target) === "OK") {
 					this.updateFolder();
 
-					API.getTrashItems().then(items => AppContentContext.setTrashItems(items));
+					API.getTrashItems().then(AppContentContext.setTrashItems);
 				}
 				break;
 			default: break;
 		}
 	};
 
-	createNewFolder = async (folder: FolderEntity) => {
-		const result = await API.createNewFolder(folder, this.state.currentFolder.path);
+	createNewFolder = async (name: string) => {
+		const result = await API.createNewFolder(name, this.state.currentFolder.path);
 
-		if (result === "OK") this.updateFolder()
+		if (result === "OK")
+			this.updateFolder();
+		else
+			APIHelpers.errorNotification(`Error creating folder ${name}`);
 	};
 
-	pasteEntity = async (targetEntity = this.state.bufferElement) => {
-		if (targetEntity !== undefined) {
-			const result = await API.pasteEntity(targetEntity.data, targetEntity.action, this.state.currentFolder.path);
+	pasteEntity = async (target = this.state.bufferElement) => {
+		if (target) {
+			const result = await API.pasteEntity(target.data, target.action, this.state.currentFolder.path);
 
-			if (result === "OK") this.updateFolder()
+			if (result === "OK")
+				this.updateFolder();
+			else
+				APIHelpers.errorNotification(`Error pasting ${target.data.name}`);
 		}
 	};
 
 	renameEntity = async (target : Entity, newName: string) => {
 		const result = await API.renameEntity(target, newName);
 
-		if (result === "OK") this.updateFolder();
+		if (result === "OK")
+			this.updateFolder();
+		else
+			APIHelpers.errorNotification(`Error renaming ${target.name} to ${newName}`);
 	};
 
 	deleteEntity = async (target: Entity) => {
 		const result = await API.deleteEntity(target);
 
-		if (result === "OK") this.updateFolder()
+		if (result === "OK")
+			this.updateFolder();
+		else
+			APIHelpers.errorNotification(`Error deleting ${target.name}`);
 	};
 
 	moveToTrash = async (target: Entity) => {
 		const result = await API.moveToTrash(target);
 
-		if (result === "OK") {
+		if (result === "OK")
 			this.updateFolder().then(() => API.getTrashItems().then(AppContentContext.setTrashItems));
-		}
+		else
+			APIHelpers.errorNotification(`Error moving to trash ${target.name}`);
 	};
 
-	deleteAllInFolder = async () => {
-		const result = await API.deleteAllFromFolder(this.state.currentFolder.path);
+	deleteFolderContent = async () => {
+		const result = await API.deleteFolderContent(this.state.currentFolder.path);
 
-		if (result === "OK") this.updateFolder()
+		if (result === "OK")
+			this.updateFolder();
+		else
+			APIHelpers.errorNotification(`Error deleting folder ${this.state.currentFolder.name} content`);
 	};
 
 	render = () => (
@@ -206,16 +202,18 @@ export default class App extends Component<{ data : FolderEntity }> {
 					<Switch>
 						<Route exact path="/:type/:id/rename" render={props =>
 							<RenameEntityDialog
-								onRename={(target: Entity, newName: string) => this.renameEntity(target, newName)}
+								onRename={this.renameEntity}
 								{...props} />}
 						/>
 						<Route exact path="/folder/create" render={() =>
 							<CreateFolderDialog
 								parent={this}
-								sendFolder={(folder: FolderEntity) => this.createNewFolder(folder)}/>}/>
+								sendFolder={this.createNewFolder}
+							/>}
+						/>
 						<Route path="/:type/:id/info" render={props => <ElementInfoContainer key={props.match.params.id} {...props}/>}/>
 						<Route exact path="/trash" render={() => <TrashContainer app={this}/>}/>
-						<Route path="/file/image/:id/view" render={props => <ImageViewOverlay id={props.match.params.id}/>}/>
+						<Route path="/file/image/:id/view" render={props => <ImageViewOverlay key={EntityHelpers.uuidv4()} id={props.match.params.id}/>}/>
 					</Switch>
 					<ContentContext.Provider value={AppContentContext}>
 						<ContentContainer
@@ -242,20 +240,24 @@ export default class App extends Component<{ data : FolderEntity }> {
 									if (uploadInput) uploadInput.click();
 								}}
 							><i className='fas fa-file-upload'/></button>
-							{this.state.uploadingFiles.length > 0
+							{
+								this.state.uploadingFiles.length > 0
 								&&
 								<FileUploadManager onClose={() => this.setState({ uploadingFiles: [] })}>
 									{this.state.uploadingFiles.map(file => <UploadFile key={file.name} data={file} parent={this} />)}
-								</FileUploadManager>}
-							{this.state.bufferElement !== undefined && <BufferElementIndicator element={this.state.bufferElement} />}
+								</FileUploadManager>
+							}
+							{this.state.bufferElement && <BufferElementIndicator element={this.state.bufferElement} />}
+							{
+								AppNotificationContext.notifications.length > 0
+								&&
+								<div className="notifications-pad">
+									{AppNotificationContext.notifications.map(NotificationComponentFactory.build)}
+								</div>
+							}
 						</ContentContainer>
 					</ContentContext.Provider>
 				</DragAndDrop>
-				<RightPanel closePanel={() => {
-					const rightPanel = document.getElementById("right-panel");
-
-					if (rightPanel) rightPanel.style.right = '-300px';
-				}} />
 				<input
 					id="select-upload-files"
 					type="file"
