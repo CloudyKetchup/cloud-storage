@@ -171,7 +171,7 @@ export default class ContentContainer extends Component<{ folderId : string, par
 				await this.props.parent.pasteEntity(this.props.parent.state.bufferElement);
 				break;
 			case 'delete-all':
-				await this.props.parent.deleteAllInFolder();
+				await this.props.parent.deleteFolderContent();
 				break;
 			default: break;
 		}

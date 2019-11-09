@@ -1,5 +1,5 @@
 import React, { Component, FC }     from 'react';
-import { APIHelpers as API, API_URL, ContentHelpers } from '../../helpers';
+import {APIHelpers as API, API_URL, ContentHelpers, EntityHelpers} from '../../helpers';
 import { FileEntity }               from '../../model/entity/FileEntity';
 import CircularProgress             from '@material-ui/core/CircularProgress/CircularProgress';
 import { Link, Route, useHistory }  from 'react-router-dom';
@@ -21,7 +21,7 @@ export default class ImageViewOverlay extends Component<ImageViewInterface> {
     imageView    : HTMLElement  | null = null;
     imageDiv     : HTMLElement  | null = null;
 
-	componentWillMount = async () => this.setState({ data : await API.getFileData(this.props.id) });
+	UNSAFE_componentWillMount = async () => this.setState({ data : await API.getFileData(this.props.id) });
 
     componentDidMount = async () => window.addEventListener("resize", () => this.resizeImageView());
 
@@ -52,9 +52,7 @@ export default class ImageViewOverlay extends Component<ImageViewInterface> {
                 const controlButtons = document.getElementsByClassName("media-view-control-button");
 
                 if (controlButtons !== null) {
-                    Array.prototype.slice.call(controlButtons).forEach(async t => {
-                        (t as HTMLElement).style.display = value;
-                    });
+                    Array.prototype.slice.call(controlButtons).forEach(t => (t as HTMLElement).style.display = value);
                 }
             };
 
@@ -66,7 +64,7 @@ export default class ImageViewOverlay extends Component<ImageViewInterface> {
 	imagePreloader = () => (
 		this.state.data
 		&&
-        <div style={{
+        <div key={EntityHelpers.uuidv4()} style={{
             transform: "translateY(400%)",
             margin: "auto",
             background: "white",
@@ -109,7 +107,7 @@ export default class ImageViewOverlay extends Component<ImageViewInterface> {
     TrashButton : FC = () => {
         const history = useHistory();
 
-        const redirect = (url: string) => history.push(url)
+        const redirect = (url: string) => history.push(url);
 
         return (
             <button
@@ -117,7 +115,7 @@ export default class ImageViewOverlay extends Component<ImageViewInterface> {
                 onClick={async () => 
                     await this.moveToTrash()
                     &&
-                    ContentHelpers.updateTrash()
+                    await ContentHelpers.updateTrash()
                     &&
                     this.state.data
                     &&

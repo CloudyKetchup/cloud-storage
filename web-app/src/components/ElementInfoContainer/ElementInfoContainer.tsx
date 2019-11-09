@@ -1,32 +1,33 @@
 import React, { Component } from 'react';
 
-import { Link, match } 	from "react-router-dom";
-import { FileEntity } 	from '../../model/entity/FileEntity';
-import { FolderEntity } from '../../model/entity/FolderEntity';
-import { APIHelpers } 	from '../../helpers';
+import { Link, match } 		from "react-router-dom";
+import { FileEntity } 		from '../../model/entity/FileEntity';
+import { FolderEntity } 	from '../../model/entity/FolderEntity';
+import { APIHelpers as API}	from '../../helpers';
+import { Entity } 			from '../../model/entity/Entity';
 
 interface IProps {
-	prevLink? : string,
-	match : match<{ id : string, type : string }>
+	prevLink? 	: string,
+	match 		: match<{ id : string, type : string }>
 }
 
 interface IState {  data : FileEntity | FolderEntity | null}
 
 export class ElementInfoContainer extends Component<IProps, IState> {
-	state : IState = { data : null }
+	state : IState = { data : null };
 
 	componentDidMount() {
 		const entityType = this.props.match.params.type;
 		const functionName = `get${entityType[0].toUpperCase() + entityType.slice(1)}Data`;
 
 		if (functionName === "getFileData" || functionName === "getFolderData")
-			APIHelpers[functionName](this.props.match.params.id)
+			(API[functionName](this.props.match.params.id) as Promise<Entity>)
 				.then(result => {
 					if ((result as FileEntity) !== undefined)
 						this.setState({  data : result as FileEntity });
 					else if ((result as FolderEntity) !== undefined)
 						this.setState({  data : result as FolderEntity });
-				})
+				});
 	}
 	
 	render = () => (
@@ -57,24 +58,24 @@ export class ElementInfoContainer extends Component<IProps, IState> {
 				{
 					this.state.data
 					&&
-					[
+					<div>
 						<div>
 							<span className="description-text">Name</span>
 							<span className="element-info-text">{this.state.data.name}</span>
-						</div>,
+						</div>
 						<div>
 							<span className="description-text">Location</span>
 							<span className="element-info-text">{this.state.data.location}</span>
-						</div>,
+						</div>
 						<div>
 							<span className="description-text">Time created</span>
 							<span className="element-info-text">{this.state.data.timeCreated}</span>
-						</div>,
+						</div>
 						<div>
 							<span className="description-text">Size</span>
 							<span className="element-info-text">{this.state.data.size}</span>
 						</div>
-					]
+					</div>
 				}
 			</div>
 		</div>

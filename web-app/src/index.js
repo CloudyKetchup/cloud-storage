@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import ReactDOM             from 'react-dom';
 
 import App                      from './App';
-import { APIHelpers as API }    from './helpers';
+import {APIHelpers as API, EntityHelpers} from './helpers';
 import { OfflineScreen }        from './components/OfflineScreen/OfflineScreen';
 import { CircularProgress }     from '@material-ui/core';
 import offlineSVG               from "./components/OfflineScreen/offline.svg";
@@ -12,7 +12,7 @@ import './css/index.css';
 class AppWrapper extends Component {
     state = { data : null, loading : true, offline : false };
 
-    componentWillMount = () => this.updateRootFolder();
+    UNSAFE_componentWillMount = () => this.updateRootFolder();
 
     componentDidMount = () => {
         if (!this.state.data) {
@@ -37,10 +37,10 @@ class AppWrapper extends Component {
         [
             this.state.data
             &&
-            <App data={this.state.data}/>,
+            <App key={EntityHelpers.uuidv4()} data={this.state.data}/>,
             !this.state.data
             &&
-            <OfflineScreen img={offlineSVG} text={this.state.offline && "Server Offline :("}>
+            <OfflineScreen key={EntityHelpers.uuidv4()} img={offlineSVG} text={this.state.offline && "Server Offline :("}>
                 <CircularProgress style={{ color: "white" }}/>
             </OfflineScreen>
         ]
