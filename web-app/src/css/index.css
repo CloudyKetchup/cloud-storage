@@ -99,7 +99,7 @@ input:focus {
 	top: 0;
 	height: 100%;
 	width: 250px;
-	z-index: 2;
+	z-index: 10000;
 	position: absolute;
 	box-shadow: 1px 2px 5px 2px rgba(0,0,0,0.55);
 }
@@ -152,7 +152,7 @@ input:focus {
 	box-shadow: 0 0 5px 0 rgba(0,0,0,0.55);
 	display: grid;
 	padding: 5px;
-	z-index: 99;
+	z-index: 9999999;
 	position: fixed;
 	animation-name: contextMenuSlide;
 	animation-duration: 0.1s;
@@ -238,7 +238,7 @@ input:focus {
 	border-radius: 5px;
 	box-shadow: 0 0 5px 0 rgba(0,0,0,0.75);
 	background: #181818;
-	z-index: 100;
+	z-index: 10000;
 	position: fixed;
 }
 
@@ -572,7 +572,7 @@ input:focus {
     overflow-y: auto;
 }
 
-.element-info > div {
+.element-info div {
 	margin-top: 20px;
 	text-align: left;
 	padding: 5px;
@@ -740,7 +740,7 @@ input:focus {
 	position: absolute;
 	top: 50px;
 	right: 0;
-	width: 85%;
+	width: 74%;
 	height: calc(100% - 50px);
 	z-index: 9999;
 	animation-name: fade;
@@ -877,49 +877,6 @@ input:focus {
 	line-height: 30px;
 }
 
-.notification-body {
-	height: 60px;
-}
-
-.notification {
-	width: 100%;
-	height: 60px;
-	box-shadow: 0 5px 5px -3px rgba(0,0,0,0.5);
-	z-index: 999;
-	position: absolute;
-}
-
-.notification:hover {
-	cursor: pointer;
-	box-shadow: 0 5px 10px -3px rgba(0,0,0,0.7);
-}
-
-.notification-background-overlay {
-	position: absolute;
-	height: 60px;
-	width: 50px;
-	font-size: 23px;
-	text-align: center;
-	color: rgb(24, 24, 24);
-	background: rgb(243, 44, 44);
-}
-
-.notification-background-overlay:hover {
-	cursor: pointer;
-}
-
-.notification-background-overlay > i {
-	line-height: 60px;
-}
-
-.notification-content {
-	display: flex;
-	float: right;
-	width: calc(-90px + 100%);
-	height: calc(-20px + 100%);
-	padding: 10px;
-}
-
 .circular-progress {
 	margin-top: 5px;
 	margin-right : 5px;
@@ -1052,6 +1009,50 @@ input:focus {
 
 .close-button:hover {
 	color: grey;
+}
+
+.notifications-pad {
+	max-height: 380px;
+	overflow-y: auto;
+	display: grid;
+	grid-gap: 5px;
+	position: fixed;
+	z-index: 9999;
+	right: 10px;
+	bottom: 10px;
+}
+
+.notification {
+	background: #181818;
+    color: white;
+    border-radius: 2px;
+	line-height: 50px;
+	padding: 0 5px 0 5px;
+    display: flex;
+    min-width: 200px;
+    max-width: 350px;
+    min-height: 50px;
+    max-height: 300px;
+	-webkit-box-shadow: 6px 8px -5px rgba(0,0,0,0.75);
+	-moz-box-shadow: 6px 8px -5px rgba(0,0,0,0.75);
+	box-shadow: 0 6px 8px -5px rgba(0,0,0,0.75);
+	animation-name: notification-slide-up;
+	animation-duration: 0.2s;
+}
+
+.notification > div {
+	padding: 0 5px 0 5px;
+}
+
+@keyframes notification-slide-up {
+	from {
+		opacity: 0;
+		bottom: -50px;
+	}
+	to {
+		opacity: 1;
+		bottom: 10px;
+	}
 }
 
 @keyframes image-view-slide {

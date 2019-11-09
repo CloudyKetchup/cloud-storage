@@ -6,20 +6,20 @@ import ContentContainer from '../ContentContainer/ContentContainer';
 import EntityContextMenu from "../EntityContextMenu/EntityContextMenu";
 
 export interface EntityProps {
-	parent: ContentContainer
-	mainParent: App
+	container 	: ContentContainer
+	mainParent 	: App
 	handleAction: (action: string) => void
 }
 
 export interface EntityState {
-	contextMenuShow: boolean,
+	contextMenuShow : boolean,
 	contextMenuStyle: {
-		top: string,
+		top : string,
 		left: string
 	}
 }
 
-export default abstract class EntityComponent<P, S> extends Component<P, EntityState> {
+export default abstract class EntityComponent<P extends EntityProps> extends Component<P, EntityState> {
 	state = {
 		contextMenuShow : false,
 		contextMenuStyle : {

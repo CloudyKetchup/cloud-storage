@@ -1,10 +1,17 @@
-import { FolderEntity }	from './model/entity/FolderEntity';
-import { Entity }		from './model/entity/Entity';
-import NavNode			from './model/NavNode';
+import { FolderEntity } 		from './model/entity/FolderEntity';
+import { Entity } 				from './model/entity/Entity';
+import NavNode					from './model/NavNode';
+import { FileEntity } 			from './model/entity/FileEntity';
+import { NotificationType } 	from './model/notification/NotificationType';
+import { NotificationEntity }	from './model/notification/NotificationEntity';
+import { ErrorNotificationEntity, ErrorNotificationType } from './model/notification/ErrorNotificationEntity';
+import App, {AppContentContext, AppNotificationContext, AppProcessingContext} from './App';
 
-import App, { AppContentContext } from './App';
+import { ContentContextInterface }		 from './context/ContentContext';
+import { NotificationsContextInterface } from './context/NotificationContext';
 
 import axios from 'axios';
+import {ProcessingContext} from "./context/ProcessingContext";
 
 export const API_URL = 'http://localhost:8080';
 
@@ -13,54 +20,53 @@ export class APIHelpers {
 	static getRootId = () : Promise<string> => (
 		axios.get(`${API_URL}/folder/root/id`)
 			.then(id => id.data)
-			.catch(() => {})
 	);
 
-	static getRootData = () : Promise<any> => (
+	static getRootData = () : Promise<FolderEntity> => (
 		axios.get(`${API_URL}/folder/root/data`)
 			.then(response => response.data)
-			.catch(() => {})
+			.catch(() => APIHelpers.errorNotification("Error fetching home folder data"))
 	);
 
 	static getRootMemory = () : Promise<object> => (
 		axios.get(`${API_URL}/folder/root/memory`)
 			.then(memory => memory.data)
-			.catch(console.log)
+			.catch(() => APIHelpers.errorNotification("Error fetching memory usage"))
 	);
 
 	static getFolderPredecessors = (id : string) : Promise<FolderEntity[]> => (
 		axios.get(`${API_URL}/folder/${id}/predecessors`)
 			.then(response => response.data)
-			.catch(console.log)
 	);
 
-	static getFileData = (id: string) : Promise<Entity> => (
+	static getFileData = (id: string) : Promise<FileEntity> => (
 		axios.get(`${API_URL}/file/${id}/data`)
 			.then(response => response.data)
-			.catch(console.log)
+			.catch(() => APIHelpers.errorNotification("Error fetching file data"))
 	);
  
 	static getFolderData = (id: string) : Promise<FolderEntity> => (
 		axios.get(`${API_URL}/folder/${id}/data`)
 			.then(response => response.data)
-			.catch(console.log)
+			.catch(() => APIHelpers.errorNotification("Error fetching folder data"))
 	);
 
 	static getFolderFiles = (id: string) : Promise<[]> => (
 		axios.get(`${API_URL}/folder/${id}/files`)
 			.then(response => response.data)
-			.catch(console.log)
+			.catch(() => APIHelpers.errorNotification("Error fetching folder files"))
 	);
 
 	static getFolderFolders = (id: string) : Promise<[]> => (
 		axios.get(`${API_URL}/folder/${id}/folders`)
 			.then(response => response.data)
-			.catch(console.log)
+			.catch(() => APIHelpers.errorNotification("Error fetching folder folders"))
 	);
 
 	static getTrashItems = (): Promise<[]> => (
 		axios.get(`${API_URL}/trash/items`)
 			.then(response => response.data)
+			.catch(() => APIHelpers.errorNotification("Error fetching items from trash"))
 	);
 
 	static folderHasContent = (id: string): Promise<boolean> => (
@@ -77,13 +83,14 @@ export class APIHelpers {
 			.then(response => response.data)
 	);
 
-	static createNewFolder = (folder: FolderEntity, path: string) : Promise<string> => (
+	static createNewFolder = (name: string, path: string) : Promise<string> => (
 		axios.post(`${API_URL}/folder/create/`,
 			{
-				name		: folder,
+				name		: name,
 				folderPath	: path
 			})
 			.then(response => response.data)
+			.catch(() => APIHelpers.errorNotification(`Error creating folder ${name}`))
 	);
 
 	static pasteEntity = (target: Entity, action: string, newPath: string) : Promise<string> => (
@@ -93,6 +100,7 @@ export class APIHelpers {
 				newPath: newPath
 			})
 			.then(response => response.data)
+			.catch(() => APIHelpers.errorNotification(`Error when pasting ${target.name}`))
 	);
 
 	static moveToTrash = (target: Entity) : Promise<string> => (
@@ -101,6 +109,7 @@ export class APIHelpers {
 				id : target.id
 			})
 			.then(response => response.data)
+			.catch(() => APIHelpers.errorNotification(`Error moving to trash ${target.name}`))
 	);
 
 	static restoreFromTrash = (target: Entity) : Promise<string> => (
@@ -109,16 +118,19 @@ export class APIHelpers {
 				id : target.id
 			})
 			.then(response => response.data)
+			.catch(() => APIHelpers.errorNotification(`Error restoring from trash ${target.name}`))
 	);
 
 	static deleteFromTrash = (target: Entity) : Promise<string> => (
 		axios.delete(`${API_URL}/trash/delete/${target.id}`)
 			.then(response => response.data)
+			.catch(() => APIHelpers.errorNotification(`Error deleting from trash ${target.name}`))
 	);
 
 	static emptyTrash = () : Promise<string> => (
 		axios.delete(`${API_URL}/trash/empty-trash`)
 			.then(response => response.data)
+			.catch(APIHelpers.errorNotification)
 	);
 
 	static renameEntity = (target: Entity, newName: string) : Promise<string> => (
@@ -128,19 +140,22 @@ export class APIHelpers {
 				'newName': newName
 			})
 			.then(response => response.data)
+			.catch(() => APIHelpers.errorNotification(`Error renaming ${target.name} to ${newName}`))
 	);
 
 	static deleteEntity = (target: Entity) : Promise<string> => (
 		axios.delete(`${API_URL}/${target.type.toLowerCase()}/${target.id}/delete`)
 			.then(response => response.data)
+			.catch(() => APIHelpers.errorNotification(`Error deleting ${target.name}`))
 	);
 
-	static deleteAllFromFolder = (path: string) : Promise<string> => (
+	static deleteFolderContent = (path: string) : Promise<string> => (
 		axios.post(`${API_URL}/folder/delete-all`,
 			{
 				path: path
 			})
 			.then(response => response.data)
+			.catch(() => APIHelpers.errorNotification("Error deleting all folder content"))
 	);
 
 	private static uploadFile = async (file: File, appContext: App) => {
@@ -165,10 +180,12 @@ export class APIHelpers {
 						[`uploadingFile${file.name}progress`] : (p.total - (p.total - p.loaded)) / p.total * 100
 				})
 			})
-			.then(response => response.data === 'OK'
-					? appContext.updateFolder(appContext.state.currentFolder.id)
-					: console.log(response.data))
-			.catch(console.log);
+			.then(async response => {
+				AppContentContext.setFiles(await APIHelpers.getFolderFiles(appContext.state.currentFolder.id));
+
+				if (response.data !== "OK") APIHelpers.errorNotification("Error uploading");
+			})
+			.catch(() => APIHelpers.errorNotification("Error starting upload"));
 	};
 
 	static uploadFiles = async (files: Array<File>, app: App) => files.forEach(file => APIHelpers.uploadFile(file, app));
@@ -186,11 +203,21 @@ export class APIHelpers {
 	};
 
 	static downloadFolder = async (target: FolderEntity) => {
-		const zip = await APIHelpers.zipFolder(target.path);
+		if (await APIHelpers.folderHasContent(target.id)) {
+			const zip = await APIHelpers.zipFolder(target.path);
 
-		if (zip !== "folder is empty" && await APIHelpers.folderHasContent(target.id)) {
-			await APIHelpers.downloadFile(zip, target.name);
-		}
+			if (zip !== "folder is empty") await APIHelpers.downloadFile(zip, target.name);
+		} else APIHelpers.errorNotification(`Folder "${target.name}" is empty`);
+	};
+
+	static errorNotification = (message? : string) => {
+		const text = message || "API call error :(";
+
+		const notifications = AppNotificationContext.notifications;
+
+		notifications.push(NotificationHelpers.createErrorNotification(text, ErrorNotificationType.ERROR));
+
+		AppNotificationContext.setNotifications(notifications);
 	};
 }
 
@@ -219,8 +246,8 @@ export class NavigationNodesHelpers {
 			entity.id,
 			entity.name,
 			prevNode,
-			async () => await app.updateFolder(entity.id)
-				.then(() => NavigationNodesHelpers.removeNodeSuccessors(entity.id, app)));
+			async () => app.updateFolder(entity.id)
+				.then(async () => await NavigationNodesHelpers.removeNodeSuccessors(entity.id, app)));
 	};
 
 	static removeNodeSuccessors = async (id: string, app: App) => {
@@ -229,5 +256,104 @@ export class NavigationNodesHelpers {
 		nodes.splice(nodes.findIndex(node => node.id === id) + 1, 9e9);
 
 		app.setState({ foldersNavigation : nodes });
+	};
+}
+
+export class EntityHelpers {
+
+	static uuidv4 = () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+		const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+		return v.toString(16);
+	});
+}
+
+export class NotificationHelpers {
+
+	static createNotification = (text : string) : NotificationEntity => {
+		return {
+			id 		: EntityHelpers.uuidv4(),
+			text	: text,
+			type	: NotificationType.BASIC
+		};
+	};
+
+	static createErrorNotification = (text : string, errorType: ErrorNotificationType) : ErrorNotificationEntity => {
+		return {
+			id 			: EntityHelpers.uuidv4(),
+			text		: text,
+			errorType	: errorType,
+			type 		: NotificationType.ERROR
+		};
+	};
+}
+
+export class ContextHelpers {
+
+	static createContentContext = (app : App) : ContentContextInterface => {
+		return {
+			files		: [],
+			folders		: [],
+			trashItems	: [],
+			setFiles: (newFiles: FileEntity[] = []) => {
+				AppContentContext.files = newFiles;
+
+				app.forceUpdate();
+
+				return AppContentContext.files;
+			},
+			setFolders: (newFolders: FolderEntity[] = []) => {
+				AppContentContext.folders = newFolders;
+
+				app.forceUpdate();
+
+				return AppContentContext.folders;
+			},
+			setTrashItems: (newTrashItems: Entity[] = []) => {
+				AppContentContext.trashItems = newTrashItems;
+
+				app.forceUpdate();
+
+				return AppContentContext.trashItems;
+			}
+		};
+	};
+
+	static createNotificationContext = (app : App) : NotificationsContextInterface => {
+		return {
+			notifications : [],
+			setNotifications : (notifications : NotificationEntity[]) => {
+				AppNotificationContext.notifications = notifications;
+
+				app.forceUpdate();
+
+				return AppNotificationContext.notifications;
+			},
+			deleteNotification : (id : string) => {
+				const notifications = AppNotificationContext.notifications;
+
+				notifications.splice(notifications.findIndex(n => n.id === id + 1), 1);
+
+				AppNotificationContext.setNotifications(notifications);
+			}
+		};
+	};
+
+	static createProcessingContext = (app : App) : ProcessingContext => {
+		return {
+			entities : [],
+			add : (entity : Entity) : Entity | null => {
+				AppProcessingContext.entities.push(entity);
+
+				app.forceUpdate();
+
+				return AppProcessingContext.get(entity.id);
+			},
+            get	: (id : string) : Entity | null => AppProcessingContext.entities.filter(e => e.id === id)[0],
+			delete : (id : string) => {
+				const index = AppProcessingContext.entities.findIndex(e => e.id === id);
+
+				AppProcessingContext.entities.splice(index, 1);
+			}
+		};
 	};
 }

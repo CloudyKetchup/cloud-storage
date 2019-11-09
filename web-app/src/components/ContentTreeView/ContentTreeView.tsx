@@ -45,23 +45,23 @@ type TreeNodeState = {
     toggled : boolean
 	files 	: FileEntity[]
 	folders : FolderEntity[]
-	contextMenuShow : boolean
+	contextMenuShow  : boolean
 	contextMenuStyle : any
 };
 
 class TreeNode extends Component<{ data : Entity, app : App }, TreeNodeState> {
-    state = {
+    state : TreeNodeState = {
         id      : this.props.data.id,
         name    : this.props.data.name,
         type    : this.props.data.type,
         toggled : false,
-		files 	: [] as FileEntity[],
-		folders : [] as FolderEntity[],
+		files 	: [],
+		folders : [],
 		contextMenuShow : false,
 		contextMenuStyle : {} 
     };
 
-	componentWillMount() {
+	UNSAFE_componentWillMount() {
 		const div = ReactDOM.findDOMNode(this);
 
 		if (div !== null) {
@@ -164,11 +164,11 @@ class TreeNode extends Component<{ data : Entity, app : App }, TreeNodeState> {
 
 export class ContentTreeView extends Component<{ app: App }> {
 	state = {
-		files : [] as FileEntity[],
+		files 	: [] as FileEntity[],
 		folders : [] as FolderEntity[]
 	};
 
-	componentWillMount = () => this.getContent().then(content => this.setState(content));
+	UNSAFE_componentWillMount = () => this.getContent().then(content => this.setState(content));
 
 	getContent = async () : Promise<object> => {
 		const rootId = await API.getRootId();

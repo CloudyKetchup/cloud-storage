@@ -14,7 +14,7 @@ interface IState { data : Entity | null }
 export default class RenameEntityDialog extends Component<IProps, IState> {
 	state : IState = { data : null }
 
-	componentWillMount = async () => {
+	UNSAFE_componentWillMount = async () => {
 		const entityType = this.props.match.params.type;
 		const functionName = `get${entityType[0].toUpperCase() + entityType.slice(1)}Data`;
 		

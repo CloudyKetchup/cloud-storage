@@ -10,6 +10,6 @@ export type BasicContentContext = {
 };
 
 export interface ContentContextInterface extends BasicContentContext {
-    trashItems : Entity[]
+    trashItems    : Entity[]
     setTrashItems : (newTrashItems : Entity[]) => Entity[]
 };
