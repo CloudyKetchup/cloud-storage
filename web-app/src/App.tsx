@@ -1,43 +1,45 @@
-import {BrowserRouter as Router, Link, Route, Switch}	from 'react-router-dom';
-import React, {Component, Context, createContext} 		from 'react';
+import { BrowserRouter as Router, Link, Route, Switch }	from 'react-router-dom';
+import React, { Component, Context, createContext } 	from 'react';
 
-import {APIHelpers as API, NavigationNodesHelpers, ContextHelpers, APIHelpers, EntityHelpers} from './helpers';
-import { ContentContextInterface } 		from './context/ContentContext';
-import { ElementInfoContainer }         from './components/ElementInfoContainer/ElementInfoContainer';
-import BufferElementIndicator           from './components/BufferElement/BufferElementIndicator';
-import ContentContainer                 from './components/ContentContainer/ContentContainer';
+import { APIHelpers as API, NavigationNodesHelpers, ContextHelpers, APIHelpers, EntityHelpers } from './helpers';
+import { ContentContextInterface }		from './context/ContentContext';
+import { ElementInfoContainer }			from './components/ElementInfoContainer/ElementInfoContainer';
+import BufferElementIndicator			from './components/BufferElement/BufferElementIndicator';
+import ContentContainer					from './components/ContentContainer/ContentContainer';
 import { ContentTreeView }				from './components/ContentTreeView/ContentTreeView';
-import CreateFolderDialog               from './components/CreateFolderDialog/CreateFolderDialog';
-import DragAndDrop                      from './components/DragAndDrop/DragAndDrop';
-import FileUploadManager, { UploadFile} from './components/UploadManager/UploadManager';
-import LeftPanel                        from './components/LeftPanel/LeftPanel';
-import NavBar                           from './components/NavBar/NavBar'
-import PrevFolderButton                 from './components/PrevFolderButton/PrevFolderButton';
+import CreateFolderDialog				from './components/CreateFolderDialog/CreateFolderDialog';
+import DragAndDrop						from './components/DragAndDrop/DragAndDrop';
+import FileUploadManager, { UploadFile }from './components/UploadManager/UploadManager';
+import LeftPanel						from './components/LeftPanel/LeftPanel';
+import NavBar							from './components/NavBar/NavBar'
+import PrevFolderButton					from './components/PrevFolderButton/PrevFolderButton';
 import RenameEntityDialog 				from './components/RenameEntityDialog/RenameEntityDialog';
 import TrashContainer					from './components/TrashContainer/TrashContainer';
 import ImageViewOverlay 				from './components/ImageViewOverlay/ImageViewOverlay';
 import { BufferElement }  				from './model/BufferElement';
-import { Entity }         				from './model/entity/Entity';
-import { EntityType }     				from './model/entity/EntityType';
-import { FolderEntity }   				from './model/entity/FolderEntity';
+import { Entity }						from './model/entity/Entity';
+import { EntityType }					from './model/entity/EntityType';
+import { FolderEntity }					from './model/entity/FolderEntity';
 import NavNode 							from './model/NavNode';
 import NotificationComponentFactory 	from './factory/NotificationComponentFactory';
 import { NotificationsContextInterface }from './context/NotificationContext';
+import { ProcessingContext } 			from "./context/ProcessingContext";
 
 type IState = {
 	bufferElement		: BufferElement | undefined,
 	elementSelected		: Entity		| undefined,
 	currentFolder		: FolderEntity,
-	rootOpened			: boolean,
 	rootMemory			: object,
 	uploadingFiles		: File[],
-	foldersNavigation 	: NavNode[],
+	foldersNavigation	: NavNode[],
 	[fileUploadProgress : string] : any
 };
 
 export let AppContentContext : ContentContextInterface; 
 
 export let AppNotificationContext : NotificationsContextInterface;
+
+export let AppProcessingContext : ProcessingContext;
 
 export let ContentContext : Context<ContentContextInterface>;
 
@@ -46,7 +48,6 @@ export default class App extends Component<{ data : FolderEntity }> {
 		bufferElement		: undefined,
 		elementSelected		: undefined,
 		currentFolder		: this.props.data,
-		rootOpened			: true,
 		rootMemory			: {},
 		uploadingFiles		: [],
 		foldersNavigation	: []
@@ -55,16 +56,16 @@ export default class App extends Component<{ data : FolderEntity }> {
 	UNSAFE_componentWillMount = () => {
 		AppContentContext = ContextHelpers.createContentContext(this);
 
-		ContentContext = createContext(AppContentContext);
-
 		AppNotificationContext = ContextHelpers.createNotificationContext(this);
+
+		AppProcessingContext = ContextHelpers.createProcessingContext(this);
+
+		ContentContext = createContext(AppContentContext);
 	};
 
 	componentDidMount = async () => {
-		this.setState({
-			rootMemory : await API.getRootMemory() || "",
-			rootOpened : true
-		});
+		this.setState({ rootMemory : await API.getRootMemory() || "" });
+
 		API.getTrashItems().then(AppContentContext.setTrashItems);
 
 		this.updateFolder();
@@ -75,7 +76,7 @@ export default class App extends Component<{ data : FolderEntity }> {
 			this.setState({
 				elementSelected : undefined,
 				currentFolder	: data,
-				rootOpened 		: data.root,
+				rootOpened		: data.root,
 			});
 		});
 
@@ -97,7 +98,7 @@ export default class App extends Component<{ data : FolderEntity }> {
 				if (target.type === EntityType.FILE)
 					await API.downloadFile(target.path, target.name);
 				else if (target.type === EntityType.FOLDER)
-					await API.downloadFolder(target as FolderEntity);
+					this.downloadFolder(target as FolderEntity);
 				break;
 			case 'move':
 				this.setState({ bufferElement: {
@@ -123,6 +124,14 @@ export default class App extends Component<{ data : FolderEntity }> {
 				break;
 			default: break;
 		}
+	};
+
+	downloadFolder = async (target : FolderEntity) => {
+		AppProcessingContext.add(target);
+
+		await API.downloadFolder(target as FolderEntity);
+
+		AppProcessingContext.delete(target.id);
 	};
 
 	createNewFolder = async (name: string) => {
@@ -204,71 +213,69 @@ export default class App extends Component<{ data : FolderEntity }> {
 							<RenameEntityDialog
 								onRename={this.renameEntity}
 								{...props} />}
-						/>
-						<Route exact path="/folder/create" render={() =>
-							<CreateFolderDialog
-								parent={this}
-								sendFolder={this.createNewFolder}
-							/>}
-						/>
-						<Route path="/:type/:id/info" render={props => <ElementInfoContainer key={props.match.params.id} {...props}/>}/>
-						<Route exact path="/trash" render={() => <TrashContainer app={this}/>}/>
-						<Route path="/file/image/:id/view" render={props => <ImageViewOverlay key={EntityHelpers.uuidv4()} id={props.match.params.id}/>}/>
-					</Switch>
-					<ContentContext.Provider value={AppContentContext}>
-						<ContentContainer
-							folderId={this.state.currentFolder.id}
-							parent={this}>
-							<PrevFolderButton
-								whenClicked={async () => {
-									if (this.state.currentFolder.parentId) {
-										await NavigationNodesHelpers.removeNodeSuccessors(this.state.currentFolder.parentId, this);
-
-										await this.updateFolder(this.state.currentFolder.parentId);
-									}
-								}}
-								rootOpened={this.state.rootOpened}
 							/>
-							<Link to="/folder/create">
-								<button className='create-folder'><i className='fas fa-folder-plus'/></button>
-							</Link>
-							<button
-								className='upload-file-button'
-								onClick={() => {
-									const uploadInput = document.getElementById('select-upload-files');
+							<Route exact path="/folder/create" render={() => <CreateFolderDialog parent={this} sendFolder={this.createNewFolder}/>}/>
+							<Route path="/:type/:id/info" render={props => <ElementInfoContainer key={props.match.params.id} {...props}/>}/>
+							<Route exact path="/trash" render={() => <TrashContainer app={this}/>}/>
+							<Route path="/file/image/:id/view" render={props => <ImageViewOverlay key={EntityHelpers.uuidv4()} id={props.match.params.id}/>}/>
+						</Switch>
+						<ContentContext.Provider value={AppContentContext}>
+							<ContentContainer
+								folderId={this.state.currentFolder.id}
+								parent={this}>
+								{
+									this.state.currentFolder.parentId
+									&&
+									<PrevFolderButton
+										whenClicked={async () => {
+											if (this.state.currentFolder.parentId) {
+												await NavigationNodesHelpers.removeNodeSuccessors(this.state.currentFolder.parentId, this);
 
-									if (uploadInput) uploadInput.click();
-								}}
-							><i className='fas fa-file-upload'/></button>
-							{
-								this.state.uploadingFiles.length > 0
-								&&
-								<FileUploadManager onClose={() => this.setState({ uploadingFiles: [] })}>
-									{this.state.uploadingFiles.map(file => <UploadFile key={file.name} data={file} parent={this} />)}
-								</FileUploadManager>
-							}
-							{this.state.bufferElement && <BufferElementIndicator element={this.state.bufferElement} />}
-							{
-								AppNotificationContext.notifications.length > 0
-								&&
-								<div className="notifications-pad">
-									{AppNotificationContext.notifications.map(NotificationComponentFactory.build)}
-								</div>
-							}
-						</ContentContainer>
-					</ContentContext.Provider>
-				</DragAndDrop>
-				<input
-					id="select-upload-files"
-					type="file"
-					onChange={async () => {
-						const files = (document.getElementById("select-upload-files") as HTMLInputElement).files;
+												await this.updateFolder(this.state.currentFolder.parentId);
+											}
+										}}
+									/>
+								}
+								<Link to="/folder/create">
+									<button className='create-folder'><i className='fas fa-folder-plus'/></button>
+								</Link>
+								<button
+									className='upload-file-button'
+									onClick={() => {
+										const uploadInput = document.getElementById('select-upload-files');
 
-						if (files) await API.uploadFiles(Array.from(files), this);
-					}}
-					style={{ display: 'none' }}
-					multiple />
-			</div>
-		</Router>
+										if (uploadInput) uploadInput.click();
+									}}
+								><i className='fas fa-file-upload'/></button>
+								{
+									this.state.uploadingFiles.length > 0
+									&&
+									<FileUploadManager onClose={() => this.setState({ uploadingFiles: [] })}>
+										{this.state.uploadingFiles.map(file => <UploadFile key={file.name} data={file} parent={this} />)}
+									</FileUploadManager>
+								}
+								{this.state.bufferElement && <BufferElementIndicator element={this.state.bufferElement} />}
+								{
+									AppNotificationContext.notifications.length > 0
+									&&
+									<div className="notifications-pad">
+										{AppNotificationContext.notifications.map(NotificationComponentFactory.build)}
+									</div>
+								}
+							</ContentContainer>
+						</ContentContext.Provider>
+					</DragAndDrop>
+					<input
+						id="select-upload-files"
+						type="file"
+						onChange={async () => {
+							const files = (document.getElementById("select-upload-files") as HTMLInputElement).files;
+
+							if (files) await API.uploadFiles(Array.from(files), this);
+						}}
+						style={{ display: 'none' }}
+						multiple />
+					</div>
+				</Router>
 	);
 }

@@ -19,7 +19,7 @@ export interface EntityState {
 	}
 }
 
-export default abstract class EntityComponent<P, S> extends Component<P, EntityState> {
+export default abstract class EntityComponent<P extends EntityProps> extends Component<P, EntityState> {
 	state = {
 		contextMenuShow : false,
 		contextMenuStyle : {

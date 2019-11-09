@@ -1,16 +1,17 @@
 import { FolderEntity } 		from './model/entity/FolderEntity';
 import { Entity } 				from './model/entity/Entity';
-import NavNode 					from './model/NavNode';
+import NavNode					from './model/NavNode';
 import { FileEntity } 			from './model/entity/FileEntity';
 import { NotificationType } 	from './model/notification/NotificationType';
-import { NotificationEntity } 	from './model/notification/NotificationEntity';
+import { NotificationEntity }	from './model/notification/NotificationEntity';
 import { ErrorNotificationEntity, ErrorNotificationType } from './model/notification/ErrorNotificationEntity';
-import App, { AppContentContext, AppNotificationContext } from './App';
+import App, {AppContentContext, AppNotificationContext, AppProcessingContext} from './App';
 
 import { ContentContextInterface }		 from './context/ContentContext';
 import { NotificationsContextInterface } from './context/NotificationContext';
 
 import axios from 'axios';
+import {ProcessingContext} from "./context/ProcessingContext";
 
 export const API_URL = 'http://localhost:8080';
 
@@ -179,10 +180,12 @@ export class APIHelpers {
 						[`uploadingFile${file.name}progress`] : (p.total - (p.total - p.loaded)) / p.total * 100
 				})
 			})
-			.then(response => response.data === 'OK'
-					? appContext.updateFolder(appContext.state.currentFolder.id)
-					: console.log(response.data))
-			.catch(console.log);
+			.then(async response => {
+				AppContentContext.setFiles(await APIHelpers.getFolderFiles(appContext.state.currentFolder.id));
+
+				if (response.data !== "OK") APIHelpers.errorNotification("Error uploading");
+			})
+			.catch(() => APIHelpers.errorNotification("Error starting upload"));
 	};
 
 	static uploadFiles = async (files: Array<File>, app: App) => files.forEach(file => APIHelpers.uploadFile(file, app));
@@ -204,9 +207,7 @@ export class APIHelpers {
 			const zip = await APIHelpers.zipFolder(target.path);
 
 			if (zip !== "folder is empty") await APIHelpers.downloadFile(zip, target.name);
-		} else {
-			APIHelpers.errorNotification(`Folder "${target.name}" is empty`);
-		}
+		} else APIHelpers.errorNotification(`Folder "${target.name}" is empty`);
 	};
 
 	static errorNotification = (message? : string) => {
@@ -246,7 +247,7 @@ export class NavigationNodesHelpers {
 			entity.name,
 			prevNode,
 			async () => app.updateFolder(entity.id)
-				.then(() => NavigationNodesHelpers.removeNodeSuccessors(entity.id, app)));
+				.then(async () => await NavigationNodesHelpers.removeNodeSuccessors(entity.id, app)));
 	};
 
 	static removeNodeSuccessors = async (id: string, app: App) => {
@@ -333,6 +334,25 @@ export class ContextHelpers {
 				notifications.splice(notifications.findIndex(n => n.id === id + 1), 1);
 
 				AppNotificationContext.setNotifications(notifications);
+			}
+		};
+	};
+
+	static createProcessingContext = (app : App) : ProcessingContext => {
+		return {
+			entities : [],
+			add : (entity : Entity) : Entity | null => {
+				AppProcessingContext.entities.push(entity);
+
+				app.forceUpdate();
+
+				return AppProcessingContext.get(entity.id);
+			},
+            get	: (id : string) : Entity | null => AppProcessingContext.entities.filter(e => e.id === id)[0],
+			delete : (id : string) => {
+				const index = AppProcessingContext.entities.findIndex(e => e.id === id);
+
+				AppProcessingContext.entities.splice(index, 1);
 			}
 		};
 	};

@@ -42,7 +42,7 @@ interface FileProps extends EntityProps { data : FileEntity }
 
 interface FileState extends EntityState { imageLoaded : boolean }
 
-export default class File extends EntityComponent<FileProps, FileState> {
+export default class File extends EntityComponent<FileProps> {
 	state : FileState = {
 		imageLoaded : false,
 	    contextMenuShow : false,
