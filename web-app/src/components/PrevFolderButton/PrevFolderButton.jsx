@@ -8,11 +8,11 @@ const PrevFolderButton = props => {
 		zIndex : 999,
 		padding : 15,
 		paddingLeft : 10
-	}
+	};
 
 	return (
 		<button className="prev-button" onClick={props.whenClicked} style={style}>
-			<i className="fas fa-chevron-left"></i>
+			<i className="fas fa-chevron-left"/>
 		</button>	
 	);
 };
