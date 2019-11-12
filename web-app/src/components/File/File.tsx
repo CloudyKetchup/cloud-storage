@@ -7,6 +7,7 @@ import { FileExtensionIcons }							from './FileExtensionIcons';
 import { API_URL } 										from '../../helpers';
 import EntityContextMenu, { ContextMenuItem } 			from '../EntityContextMenu/EntityContextMenu';
 import CircularProgress 								from '@material-ui/core/CircularProgress';
+import { FileExtension } 								from '../../model/entity/FileExtension';
 
 const contextMenuListener = async (e: MouseEvent, obj: File) => {
 	e.preventDefault();
@@ -84,15 +85,40 @@ export default class File extends EntityComponent<FileProps> {
 			onStart={() => this.props.mainParent.setState({ elementSelected : this.props.data })}
 			style={this.state.contextMenuStyle}
 		>
-			<Link to={`/file/image/${this.props.data.id}/view`}>
-				<ContextMenuItem
-					key={`context-menu-item-${this.props.data.id}`}
-					icon={<i className="fas fa-eye"/>}
-					text="View"
-				/>
-			</Link>
+			{
+				this.props.data.image
+				&&
+				<Link to={`/file/image/${this.props.data.id}/view`}>
+					<ContextMenuItem
+						key={`context-menu-item-${this.props.data.id}`}
+						icon={<i className="fas fa-eye"/>}
+						text="View"
+					/>
+				</Link>
+			}
 		</EntityContextMenu>
 	);
+
+	private imageAssign = () : boolean => {
+	    const ext = FileExtension;
+
+		switch (this.props.data.extension) {
+			case ext.IMAGE_JPEG:
+			case ext.IMAGE_JPG:
+			case ext.IMAGE_GIF:
+			case ext.IMAGE_PNG:
+			case ext.IMAGE_RAW:
+				return true;
+			default: return false;
+		}
+	};
+
+	private imageLink = () : string => {
+		// if (this.props.data.extension !== FileExtension.IMAGE_GIF) {
+			return `${API_URL}/file/${this.props.data.id}/thumbnail`;
+		// }
+		// return `${API_URL}/file/${this.props.data.id}/image`;
+	};
 
 	render = () => (
 		<div
@@ -103,7 +129,8 @@ export default class File extends EntityComponent<FileProps> {
 		>
 			{this.contextMenu()}
 			<div className="file-icon">
-				{this.props.data.extension === "IMAGE_JPG"
+				{
+					this.imageAssign()
 					? [
 						!this.state.imageLoaded
 						&&
@@ -112,7 +139,7 @@ export default class File extends EntityComponent<FileProps> {
 							key={this.props.data.path}
 							style={{ display : this.state.imageLoaded ? "unset" : "none" }}
 							onLoad={() => this.setState({ imageLoaded : true } as FileState)}
-							src={`${API_URL}/file/${this.props.data.id}/thumbnail`}
+							src={this.imageLink()}
 							alt="..."/>]
 					: <i className={FileExtensionIcons[this.props.data.extension as any]}/>}
 			</div>

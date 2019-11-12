@@ -9,7 +9,6 @@ import com.krypton.databaselayer.model.File;
 import com.krypton.databaselayer.repository.FileRepository;
 import com.krypton.databaselayer.service.folder.FolderPersistenceHelper;
 import com.krypton.databaselayer.service.image.ImageRecordService;
-import common.model.FileType;
 import lombok.AllArgsConstructor;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Service;
@@ -18,7 +17,6 @@ import reactor.core.publisher.Mono;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -48,9 +46,7 @@ public class FileRecordServiceImpl implements IOEntityRecordService<File> {
 
     @Override
     public File save(File file) {
-        // file saved to database
-        var entity = fileRepository.save(file);
-
+        fileRepository.save(file);
         // filesystem folder where file is located
         var parentFolder    = Paths.get(file.getPath()).getParent().toFile();
         // folder record where file need to be added as child
@@ -152,7 +148,7 @@ public class FileRecordServiceImpl implements IOEntityRecordService<File> {
                     if (entity == null) {
                         return false;
                         // if file is a jpg image, create a resized thumbnail for it
-                    } else if (entity.getExtension().equals(FileType.IMAGE_JPG)) {
+                    } else if (withThumbnail(entity)) {
                         assignImage(entity, imageService.createAndSave(entity));
 
                         var check = getById(entity.getId());
@@ -163,6 +159,22 @@ public class FileRecordServiceImpl implements IOEntityRecordService<File> {
                 })
                 .doOnError(Throwable::printStackTrace)
                 .onErrorReturn(false);
+    }
+
+    private boolean withThumbnail(File file) {
+        switch (file.getExtension()) {
+            case IMAGE_JPG:
+            case IMAGE_JPEG:
+            case IMAGE_PNG:
+            case IMAGE_RAW:
+            case IMAGE_GIF:
+            case MP4:
+            case AVI:
+            case MOV:
+            case MKV:
+                return true;
+            default: return false;
+        }
     }
 
     /**

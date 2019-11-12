@@ -213,11 +213,13 @@ export class APIHelpers {
 	static errorNotification = (message? : string) => {
 		const text = message || "API call error :(";
 
-		const notifications = AppNotificationContext.notifications;
+		if (AppNotificationContext) {
+			const notifications = AppNotificationContext.notifications;
 
-		notifications.push(NotificationHelpers.createErrorNotification(text, ErrorNotificationType.ERROR));
+			notifications.push(NotificationHelpers.createErrorNotification(text, ErrorNotificationType.ERROR));
 
-		AppNotificationContext.setNotifications(notifications);
+			AppNotificationContext.setNotifications(notifications);
+		}
 	};
 }
 
