@@ -44,6 +44,7 @@ public class FolderServiceImpl implements FolderService, ErrorHandler {
 	@Override
 	public HttpStatus create(String name, String path) {
 		var folder = new File(path + "/" + name);
+
 		// create folder locally on file system
 		if (folder.mkdir()) {
 			// add folder to database and return http status > ok
@@ -88,6 +89,7 @@ public class FolderServiceImpl implements FolderService, ErrorHandler {
 	    var folderEntity = folderRecordService.getById(id);
 	    var folder 		 = new File(folderEntity.getPath());
 		var newPath 	 = Paths.get(folderEntity.getPath()).getParent().toAbsolutePath() + "/" + newName;
+
 	    // rename folder locally on file system
 	    if (fileSystemLayer.rename(folder, newName)) {
 			// update folder name in database
@@ -114,7 +116,7 @@ public class FolderServiceImpl implements FolderService, ErrorHandler {
 	@Override
 	public HttpStatus deleteContent(UUID id) {
 		var folder = folderRecordService.getById(id);
-		// check if folder is not empty
+
 		folder.getFiles().parallelStream().forEach(f -> {
 			var path = f.getPath();
 

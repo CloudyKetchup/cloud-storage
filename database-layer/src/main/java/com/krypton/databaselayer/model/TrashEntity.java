@@ -20,7 +20,7 @@ public class TrashEntity extends com.krypton.databaselayer.model.Entity {
 	@Column
 	private String name;
 
-	@Column
+	@Column(unique = true)
 	private String path;
 
 	@Column
