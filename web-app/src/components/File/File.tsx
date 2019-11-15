@@ -4,10 +4,9 @@ import { Link }											from 'react-router-dom';
 import { FileEntity }									from '../../model/entity/FileEntity';
 import EntityComponent, { EntityProps, EntityState }	from '../EntityComponent/EntityComponent';
 import { FileExtensionIcons }							from './FileExtensionIcons';
-import { API_URL } 										from '../../helpers';
+import { API_URL, FileHelpers } 										from '../../helpers';
 import EntityContextMenu, { ContextMenuItem } 			from '../EntityContextMenu/EntityContextMenu';
 import CircularProgress 								from '@material-ui/core/CircularProgress';
-import { FileExtension } 								from '../../model/entity/FileExtension';
 
 const contextMenuListener = async (e: MouseEvent, obj: File) => {
 	e.preventDefault();
@@ -99,27 +98,6 @@ export default class File extends EntityComponent<FileProps> {
 		</EntityContextMenu>
 	);
 
-	private imageAssign = () : boolean => {
-	    const ext = FileExtension;
-
-		switch (this.props.data.extension) {
-			case ext.IMAGE_JPEG:
-			case ext.IMAGE_JPG:
-			case ext.IMAGE_GIF:
-			case ext.IMAGE_PNG:
-			case ext.IMAGE_RAW:
-				return true;
-			default: return false;
-		}
-	};
-
-	private imageLink = () : string => {
-		// if (this.props.data.extension !== FileExtension.IMAGE_GIF) {
-			return `${API_URL}/file/${this.props.data.id}/thumbnail`;
-		// }
-		// return `${API_URL}/file/${this.props.data.id}/image`;
-	};
-
 	render = () => (
 		<div
 			className="entity"
@@ -130,7 +108,7 @@ export default class File extends EntityComponent<FileProps> {
 			{this.contextMenu()}
 			<div className="file-icon">
 				{
-					this.imageAssign()
+					FileHelpers.imageAssign(this.props.data)
 					? [
 						!this.state.imageLoaded
 						&&
@@ -139,7 +117,7 @@ export default class File extends EntityComponent<FileProps> {
 							key={this.props.data.path}
 							style={{ display : this.state.imageLoaded ? "unset" : "none" }}
 							onLoad={() => this.setState({ imageLoaded : true } as FileState)}
-							src={this.imageLink()}
+							src={`${API_URL}/file/${this.props.data.id}/thumbnail`}
 							alt="..."/>]
 					: <i className={FileExtensionIcons[this.props.data.extension as any]}/>}
 			</div>
