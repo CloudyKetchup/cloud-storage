@@ -12,6 +12,7 @@ import { NotificationsContextInterface } from './context/NotificationContext';
 
 import axios from 'axios';
 import {ProcessingContext} from "./context/ProcessingContext";
+import { FileExtension } from './model/entity/FileExtension';
 
 export const API_URL = 'http://localhost:8080';
 
@@ -112,13 +113,19 @@ export class APIHelpers {
 			.catch(() => APIHelpers.errorNotification(`Error moving to trash ${target.name}`))
 	);
 
-	static restoreFromTrash = (target: Entity) : Promise<string> => (
+	static restoreFromTrash = (id : string) : Promise<string> => (
 		axios.post(`${API_URL}/trash/restore-from-trash`,
 			{
-				id : target.id
+				id : id
 			})
 			.then(response => response.data)
-			.catch(() => APIHelpers.errorNotification(`Error restoring from trash ${target.name}`))
+			.catch(() => APIHelpers.errorNotification("Error restoring from trash"))
+	);
+
+	static restoreAllFromTrash = () : Promise<string> => (
+		axios.post(`${API_URL}/trash/restore-all`)
+			.then(response => response.data)
+			.catch(() => APIHelpers.errorNotification("Error restoring all trash items"))
 	);
 
 	static deleteFromTrash = (target: Entity) : Promise<string> => (
@@ -316,7 +323,9 @@ export class ContextHelpers {
 				app.forceUpdate();
 
 				return AppContentContext.trashItems;
-			}
+			},
+			moveToTrash: app.moveToTrash,
+			restoreFromTrash: app.restoreFromTrash
 		};
 	};
 
@@ -357,5 +366,22 @@ export class ContextHelpers {
 				AppProcessingContext.entities.splice(index, 1);
 			}
 		};
+	};
+}
+
+export class FileHelpers {
+
+	static imageAssign = (data : FileEntity) : boolean => {
+	    const ext = FileExtension;
+
+		switch (data.extension) {
+			case ext.IMAGE_JPEG:
+			case ext.IMAGE_JPG:
+			case ext.IMAGE_GIF:
+			case ext.IMAGE_PNG:
+			case ext.IMAGE_RAW:
+				return true;
+			default: return false;
+		}
 	};
 }

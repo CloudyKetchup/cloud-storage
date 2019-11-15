@@ -14,7 +14,6 @@ import LeftPanel						from './components/LeftPanel/LeftPanel';
 import NavBar							from './components/NavBar/NavBar'
 import PrevFolderButton					from './components/PrevFolderButton/PrevFolderButton';
 import RenameEntityDialog 				from './components/RenameEntityDialog/RenameEntityDialog';
-import TrashContainer					from './components/TrashContainer/TrashContainer';
 import ImageViewOverlay 				from './components/ImageViewOverlay/ImageViewOverlay';
 import { BufferElement }  				from './model/BufferElement';
 import { Entity }						from './model/entity/Entity';
@@ -24,6 +23,7 @@ import NavNode 							from './model/NavNode';
 import NotificationComponentFactory 	from './factory/NotificationComponentFactory';
 import { NotificationsContextInterface }from './context/NotificationContext';
 import { ProcessingContext } 			from "./context/ProcessingContext";
+import TrashViewContainer from './components/TrashViewContainer/TrashViewContainer';
 
 type IState = {
 	bufferElement		: BufferElement | undefined,
@@ -178,7 +178,16 @@ export default class App extends Component<{ data : FolderEntity }> {
 		if (result === "OK")
 			this.updateFolder().then(() => API.getTrashItems().then(AppContentContext.setTrashItems));
 		else
-			APIHelpers.errorNotification(`Error moving to trash ${target.name}`);
+			API.errorNotification(`Error moving to trash ${target.name}`);
+	};
+
+	restoreFromTrash = async (id : string) => {
+		const result = await API.restoreFromTrash(id);
+		
+		if (result === "OK")
+			this.updateFolder().then(() => API.getTrashItems().then(AppContentContext.setTrashItems));
+		else
+			API.errorNotification("Error restoring from trash");
 	};
 
 	deleteFolderContent = async () => {
@@ -216,7 +225,7 @@ export default class App extends Component<{ data : FolderEntity }> {
 							/>
 							<Route exact path="/folder/create" render={() => <CreateFolderDialog parent={this} sendFolder={this.createNewFolder}/>}/>
 							<Route path="/:type/:id/info" render={props => <ElementInfoContainer key={props.match.params.id} {...props}/>}/>
-							<Route exact path="/trash" render={() => <TrashContainer app={this}/>}/>
+							<Route path="/trash" render={() => <TrashViewContainer/>}/>
 							<Route path="/file/image/:id/view" render={props => <ImageViewOverlay key={EntityHelpers.uuidv4()} id={props.match.params.id}/>}/>
 						</Switch>
 						<ContentContext.Provider value={AppContentContext}>

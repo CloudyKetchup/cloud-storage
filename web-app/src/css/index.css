@@ -432,7 +432,7 @@ input:focus {
 	opacity: 1;
 	max-height: 100%;
 	width: 100%;
-	object-fit: none;
+	object-fit: cover;
 	margin: auto;
 }
 
