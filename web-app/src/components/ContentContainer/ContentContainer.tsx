@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import { EmptyContentBanner }	from '../EmptyContentBanner/EmptyContentBanner';
 import { FileEntity } 			from '../../model/entity/FileEntity';
 import { FolderEntity } 		from '../../model/entity/FolderEntity';
-import App, { ContentContext }	from '../../App';
+import App, { ContentContext}	from '../../App';
 import File 					from '../File/File';
 import Folder 					from '../Folder/Folder';
 import { Link }					from "react-router-dom";
@@ -79,7 +79,7 @@ export default class ContentContainer extends Component<{ folderId : string, par
 		}
 	};
 
-	componentDidMount() {
+	componentDidMount = () => {
 		const div = document.getElementById('content-container');
 
 		if (div) {
@@ -105,7 +105,7 @@ export default class ContentContainer extends Component<{ folderId : string, par
 			}
 			setTimeout(() => this.setState({ contextMenuShow : false }), 100);
 		});
-	}
+	};
 
 	createFile = (data: FileEntity) => {
 		const mainParent = this.props.parent;

@@ -1,18 +1,22 @@
-import { FolderEntity } 		from './model/entity/FolderEntity';
-import { Entity } 				from './model/entity/Entity';
-import NavNode					from './model/NavNode';
-import { FileEntity } 			from './model/entity/FileEntity';
-import { NotificationType } 	from './model/notification/NotificationType';
-import { NotificationEntity }	from './model/notification/NotificationEntity';
-import { ErrorNotificationEntity, ErrorNotificationType } from './model/notification/ErrorNotificationEntity';
-import App, {AppContentContext, AppNotificationContext, AppProcessingContext} from './App';
+import { Component } from "react";
 
-import { ContentContextInterface }		 from './context/ContentContext';
-import { NotificationsContextInterface } from './context/NotificationContext';
+import { ContentContextInterface }	from './context/ContentContext';
+import { FileEntity } 				from './model/entity/FileEntity';
+import { FileExtension } 			from './model/entity/FileExtension';
+import { FolderEntity } 			from './model/entity/FolderEntity';
+import { NotificationEntity }		from './model/notification/NotificationEntity';
+import { NotificationType } 		from './model/notification/NotificationType';
+import NavNode						from './model/NavNode';
+import { Entity }					from './model/entity/Entity';
+import { UploadItem } 				from './model/UploadItem';
+import { ProcessingContext } 		from "./context/ProcessingContext";
+import { UploadingContext }			from './context/UploadingContext';
+import { NotificationsContextInterface } 										from './context/NotificationContext';
+import { ErrorNotificationEntity, ErrorNotificationType } 						from './model/notification/ErrorNotificationEntity';
+import App, {AppContentContext, AppNotificationContext, AppProcessingContext} 	from './App';
+
 
 import axios from 'axios';
-import {ProcessingContext} from "./context/ProcessingContext";
-import { FileExtension } from './model/entity/FileExtension';
 
 export const API_URL = 'http://localhost:8080';
 
@@ -220,13 +224,9 @@ export class APIHelpers {
 	static errorNotification = (message? : string) => {
 		const text = message || "API call error :(";
 
-		if (AppNotificationContext) {
-			const notifications = AppNotificationContext.notifications;
-
-			notifications.push(NotificationHelpers.createErrorNotification(text, ErrorNotificationType.ERROR));
-
-			AppNotificationContext.setNotifications(notifications);
-		}
+		AppNotificationContext
+		&&
+		AppNotificationContext.add(NotificationHelpers.createErrorNotification(text, ErrorNotificationType.ERROR));
 	};
 }
 
@@ -298,73 +298,93 @@ export class NotificationHelpers {
 
 export class ContextHelpers {
 
-	static createContentContext = (app : App) : ContentContextInterface => {
-		return {
-			files		: [],
-			folders		: [],
-			trashItems	: [],
-			setFiles: (newFiles: FileEntity[] = []) => {
-				AppContentContext.files = newFiles;
+	static createContentContext = (component? : Component) : ContentContextInterface => {
+		return new class {
+			files 		: FileEntity[]	 = [];
+			folders 	: FolderEntity[] = [];
+			trashItems 	: Entity[]		 = [];
 
-				app.forceUpdate();
+			setFiles = (files : FileEntity[] = []) => {
+				this.files = files;
 
-				return AppContentContext.files;
-			},
-			setFolders: (newFolders: FolderEntity[] = []) => {
-				AppContentContext.folders = newFolders;
+				component && component.forceUpdate();
 
-				app.forceUpdate();
+				return this.files;
+			};
 
-				return AppContentContext.folders;
-			},
-			setTrashItems: (newTrashItems: Entity[] = []) => {
-				AppContentContext.trashItems = newTrashItems;
+			setFolders = (folders : FolderEntity[] = []) => {
+				this.folders = folders;
 
-				app.forceUpdate();
+				component && component.forceUpdate();
 
-				return AppContentContext.trashItems;
-			},
-			moveToTrash: app.moveToTrash,
-			restoreFromTrash: app.restoreFromTrash
+				return this.folders;
+			};
+
+			setTrashItems = (items : Entity[] = []) => {
+				this.trashItems = items;
+
+				component && component.forceUpdate();
+
+				return this.trashItems;
+			};
 		};
 	};
 
-	static createNotificationContext = (app : App) : NotificationsContextInterface => {
-		return {
-			notifications : [],
-			setNotifications : (notifications : NotificationEntity[]) => {
-				AppNotificationContext.notifications = notifications;
+	static createNotificationContext = (component? : Component) : NotificationsContextInterface => {
+		return new class {
+			notifications : NotificationEntity[] = [];
 
-				app.forceUpdate();
+			add = (notification : NotificationEntity) => {
+				this.notifications.push(notification);
 
-				return AppNotificationContext.notifications;
-			},
-			deleteNotification : (id : string) => {
-				const notifications = AppNotificationContext.notifications;
+				component && component.forceUpdate();
 
-				notifications.splice(notifications.findIndex(n => n.id === id + 1), 1);
+				return this.notifications;
+			};
 
-				AppNotificationContext.setNotifications(notifications);
-			}
+			delete = (id : string) => {
+				const index = this.notifications.findIndex(n => n.id === id);
+
+				this.notifications.splice(index, 1);
+
+				component && component.forceUpdate();
+			};
 		};
 	};
 
-	static createProcessingContext = (app : App) : ProcessingContext => {
-		return {
-			entities : [],
-			add : (entity : Entity) : Entity | null => {
-				AppProcessingContext.entities.push(entity);
+	static createProcessingContext = (component? : Component) : ProcessingContext => {
+		return new class {
+			entities : Entity[] = [];
 
-				app.forceUpdate();
+			add = (entity : Entity) =>  {
+				this.entities.push(entity);
 
-				return AppProcessingContext.get(entity.id);
-			},
-            get	: (id : string) : Entity | null => AppProcessingContext.entities.filter(e => e.id === id)[0],
-			delete : (id : string) => {
-				const index = AppProcessingContext.entities.findIndex(e => e.id === id);
+				component && component.forceUpdate();
+			};
 
-				AppProcessingContext.entities.splice(index, 1);
-			}
+			get = (id : string) : Entity | null => this.entities.filter(i => i.id === id)[0];
+
+			delete = (id : string) => this.entities.splice(this.entities.findIndex(i => i.id === id), 1);
+		};
+	};
+
+	static createUploadContext = (component? : Component) : UploadingContext => {
+		return new class {
+			items : UploadItem[] = [];
+
+			addItem = (item : UploadItem) => {
+				this.items.push(item);
+
+				component && component.forceUpdate();
+
+				return item;
+			};
+
+			deleteItem = (id : string) => {
+				this.items.splice(this.items.findIndex(i => i.id === id), 1);
+
+				component && component.forceUpdate();
+			};
 		};
 	};
 }
