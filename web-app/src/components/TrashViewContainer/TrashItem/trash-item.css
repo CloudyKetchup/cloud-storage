@@ -1,0 +1,54 @@
+.trash-file-item, .trash-file-main, .trash-file-control {
+    display: flex;
+}
+
+.trash-file-main, .trash-file-control > button {
+    padding: 0 5px;
+}
+
+.trash-file-item {
+    animation-name: trash-item-slide-up;
+    animation-duration: 0.1s;
+    height: 45px;
+}
+
+.trash-file-item:hover {
+    cursor: pointer;
+}
+
+.trash-file-item > *, .trash-file-control > button {
+    border-radius: 4px;
+}
+
+.trash-file-main {
+    box-shadow: 0 3px 9px 0 rgba(173, 173, 173, 0.30);
+    width: 75%;
+}
+
+.trash-file-control > * {
+    box-shadow: 0 3px 4px 0 rgba(173, 173, 173, 0.30);
+    margin-left: 5px;
+    margin-right: 5px;
+    height: 100%;
+    width: 50%;
+}
+
+.trash-file-control * {
+    border-radius: 3px;
+}
+
+.trash-file-control {
+    margin-left: 5px;
+    width: 25%;
+}
+
+@keyframes trash-item-slide-up {
+    from {
+        opacity: 0;
+        margin-top: 20px;
+    }
+    to {
+        opacity: unset;
+        margin-top: unset;
+    }
+}
