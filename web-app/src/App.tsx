@@ -9,7 +9,6 @@ import ContentContainer					from './components/ContentContainer/ContentContainer
 import { ContentTreeView }				from './components/ContentTreeView/ContentTreeView';
 import CreateFolderDialog				from './components/CreateFolderDialog/CreateFolderDialog';
 import DragAndDrop						from './components/DragAndDrop/DragAndDrop';
-import FileUploadManager, { UploadFile }from './components/UploadManager/UploadManager';
 import LeftPanel						from './components/LeftPanel/LeftPanel';
 import NavBar							from './components/NavBar/NavBar'
 import PrevFolderButton					from './components/PrevFolderButton/PrevFolderButton';
@@ -23,16 +22,15 @@ import NavNode 							from './model/NavNode';
 import NotificationComponentFactory 	from './factory/NotificationComponentFactory';
 import { NotificationsContextInterface }from './context/NotificationContext';
 import { ProcessingContext } 			from "./context/ProcessingContext";
-import TrashViewContainer from './components/TrashViewContainer/TrashViewContainer';
+import TrashViewContainer 				from './components/TrashViewContainer/TrashViewContainer';
+import UploadingPane                    from './components/UploadingPane/UploadingPaneComponent';
 
 type IState = {
 	bufferElement		: BufferElement | undefined,
 	elementSelected		: Entity		| undefined,
 	currentFolder		: FolderEntity,
 	rootMemory			: object,
-	uploadingFiles		: File[],
 	foldersNavigation	: NavNode[],
-	[fileUploadProgress : string] : any
 };
 
 export let AppContentContext : ContentContextInterface; 
@@ -49,7 +47,6 @@ export default class App extends Component<{ data : FolderEntity }> {
 		elementSelected		: undefined,
 		currentFolder		: this.props.data,
 		rootMemory			: {},
-		uploadingFiles		: [],
 		foldersNavigation	: []
 	};
 
@@ -181,15 +178,6 @@ export default class App extends Component<{ data : FolderEntity }> {
 			API.errorNotification(`Error moving to trash ${target.name}`);
 	};
 
-	restoreFromTrash = async (id : string) => {
-		const result = await API.restoreFromTrash(id);
-		
-		if (result === "OK")
-			this.updateFolder().then(() => API.getTrashItems().then(AppContentContext.setTrashItems));
-		else
-			API.errorNotification("Error restoring from trash");
-	};
-
 	deleteFolderContent = async () => {
 		const result = await API.deleteFolderContent(this.state.currentFolder.path);
 
@@ -216,7 +204,7 @@ export default class App extends Component<{ data : FolderEntity }> {
 				<DragAndDrop
 					className="drag-and-drop"
 					style={{ height: "100%" }}
-					handleDrop={(files: Array<File>) => API.uploadFiles(files, this)}>
+					handleDrop={(files : Array<File>) => API.uploadFiles(this.state.currentFolder, files)}>
 					<Switch>
 						<Route exact path="/:type/:id/rename" render={props =>
 							<RenameEntityDialog
@@ -256,13 +244,6 @@ export default class App extends Component<{ data : FolderEntity }> {
 										if (uploadInput) uploadInput.click();
 									}}
 								><i className='fas fa-file-upload'/></button>
-								{
-									this.state.uploadingFiles.length > 0
-									&&
-									<FileUploadManager onClose={() => this.setState({ uploadingFiles: [] })}>
-										{this.state.uploadingFiles.map(file => <UploadFile key={file.name} data={file} parent={this} />)}
-									</FileUploadManager>
-								}
 								{this.state.bufferElement && <BufferElementIndicator element={this.state.bufferElement} />}
 								{
 									AppNotificationContext.notifications.length > 0
@@ -274,13 +255,14 @@ export default class App extends Component<{ data : FolderEntity }> {
 							</ContentContainer>
 						</ContentContext.Provider>
 					</DragAndDrop>
-					<input
-						id="select-upload-files"
+				<UploadingPane/>
+				<input
+					id="select-upload-files"
 						type="file"
-						onChange={async () => {
+						onChange={() => {
 							const files = (document.getElementById("select-upload-files") as HTMLInputElement).files;
 
-							if (files) await API.uploadFiles(Array.from(files), this);
+							files && API.uploadFiles(this.state.currentFolder, Array.from(files));
 						}}
 						style={{ display: 'none' }}
 						multiple />

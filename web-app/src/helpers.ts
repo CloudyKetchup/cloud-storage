@@ -1,22 +1,24 @@
 import { Component } from "react";
+import axios from 'axios';
 
 import { ContentContextInterface }	from './context/ContentContext';
+import { Entity }					from './model/entity/Entity';
+import { ErrorNotificationEntity, ErrorNotificationType } from './model/notification/ErrorNotificationEntity';
 import { FileEntity } 				from './model/entity/FileEntity';
 import { FileExtension } 			from './model/entity/FileExtension';
 import { FolderEntity } 			from './model/entity/FolderEntity';
 import { NotificationEntity }		from './model/notification/NotificationEntity';
 import { NotificationType } 		from './model/notification/NotificationType';
-import NavNode						from './model/NavNode';
-import { Entity }					from './model/entity/Entity';
-import { UploadItem } 				from './model/UploadItem';
+import { NotificationsContextInterface } from './context/NotificationContext';
 import { ProcessingContext } 		from "./context/ProcessingContext";
-import { UploadingContext }			from './context/UploadingContext';
-import { NotificationsContextInterface } 										from './context/NotificationContext';
-import { ErrorNotificationEntity, ErrorNotificationType } 						from './model/notification/ErrorNotificationEntity';
-import App, {AppContentContext, AppNotificationContext, AppProcessingContext} 	from './App';
+import { UploadItem } 				from './model/UploadItem';
+import { UploadingContextInterface }			from './context/UploadingContext';
+import { UploadingContextImpl }		from './components/UploadingPane/UploadingPaneComponent';
+import App, {AppContentContext, AppNotificationContext, ContentContext} from './App';
+import NavNode						from './model/NavNode';
+import UploadQueue from './utils/UploadQueue';
 
-
-import axios from 'axios';
+import { CancelToken } from "axios";
 
 export const API_URL = 'http://localhost:8080';
 
@@ -169,37 +171,41 @@ export class APIHelpers {
 			.catch(() => APIHelpers.errorNotification("Error deleting all folder content"))
 	);
 
-	private static uploadFile = async (file: File, appContext: App) => {
+	static uploadFile = async (file: File, folder: FolderEntity, uploadItem?: UploadItem, cancelToken?: CancelToken) => {
 		const URL = `${API_URL}/file/upload/one`;
-
 		const formData = new FormData();
 
 		formData.append('file', file);
-		formData.append('path', appContext.state.currentFolder.path);
+		formData.append('path', folder.path);
 
-		const uploadingFiles = appContext.state.uploadingFiles;
-
-		uploadingFiles.push(file);
-
-		appContext.setState({ uploadingFiles : uploadingFiles });
-
-		axios.request({
+		await axios({
 				url     : URL,
+				cancelToken : cancelToken,
 				method  : 'POST',
 				data    : formData,
-				onUploadProgress : p => appContext.setState({
-						[`uploadingFile${file.name}progress`] : (p.total - (p.total - p.loaded)) / p.total * 100
-				})
+				onUploadProgress : p => {
+					if (uploadItem) uploadItem.progress = `${(p.total - (p.total - p.loaded)) / p.total * 100}`;
+				}
 			})
-			.then(async response => {
-				AppContentContext.setFiles(await APIHelpers.getFolderFiles(appContext.state.currentFolder.id));
+			.then(response => {
+				response.data !== "OK" && APIHelpers.errorNotification("Error uploading");
 
-				if (response.data !== "OK") APIHelpers.errorNotification("Error uploading");
+				uploadItem && !UploadQueue.getInstance().jobCanceled(uploadItem.id) && ContentHelpers.updateFiles(folder.id);
 			})
-			.catch(() => APIHelpers.errorNotification("Error starting upload"));
+			.catch(e => !axios.isCancel(e) && APIHelpers.errorNotification("Error starting upload"));
 	};
 
-	static uploadFiles = async (files: Array<File>, app: App) => files.forEach(file => APIHelpers.uploadFile(file, app));
+	static uploadFiles = (folder : FolderEntity, files : File[]) => {
+		files.forEach(file => {
+			const uploadItem = UploadingContextImpl.addUpload(UploadHelpers.createUploadItem(file, folder));
+
+			if (uploadItem !== undefined) {
+				const queue = UploadQueue.getInstance();
+
+				queue.add(queue.createJob(uploadItem));
+			}
+		});
+	};
 
 	static downloadFile = async (path: string, name: string) => {
 		const link = document.createElement("a");
@@ -271,20 +277,12 @@ export class NavigationNodesHelpers {
 export class EntityHelpers {
 
 	static uuidv4 = () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-		const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+		const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r ? 0x3 : 0x8);
 		return v.toString(16);
 	});
 }
 
 export class NotificationHelpers {
-
-	static createNotification = (text : string) : NotificationEntity => {
-		return {
-			id 		: EntityHelpers.uuidv4(),
-			text	: text,
-			type	: NotificationType.BASIC
-		};
-	};
 
 	static createErrorNotification = (text : string, errorType: ErrorNotificationType) : ErrorNotificationEntity => {
 		return {
@@ -327,11 +325,11 @@ export class ContextHelpers {
 
 				return this.trashItems;
 			};
-		};
+		}();
 	};
 
 	static createNotificationContext = (component? : Component) : NotificationsContextInterface => {
-		return new class {
+		return new class implements NotificationsContextInterface {
 			notifications : NotificationEntity[] = [];
 
 			add = (notification : NotificationEntity) => {
@@ -353,10 +351,10 @@ export class ContextHelpers {
 	};
 
 	static createProcessingContext = (component? : Component) : ProcessingContext => {
-		return new class {
+		return new class implements ProcessingContext {
 			entities : Entity[] = [];
 
-			add = (entity : Entity) =>  {
+			add = (entity : Entity) => {
 				this.entities.push(entity);
 
 				component && component.forceUpdate();
@@ -368,23 +366,45 @@ export class ContextHelpers {
 		};
 	};
 
-	static createUploadContext = (component? : Component) : UploadingContext => {
-		return new class {
-			items : UploadItem[] = [];
+	static createUploadContext = (component? : Component) : UploadingContextInterface => {
+		return new class implements UploadingContextInterface {
+			uploads : UploadItem[] = [];
 
-			addItem = (item : UploadItem) => {
-				this.items.push(item);
+			addUpload = (item : UploadItem) : UploadItem => {
+				this.uploads.push(item);
 
-				component && component.forceUpdate();
+				component && component.setState({ items : this.uploads });
 
 				return item;
 			};
 
-			deleteItem = (id : string) => {
-				this.items.splice(this.items.findIndex(i => i.id === id), 1);
+			deleteUpload = (id : string) => {
+				this.uploads.splice(this.uploads.findIndex(i => i.id === id), 1);
 
-				component && component.forceUpdate();
+				component && component.setState({ items : this.uploads });
 			};
+
+			clearAllUploads = async () => {
+				await UploadQueue.getInstance().selfDestroy();
+
+				this.uploads = [];
+
+				component && component.setState({ items : this.uploads });
+			};
+
+			updateComponent = () => component && component.forceUpdate();
+		};
+	};
+}
+
+export class UploadHelpers {
+	
+	static createUploadItem = (file : File, folder : FolderEntity) : UploadItem => {
+		return {
+			id : EntityHelpers.uuidv4(),
+			file : file,
+			folder : folder,
+			progress : "0"
 		};
 	};
 }
