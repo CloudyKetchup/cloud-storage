@@ -34,7 +34,7 @@ export default class TrashItemInfoContainer extends Component<{ data : Entity }>
         if (this.props.data.type === EntityType.FILE) {
             const fileData = this.props.data as FileEntity;
 
-            if (fileData.image) {
+            if (fileData.isMedia) {
                 if (FileHelpers.imageAssign(fileData)) {
                     return <img src={`${API_URL}/file/${fileData.id}/${fileData.extension === FileExtension.IMAGE_GIF ? "image" : "thumbnail"}`} alt={"..."}/>;
                 }
@@ -96,7 +96,7 @@ export default class TrashItemInfoContainer extends Component<{ data : Entity }>
                             ?
                             "Folder"
                             :
-                            (this.props.data as FileEntity).image
+                            (this.props.data as FileEntity).isMedia
                             ?
                             "Media File"
                             :
@@ -107,7 +107,7 @@ export default class TrashItemInfoContainer extends Component<{ data : Entity }>
                 {
                     this.props.data.type === EntityType.FILE
                     &&
-                    (this.props.data as FileEntity).image
+                    (this.props.data as FileEntity).isMedia
                     &&
                     <div>
                         <span>Resolution</span>

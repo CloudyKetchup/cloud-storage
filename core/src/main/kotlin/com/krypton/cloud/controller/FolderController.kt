@@ -47,10 +47,10 @@ class FolderController(
 		val rootFolder = folderRecordService.getById(UUID.fromString(rootId()))
 
 		return HashMap<String, Any>().apply {
-			put("id", rootFolder.id)
+			put("id", rootFolder?.id ?: "")
 			put("memory", rootMemory())
-			put("files", rootFolder.files)
-			put("folders", rootFolder.folders)
+			put("files", rootFolder?.files ?: {})
+			put("folders", rootFolder?.folders ?: {})
 		}
 	}
 
@@ -71,7 +71,7 @@ class FolderController(
 	  * @return [Folder]
 	  */
 	@GetMapping("/{id}/data")
-	fun getFolderData(@PathVariable id : String) : Folder = folderRecordService.getById(UUID.fromString(id))
+	fun getFolderData(@PathVariable id : String) : Folder? = folderRecordService.getById(UUID.fromString(id))
 
 	/**
 	 * get list of [Folder]'s inside a [Folder]
@@ -83,10 +83,10 @@ class FolderController(
 	fun getFolderFolders(@PathVariable id : String) : Flux<Folder> = folderRecordService.getFolderFolders(UUID.fromString(id))
 
 	/**
-	 * get list of [com.krypton.cloud.model.File]'s inside a [Folder]
+	 * get list of [com.krypton.databaselayer.model.File]'s inside a [Folder]
 	 *
 	 * @param id    parent folder id
-	 * @return [com.krypton.cloud.model.File]'s list
+	 * @return [com.krypton.databaselayer.model.File]'s list
 	 */
 	@GetMapping("/{id}/files")
 	fun getFolderFiles(@PathVariable id : String) : Flux<com.krypton.databaselayer.model.File> = folderRecordService.getFolderFiles(UUID.fromString(id))
@@ -135,14 +135,14 @@ class FolderController(
 	fun renameFolder(@RequestBody request: HashMap<String, String>) : HttpStatus = folderService.rename(UUID.fromString(request["id"]!!), request["newName"]!!)
 
 	/**
-	 * @param id	folder entity id
+	 * @param id	[Folder] id
 	 * @return http status
 	 */
 	@DeleteMapping("/{id}/delete")
 	fun deleteFolder(@PathVariable id : String) : HttpStatus = folderService.delete(UUID.fromString(id))
 
 	/**
-	 * @param request    request containing folder path
+	 * @param id	[Folder] id
 	 * @return http status
 	 */
 	@DeleteMapping("/{id}/delete-all")

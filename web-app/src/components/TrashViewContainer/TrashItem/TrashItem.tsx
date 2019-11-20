@@ -1,10 +1,4 @@
-import { FolderEntity } from '../../../model/entity/FolderEntity';
-
-import { FileEntity } from '../../../model/entity/FileEntity';
-
 import React, { Component }   from "react";
-import { ITrashItem }         from "../TrashViewContainer";
-import { AppContentContext }  from "../../../App";
 
 import TrashAnimatedButton   	from "../ControlButton/TrashAnimatedButton";
 import { Entity }               from "../../../model/entity/Entity";
@@ -12,6 +6,10 @@ import { EntityType }           from "../../../model/entity/EntityType";
 import { APIHelpers as API, ContentHelpers } from "../../../helpers";
 
 import "./trash-item.css";
+
+type ITrashItem = {
+	onDelete    : (...args : any) => any
+};
 
 type IProps = {
 	data: Entity,

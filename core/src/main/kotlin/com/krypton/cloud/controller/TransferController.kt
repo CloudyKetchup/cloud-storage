@@ -37,24 +37,31 @@ class TransferController(private val fileRecordServiceImpl: FileRecordServiceImp
 	}
 
 	@GetMapping("/file/{id}/thumbnail")
-	fun getThumbnail(@PathVariable id : String) : ResponseEntity<ByteArray> {
-		val file = fileRecordServiceImpl.getById(UUID.fromString(id))
+	suspend fun getThumbnail(@PathVariable id : String) : ResponseEntity<ByteArray> {
+		val fileEntity = fileRecordServiceImpl.getById(UUID.fromString(id))
+		val file : File? = when (fileEntity) { null -> null else -> File(fileEntity.path) }
 
-		if (file != null && file.image != null) {
-			val thumbnail = MediaService.getThumbnail(file.image.thumbnailPath)
+		if (fileEntity != null) {
+			var thumbnail = MediaService.getThumbnail(fileEntity.id)
 
-			if (thumbnail != null && thumbnail.body != null) {
-				return thumbnail
+			if (thumbnail == null || thumbnail.body == null) {
+
+				if (file != null && file.exists()) {
+					MediaService.createThumbnail(file, fileEntity.id.toString())
+
+					thumbnail = MediaService.getThumbnail(fileEntity.id);
+				}
 			}
+			if (thumbnail != null && thumbnail.body != null) return thumbnail
 		}
-		return ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).body(File(file!!.path).readBytes())
+		return ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).body(file?.readBytes())
 	}
 
 	@GetMapping("/file/{id}/image")
 	fun getImage(@PathVariable id : String) : HttpEntity<*> {
 		val file = fileRecordServiceImpl.getById(UUID.fromString(id))
 
-		return if (file != null && file.image != null) {
+		return if (file != null && file.isMedia) {
 			ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).body(File(file.path).readBytes())
 		} else ResponseEntity.EMPTY
 	}

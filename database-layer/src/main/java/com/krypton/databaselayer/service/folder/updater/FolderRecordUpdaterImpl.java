@@ -60,10 +60,12 @@ public class FolderRecordUpdaterImpl implements FolderRecordUpdater {
 
         folderRepository.save(folder);
 
-        var parentFolder = folderRepository.getByPath(fsFolder.getParentFile().getPath());
+		if (folder.getParentId() != null) {
+			var parentFolder = folderRepository.findById(folder.getParentId()).orElse(null);
 
-        if (parentFolder != null)
-            if (!parentFolder.getPath().equals(AppProperties.INSTANCE.getRoot())) updateSize(parentFolder);
+			if (parentFolder != null)
+				if (!parentFolder.getPath().equals(AppProperties.INSTANCE.getRoot())) updateSize(parentFolder);
+		}
     }
 
     /**

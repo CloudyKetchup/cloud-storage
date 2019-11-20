@@ -3,7 +3,6 @@ package com.krypton.medialayer.service.image;
 import com.krypton.medialayer.service.MediaExtension;
 import net.coobird.thumbnailator.Thumbnails;
 import org.apache.commons.io.FilenameUtils;
-import org.springframework.lang.Nullable;
 
 import javax.imageio.*;
 import java.awt.image.BufferedImage;
@@ -16,7 +15,8 @@ public class ImageProcessor {
 
     public static Optional<BufferedImage> resize(int height, int width, File image) {
         try {
-            return Optional.of(Thumbnails.of(image).size(width, height).asBufferedImage());
+            if (image.exists())
+                return Optional.of(Thumbnails.of(image).size(width, height).asBufferedImage());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -48,7 +48,6 @@ public class ImageProcessor {
                 .orElse(MediaExtension.UNKNOWN);
     }
 
-    @Nullable
     private static BufferedImage getGifFrame(File gif) {
         try {
             String[] imageatt = { "imageLeftPosition", "imageTopPosition", "imageWidth", "imageHeight" };

@@ -10,6 +10,8 @@ export type BasicContentContext = {
 };
 
 export interface ContentContextInterface extends BasicContentContext {
+    currentFolder    : FolderEntity
+    setCurrentFolder : (folder : FolderEntity) => void
 	trashItems		 : Entity[]
     setTrashItems	 : (newTrashItems : Entity[]) => Entity[]
 };

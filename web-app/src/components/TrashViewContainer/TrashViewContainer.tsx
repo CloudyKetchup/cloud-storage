@@ -10,11 +10,7 @@ import TrashItemInfoContainer, { TrashEmptyInfoContainer }  from "./InfoContaine
 
 import "./trash-view-container.css";
 
-export interface ITrashItem {
-	onDelete    : (...args : any) => any
-}
-
-interface IState {
+type IState = {
 	items       : Entity[]
 	selectedItem: Entity | null
 	rightPanel  : boolean

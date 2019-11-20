@@ -85,7 +85,7 @@ export default class File extends EntityComponent<FileProps> {
 			style={this.state.contextMenuStyle}
 		>
 			{
-				this.props.data.image
+				this.props.data.isMedia
 				&&
 				<Link to={`/file/image/${this.props.data.id}/view`}>
 					<ContextMenuItem

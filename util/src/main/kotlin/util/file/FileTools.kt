@@ -30,4 +30,18 @@ object FileTools {
                 .findAny()
                 .orElse(FileType.OTHER)
     }
+
+    fun isMediaFile(file : File) : Boolean {
+        return when (getFileExtension(file).type.toLowerCase()) {
+            "jpg",
+            "jpeg",
+            "png",
+            "gif",
+            "raw",
+            "avi",
+            "mkv",
+            "mov" -> true
+            else -> false
+        }
+    }
 }

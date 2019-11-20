@@ -10,18 +10,22 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Optional;
+import java.util.UUID;
 
 public abstract class MediaService {
 
-    public static Optional<Thumbnail> createThumbnail(File file, String name) {
-        var path = (AppProperties.INSTANCE.getThumbnailsFolder().getPath() + "/" + name + ".jpg");
+    public static final String THUMBNAILS_PATH = AppProperties.INSTANCE.getThumbnailsFolder().getPath();
+
+    public static Optional<Thumbnail> createThumbnail(File file, String id) {
+        var path = MediaService.THUMBNAILS_PATH + "/" + id + ".jpg";
 
         return new Thumbnail.Builder(file, path).buildAndWrite();
     }
 
     @Nullable
-    public static ResponseEntity<byte[]> getThumbnail(String path) {
+    public static ResponseEntity<byte[]> getThumbnail(UUID id) {
         byte[] thumbnail = null;
+        var path = MediaService.THUMBNAILS_PATH + "/" + id.toString() + ".jpg";
 
         try {
             thumbnail = FileUtils.readFileToByteArray(new File(path));

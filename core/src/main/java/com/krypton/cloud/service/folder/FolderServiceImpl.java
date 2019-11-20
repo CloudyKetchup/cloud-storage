@@ -6,10 +6,11 @@ import common.exception.entity.io.FolderIOException;
 import com.krypton.cloud.service.handler.http.ErrorHandler;
 import common.model.LogType;
 import lombok.AllArgsConstructor;
+import com.krypton.cloud.service.file.FileService;
 import com.krypton.databaselayer.service.folder.updater.FolderRecordUpdaterImpl;
 import com.krypton.databaselayer.service.folder.FolderRecordServiceImpl;
 import com.krypton.databaselayer.service.folder.FolderRecordUtils;
-import com.krypton.databaselayer.service.file.FileRecordServiceImpl;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -33,7 +34,7 @@ public class FolderServiceImpl implements FolderService, ErrorHandler {
 
 	private final FolderRecordServiceImpl folderRecordService;
 
-	private final FileRecordServiceImpl fileRecordService;
+	private final FileService fileService;
 
 	private final FolderRecordUtils folderRecordUtils;
 
@@ -87,6 +88,9 @@ public class FolderServiceImpl implements FolderService, ErrorHandler {
 	@Override
 	public HttpStatus rename(UUID id, String newName) {
 	    var folderEntity = folderRecordService.getById(id);
+
+	    if (folderEntity == null) return HttpStatus.INTERNAL_SERVER_ERROR;
+
 	    var folder 		 = new File(folderEntity.getPath());
 		var newPath 	 = Paths.get(folderEntity.getPath()).getParent().toAbsolutePath() + "/" + newName;
 
@@ -102,7 +106,11 @@ public class FolderServiceImpl implements FolderService, ErrorHandler {
 
 	@Override
 	public HttpStatus delete(UUID id) {
-		var path = folderRecordService.getById(id).getPath();
+		var folder = folderRecordService.getById(id);
+
+		if (folder == null) return HttpStatus.INTERNAL_SERVER_ERROR;
+
+		var path = folder.getPath();
 
 		deleteContent(id);
 
@@ -117,25 +125,26 @@ public class FolderServiceImpl implements FolderService, ErrorHandler {
 	public HttpStatus deleteContent(UUID id) {
 		var folder = folderRecordService.getById(id);
 
-		folder.getFiles().parallelStream().forEach(f -> {
-			var path = f.getPath();
+		if (folder == null) return HttpStatus.INTERNAL_SERVER_ERROR;
 
-			if (new File(path).delete()) fileRecordService.delete(path);
-		});
+		folder.getFiles().forEach(f -> fileService.delete(f.getId()));
+
 		folder.getFolders().parallelStream().forEach(f -> {
 			deleteContent(f.getId());
 
 			delete(f.getId());
 		});
-		var folderFiles = new File(folder.getPath()).list();
-        // check if folder is now empty
+
+        var folderFiles = new File(folder.getPath()).list();
+
 		return folderFiles != null && folderFiles.length == 0
 				? HttpStatus.OK
 				: httpError(new FolderIOException("Error while deleting folder " + folder.getPath() + " content").stackTraceToString());
 	}
 
+	@NotNull
 	@Override
-	public HttpStatus httpError(String message) {
+	public HttpStatus httpError(@NotNull String message) {
 		LoggingService.INSTANCE.saveLog(message, LogType.ERROR, LogFolder.FOLDER.getType());
 
 		return HttpStatus.INTERNAL_SERVER_ERROR;
@@ -149,6 +158,8 @@ public class FolderServiceImpl implements FolderService, ErrorHandler {
 	 */
 	public HashMap<String, Integer> getItemsCount(UUID id) {
 		var folder = folderRecordService.getById(id);
+
+		if (folder == null) return new HashMap<>();
 
 		return new HashMap<>(){{
 			put("foldersCount",  folder.getFolders().size());

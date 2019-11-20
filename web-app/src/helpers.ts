@@ -1,24 +1,23 @@
 import { Component } from "react";
-import axios from 'axios';
 
 import { ContentContextInterface }	from './context/ContentContext';
 import { Entity }					from './model/entity/Entity';
-import { ErrorNotificationEntity, ErrorNotificationType } from './model/notification/ErrorNotificationEntity';
 import { FileEntity } 				from './model/entity/FileEntity';
 import { FileExtension } 			from './model/entity/FileExtension';
 import { FolderEntity } 			from './model/entity/FolderEntity';
 import { NotificationEntity }		from './model/notification/NotificationEntity';
 import { NotificationType } 		from './model/notification/NotificationType';
-import { NotificationsContextInterface } from './context/NotificationContext';
 import { ProcessingContext } 		from "./context/ProcessingContext";
 import { UploadItem } 				from './model/UploadItem';
-import { UploadingContextInterface }			from './context/UploadingContext';
-import { UploadingContextImpl }		from './components/UploadingPane/UploadingPaneComponent';
-import App, {AppContentContext, AppNotificationContext, ContentContext} from './App';
 import NavNode						from './model/NavNode';
-import UploadQueue from './utils/UploadQueue';
+import { UploadingContextInterface }from './context/UploadingContext';
+import { UploadingContextImpl }		from './components/UploadingPane/UploadingPaneComponent';
+import UploadQueue 					from './utils/UploadQueue';
+import { ErrorNotificationEntity, ErrorNotificationType } 	from './model/notification/ErrorNotificationEntity';
+import App, {AppContentContext, AppNotificationContext } 	from './App';
+import { NotificationsContextInterface } from './context/NotificationContext';
 
-import { CancelToken } from "axios";
+import axios, { CancelToken } from 'axios';
 
 export const API_URL = 'http://localhost:8080';
 
@@ -162,16 +161,13 @@ export class APIHelpers {
 			.catch(() => APIHelpers.errorNotification(`Error deleting ${target.name}`))
 	);
 
-	static deleteFolderContent = (path: string) : Promise<string> => (
-		axios.post(`${API_URL}/folder/delete-all`,
-			{
-				path: path
-			})
+	static deleteFolderContent = (id : string) : Promise<string> => (
+		axios.delete(`${API_URL}/folder/${id}/delete-all`)
 			.then(response => response.data)
 			.catch(() => APIHelpers.errorNotification("Error deleting all folder content"))
 	);
 
-	static uploadFile = async (file: File, folder: FolderEntity, uploadItem?: UploadItem, cancelToken?: CancelToken) => {
+	static uploadFile = async (file : File, folder : FolderEntity, uploadItem? : UploadItem, cancelToken? : CancelToken) => {
 		const URL = `${API_URL}/file/upload/one`;
 		const formData = new FormData();
 
@@ -188,9 +184,16 @@ export class APIHelpers {
 				}
 			})
 			.then(response => {
+				console.log(response.data)
 				response.data !== "OK" && APIHelpers.errorNotification("Error uploading");
 
-				uploadItem && !UploadQueue.getInstance().jobCanceled(uploadItem.id) && ContentHelpers.updateFiles(folder.id);
+				AppContentContext.currentFolder.id === folder.id
+				&&
+				uploadItem
+				&&
+				!UploadQueue.getInstance().jobCanceled(uploadItem.id)
+				&&
+				ContentHelpers.updateFiles(folder.id);
 			})
 			.catch(e => !axios.isCancel(e) && APIHelpers.errorNotification("Error starting upload"));
 	};
@@ -296,11 +299,12 @@ export class NotificationHelpers {
 
 export class ContextHelpers {
 
-	static createContentContext = (component? : Component) : ContentContextInterface => {
+	static createContentContext = (currentFolder : FolderEntity, component? : Component) : ContentContextInterface => {
 		return new class {
 			files 		: FileEntity[]	 = [];
 			folders 	: FolderEntity[] = [];
 			trashItems 	: Entity[]		 = [];
+			currentFolder : FolderEntity = currentFolder;
 
 			setFiles = (files : FileEntity[] = []) => {
 				this.files = files;
@@ -325,6 +329,12 @@ export class ContextHelpers {
 
 				return this.trashItems;
 			};
+
+			setCurrentFolder = (folder : FolderEntity) => {
+				this.currentFolder = folder;
+
+				component && component.forceUpdate();
+			}
 		}();
 	};
 
@@ -347,7 +357,7 @@ export class ContextHelpers {
 
 				component && component.forceUpdate();
 			};
-		};
+		}();
 	};
 
 	static createProcessingContext = (component? : Component) : ProcessingContext => {
@@ -363,7 +373,7 @@ export class ContextHelpers {
 			get = (id : string) : Entity | null => this.entities.filter(i => i.id === id)[0];
 
 			delete = (id : string) => this.entities.splice(this.entities.findIndex(i => i.id === id), 1);
-		};
+		}();
 	};
 
 	static createUploadContext = (component? : Component) : UploadingContextInterface => {
@@ -393,7 +403,7 @@ export class ContextHelpers {
 			};
 
 			updateComponent = () => component && component.forceUpdate();
-		};
+		}();
 	};
 }
 

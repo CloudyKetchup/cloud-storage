@@ -28,7 +28,6 @@ import UploadingPane                    from './components/UploadingPane/Uploadi
 type IState = {
 	bufferElement		: BufferElement | undefined,
 	elementSelected		: Entity		| undefined,
-	currentFolder		: FolderEntity,
 	rootMemory			: object,
 	foldersNavigation	: NavNode[],
 };
@@ -45,13 +44,12 @@ export default class App extends Component<{ data : FolderEntity }> {
 	state : IState = {
 		bufferElement		: undefined,
 		elementSelected		: undefined,
-		currentFolder		: this.props.data,
 		rootMemory			: {},
 		foldersNavigation	: []
 	};
 
 	UNSAFE_componentWillMount = () => {
-		AppContentContext = ContextHelpers.createContentContext(this);
+		AppContentContext = ContextHelpers.createContentContext(this.props.data, this);
 
 		AppNotificationContext = ContextHelpers.createNotificationContext(this);
 
@@ -61,21 +59,25 @@ export default class App extends Component<{ data : FolderEntity }> {
 	};
 
 	componentDidMount = async () => {
-		this.setState({ rootMemory : await API.getRootMemory() || "" });
+		this.setState({
+			rootMemory : await API.getRootMemory() || "",
+			currentFolder : AppContentContext.currentFolder
+		});
 
 		API.getTrashItems().then(AppContentContext.setTrashItems);
 
 		this.updateFolder();
 	};
 
-	updateFolder = async (folderId = this.state.currentFolder.id) => {
-		API.getFolderData(folderId).then(data => {
-			this.setState({
-				elementSelected : undefined,
-				currentFolder	: data,
-				rootOpened		: data.root,
-			});
+	updateFolder = async (folderId = AppContentContext.currentFolder.id) => {
+		const data = await API.getFolderData(folderId);
+
+		this.setState({
+			elementSelected: undefined,
+			rootOpened: data.root,
 		});
+
+		AppContentContext.setCurrentFolder(data);
 
 		API.getFolderFiles(folderId).then(AppContentContext.setFiles);
 
@@ -86,7 +88,7 @@ export default class App extends Component<{ data : FolderEntity }> {
 		API.getFolderPredecessors(folderId).then(predecessors => {
 			predecessors.forEach(p => nodes.push(NavigationNodesHelpers.createNavNode(p, nodes[nodes.length -1], this)));
 		})
-		.then(() => this.setState({ foldersNavigation : [...nodes, this.state.currentFolder] }));
+		.then(() => this.setState({ foldersNavigation : [...nodes, AppContentContext.currentFolder] }));
 	};
 
 	handleContextMenuAction = async (action: string, target: Entity) => {
@@ -132,7 +134,7 @@ export default class App extends Component<{ data : FolderEntity }> {
 	};
 
 	createNewFolder = async (name: string) => {
-		const result = await API.createNewFolder(name, this.state.currentFolder.path);
+		const result = await API.createNewFolder(name, AppContentContext.currentFolder.path);
 
 		if (result === "OK")
 			this.updateFolder();
@@ -142,7 +144,7 @@ export default class App extends Component<{ data : FolderEntity }> {
 
 	pasteEntity = async (target = this.state.bufferElement) => {
 		if (target) {
-			const result = await API.pasteEntity(target.data, target.action, this.state.currentFolder.path);
+			const result = await API.pasteEntity(target.data, target.action, AppContentContext.currentFolder.path);
 
 			if (result === "OK")
 				this.updateFolder();
@@ -179,12 +181,12 @@ export default class App extends Component<{ data : FolderEntity }> {
 	};
 
 	deleteFolderContent = async () => {
-		const result = await API.deleteFolderContent(this.state.currentFolder.path);
+		const result = await API.deleteFolderContent(AppContentContext.currentFolder.id);
 
 		if (result === "OK")
 			this.updateFolder();
 		else
-			APIHelpers.errorNotification(`Error deleting folder ${this.state.currentFolder.name} content`);
+			APIHelpers.errorNotification(`Error deleting folder ${AppContentContext.currentFolder.name} content`);
 	};
 
 	render = () => (
@@ -193,7 +195,7 @@ export default class App extends Component<{ data : FolderEntity }> {
 				<NavBar navNodes={this.state.foldersNavigation} />
 				<LeftPanel
 					memory={this.state.rootMemory}
-					currentFolder={this.state.currentFolder}
+					currentFolder={AppContentContext.currentFolder}
 					folders={AppContentContext.folders.length}
 					files={AppContentContext.files.length}
 				>
@@ -204,7 +206,7 @@ export default class App extends Component<{ data : FolderEntity }> {
 				<DragAndDrop
 					className="drag-and-drop"
 					style={{ height: "100%" }}
-					handleDrop={(files : Array<File>) => API.uploadFiles(this.state.currentFolder, files)}>
+					handleDrop={(files : Array<File>) => API.uploadFiles(AppContentContext.currentFolder, files)}>
 					<Switch>
 						<Route exact path="/:type/:id/rename" render={props =>
 							<RenameEntityDialog
@@ -218,17 +220,17 @@ export default class App extends Component<{ data : FolderEntity }> {
 						</Switch>
 						<ContentContext.Provider value={AppContentContext}>
 							<ContentContainer
-								folderId={this.state.currentFolder.id}
+								folderId={AppContentContext.currentFolder.id}
 								parent={this}>
 								{
-									this.state.currentFolder.parentId
+									AppContentContext.currentFolder.parentId
 									&&
 									<PrevFolderButton
 										whenClicked={async () => {
-											if (this.state.currentFolder.parentId) {
-												await NavigationNodesHelpers.removeNodeSuccessors(this.state.currentFolder.parentId, this);
+											if (AppContentContext.currentFolder.parentId) {
+												await NavigationNodesHelpers.removeNodeSuccessors(AppContentContext.currentFolder.parentId, this);
 
-												await this.updateFolder(this.state.currentFolder.parentId);
+												await this.updateFolder(AppContentContext.currentFolder.parentId);
 											}
 										}}
 									/>
@@ -262,7 +264,7 @@ export default class App extends Component<{ data : FolderEntity }> {
 						onChange={() => {
 							const files = (document.getElementById("select-upload-files") as HTMLInputElement).files;
 
-							files && API.uploadFiles(this.state.currentFolder, Array.from(files));
+							files && API.uploadFiles(AppContentContext.currentFolder, Array.from(files));
 						}}
 						style={{ display: 'none' }}
 						multiple />
