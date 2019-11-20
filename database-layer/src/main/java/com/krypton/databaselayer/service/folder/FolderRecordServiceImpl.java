@@ -27,6 +27,11 @@ public class FolderRecordServiceImpl implements IOEntityRecordService<Folder> {
     private final FolderRepository folderRepository;
 
     @Override
+    public List<Folder> findAll() {
+        return folderRepository.findAll();
+    }
+
+    @Override
     public Folder getById(UUID id) {
         return folderRepository.findById(id).orElse(null);
     }

@@ -3,6 +3,7 @@ package common.model
 enum class FileType private constructor(val type: String) {
 
     IMAGE_JPG("JPG"),
+    IMAGE_JPEG("JPEG"),
     IMAGE_PNG("PNG"),
     IMAGE_RAW("RAW"),
     IMAGE_GIF("GIF"),
@@ -10,7 +11,9 @@ enum class FileType private constructor(val type: String) {
     ARCHIVE_TAR("TAR"),
     ARCHIVE_7Z("7z"),
     ARCHIVE_RAR("RAR"),
+    AVI("AVI"),
     MKV("MKV"),
+    MOV("MOV"),
     MP3("MP3"),
     MP4("MP4"),
     TXT("TXT"),

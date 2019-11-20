@@ -1,0 +1,41 @@
+.trash-empty-info-container div {
+    animation-name: trash-item-slide-up;
+    animation-duration: 0.3s;
+}
+
+.trash-item-icon-wrapper {
+    min-width: 60%;
+    min-height: 200px;
+    max-width: 70%;
+    margin: auto;
+    text-align: center;    
+}
+
+.trash-item-icon-wrapper i {
+    line-height: 5;
+}
+
+.trash-item-info-header img {
+    border-radius: 5px;
+    width: 100%;
+    animation-name: trash-item-slide-up;
+    animation-duration: 0.2s;
+}
+
+.trash-item-info > div {
+    height: 30px;
+    display: flex;
+}
+
+.trash-item-info > div > span:last-child {
+    margin-left: auto;
+}
+
+.trash-item-info {
+    padding-top: 20px;
+    margin: auto;
+    width: 90%;
+    height: 50%;
+    display: grid;
+    grid-gap: 10px;
+}

@@ -1,8 +1,6 @@
 package com.krypton.databaselayer.service.trash
 
 import com.krypton.databaselayer.model.BaseEntity
-import com.krypton.databaselayer.model.File
-import com.krypton.databaselayer.model.Folder
 import com.krypton.databaselayer.model.TrashEntity
 import com.krypton.databaselayer.repository.FileRepository
 import com.krypton.databaselayer.repository.FolderRepository
@@ -57,25 +55,17 @@ class TrashRecordService(
 
 	fun getByEntityId(id : UUID) : TrashEntity? = trashRepository.findByEntityId(id).orElse(null)
 
-	fun getInfo() : HashMap<String, String> {
-		val items = getAllItems()
-
-		return HashMap<String, String>().apply {
-			put("foldersCount", filterFolders(items).size.toString())
-			put("filesCount", filterFiles(items).size.toString())
-			put("totalItems", items.size.toString())
-		}
-	}
+	fun getAll() : List<TrashEntity> = trashRepository.all
 
 	/**
 	 * return all items entities located in trash folder
 	 *
-	 * @return list of items in trash folder
+	 * @return [List] of [BaseEntity]
 	 * */
 	fun getAllItems() : List<BaseEntity> {
 		val items = ArrayList<BaseEntity>()
 
-		trashRepository.all.forEach {
+		getAll().forEach {
 			val entity : BaseEntity? = when (it.type) {
 				EntityType.FOLDER -> folderRepository.findById(it.entityId).orElse(null)
 				EntityType.FILE -> fileRepository.findById(it.entityId).orElse(null)
@@ -85,8 +75,4 @@ class TrashRecordService(
 		}
 		return items
 	}
-
-	private fun filterFolders(folders : List<BaseEntity>) = folders.filter { it.type == EntityType.FOLDER }.map { it as Folder }
-
-	private fun filterFiles(files : List<BaseEntity>) = files.filter { it.type == EntityType.FILE }.map { it as File }
 }

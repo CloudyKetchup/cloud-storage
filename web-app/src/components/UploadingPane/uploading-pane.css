@@ -1,0 +1,85 @@
+.uploading-pane {
+	background: white;
+    opacity: 1;
+    top: 60px;
+    right: 20px;
+    width: 300px;
+	border-radius: 3px;
+    box-shadow: 0 3px 9px 0 rgba(173, 173, 173, 0.60);
+    z-index: 999;
+    position: absolute;
+    animation-name: uploading-pane;
+    animation-duration: 0.4s;
+}
+
+.uploading-pane-content {
+    max-height: 300px;
+    overflow-y: auto;
+    display: grid;
+    grid-gap: 5px;
+    text-align: center;
+}
+
+.uploading-pane > div {
+	padding: 10px;
+	margin: auto;
+}
+
+.uploading-pane > button {
+    color: #181818;
+    font-size: 15px;
+    float: right;
+    margin-top: -32.5px;
+    width: 40px;
+    padding: 5px;
+}
+
+.uploading-pane-header {
+    display: flex;
+}
+
+.uploading-pane-header > div:first-child {
+    margin: auto;
+}
+
+.upload-item {
+    box-shadow: 0 3px 9px 0 rgba(173, 173, 173, 0.60);
+    border-radius: 5px;
+    height: 50px;
+}
+
+.upload-item span {
+    float: left;
+}
+
+.upload-item > div:first-child {
+    display: flex;
+    height: 46px;
+}
+
+.upload-item > div:first-child > div:first-child {
+    width: calc(100% - 50px);
+}
+
+.upload-item > div:first-child {
+    line-height: 50px;
+}
+
+.upload-item-control-button {
+    font-size: 20px;
+}
+
+.upload-item-control-button:hover {
+    cursor: pointer;
+}
+
+@keyframes uploading-pane {
+    from {
+        opacity: 0;
+        top: 0;
+    }
+    to {
+        top: 60px;
+        opacity: 1;
+    }
+}

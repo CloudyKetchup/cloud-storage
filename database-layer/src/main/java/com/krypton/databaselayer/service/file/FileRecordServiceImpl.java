@@ -1,6 +1,5 @@
 package com.krypton.databaselayer.service.file;
 
-import com.krypton.databaselayer.model.Image;
 import com.krypton.databaselayer.service.folder.FolderRecordServiceImpl;
 import com.krypton.databaselayer.service.folder.FolderRecordUtils;
 import com.krypton.databaselayer.service.folder.updater.FolderRecordUpdaterImpl;
@@ -8,17 +7,13 @@ import com.krypton.databaselayer.service.IOEntityRecordService;
 import com.krypton.databaselayer.model.File;
 import com.krypton.databaselayer.repository.FileRepository;
 import com.krypton.databaselayer.service.folder.FolderPersistenceHelper;
-import com.krypton.databaselayer.service.image.ImageRecordService;
-import common.model.FileType;
 import lombok.AllArgsConstructor;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -33,7 +28,10 @@ public class FileRecordServiceImpl implements IOEntityRecordService<File> {
 
     private final FolderRecordUpdaterImpl folderRecordUpdater;
 
-    private final ImageRecordService imageService;
+    @Override
+    public List<File> findAll() {
+        return fileRepository.findAll();
+    }
 
     @Override
     @Nullable
@@ -48,9 +46,7 @@ public class FileRecordServiceImpl implements IOEntityRecordService<File> {
 
     @Override
     public File save(File file) {
-        // file saved to database
-        var entity = fileRepository.save(file);
-
+        fileRepository.save(file);
         // filesystem folder where file is located
         var parentFolder    = Paths.get(file.getPath()).getParent().toFile();
         // folder record where file need to be added as child
@@ -67,9 +63,9 @@ public class FileRecordServiceImpl implements IOEntityRecordService<File> {
 
         fileRepository.delete(file);
 
-        var parent = new java.io.File(file.getPath()).getParentFile();
+        var parent = folderRecordService.getById(file.getParentId());
 
-        folderRecordUpdater.updateSize(folderRecordService.getByPath(parent.getPath()));
+        if (parent != null) folderRecordUpdater.updateSize(parent);
 
         return !exists(path);
     }
@@ -128,53 +124,12 @@ public class FileRecordServiceImpl implements IOEntityRecordService<File> {
                     &&
                     !file.getName().startsWith(".")     // if file is not ignored, like(.DS_STORE, .vimrc, ...)
             ) {
-                createAndSave(file).subscribe();
+                save(file);
             } else if (file.listFiles() != null) {
                 var insideContent = Arrays.asList(file.listFiles());
                 // add all files inside
                 addAllFilesToDatabase(insideContent);
             }
         });
-    }
-
-    /**
-     * Take a {@link java.io.File} and save it to database,
-     * will create a {@link com.krypton.databaselayer.model.File} entity and save it to database.
-     * If file have jpg extension will create a resized thumbnail as {@link Image}
-     * for it and will assign it as one to one relationship to this file
-     *
-     * @param file      {@link java.io.File} target
-     * @return {@link Mono<Boolean>} result
-     * */
-    public Mono<Boolean> createAndSave(java.io.File file) {
-        return Mono.just(save(file))
-                .map(entity -> {
-                    if (entity == null) {
-                        return false;
-                        // if file is a jpg image, create a resized thumbnail for it
-                    } else if (entity.getExtension().equals(FileType.IMAGE_JPG)) {
-                        assignImage(entity, imageService.createAndSave(entity));
-
-                        var check = getById(entity.getId());
-
-                        if (check != null) return check.getImage() != null;
-                    }
-                    return false;
-                })
-                .doOnError(Throwable::printStackTrace)
-                .onErrorReturn(false);
-    }
-
-    /**
-     * Link a image to a file entity
-     *
-     * @param file      {@link File} entity
-     * @param image     {@link Image} to be assigned
-     * @return {@link File}
-     * */
-    private File assignImage(File file, Image image) {
-        file.setImage(image);
-
-        return save(file);
     }
 }

@@ -45,7 +45,7 @@ export default class Notification<P extends NotificationProps> extends Component
             div.style.opacity = "0";
         }
         setTimeout(() => {
-            AppNotificationContext.deleteNotification(this.props.data.id);
+            AppNotificationContext.delete(this.props.data.id);
         }, 100);
     };
 

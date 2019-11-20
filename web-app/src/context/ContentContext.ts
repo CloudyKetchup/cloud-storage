@@ -1,15 +1,17 @@
-import { FileEntity } from "../model/entity/FileEntity";
+import { FileEntity } 	from "../model/entity/FileEntity";
 import { FolderEntity } from "../model/entity/FolderEntity";
-import { Entity } from "../model/entity/Entity";
+import { Entity } 		from "../model/entity/Entity";
 
 export type BasicContentContext = {
-    files : FileEntity[]
-    folders : FolderEntity[]
-    setFiles: (newFiles: FileEntity[]) => FileEntity[]
-    setFolders : (newFolders : FolderEntity[]) => FolderEntity[]
+    files 		: FileEntity[]
+    folders 	: FolderEntity[]
+    setFiles	: (newFiles: FileEntity[]) => FileEntity[]
+    setFolders 	: (newFolders : FolderEntity[]) => FolderEntity[]
 };
 
 export interface ContentContextInterface extends BasicContentContext {
-    trashItems    : Entity[]
-    setTrashItems : (newTrashItems : Entity[]) => Entity[]
+    currentFolder    : FolderEntity
+    setCurrentFolder : (folder : FolderEntity) => void
+	trashItems		 : Entity[]
+    setTrashItems	 : (newTrashItems : Entity[]) => Entity[]
 };

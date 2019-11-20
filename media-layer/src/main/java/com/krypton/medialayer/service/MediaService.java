@@ -1,42 +1,36 @@
 package com.krypton.medialayer.service;
 
-import com.krypton.medialayer.service.image.ImageProcessor;
 import common.config.AppProperties;
 import org.apache.commons.io.FileUtils;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
 import reactor.util.annotation.Nullable;
 
-import javax.imageio.ImageIO;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Optional;
+import java.util.UUID;
 
-@Service
 public abstract class MediaService {
 
-    private static ImageProcessor imageProcessor = new ImageProcessor();
+    public static final String THUMBNAILS_PATH = AppProperties.INSTANCE.getThumbnailsFolder().getPath();
 
-    public static File createThumbnail(File file, String name) throws IOException {
-        var bufferedImage = imageProcessor.resizeImage(MediaSettings.THUMBNAIL_HEIGHT, MediaSettings.THUMBNAIL_WIDTH, file);
+    public static Optional<Thumbnail> createThumbnail(File file, String id) {
+        var path = MediaService.THUMBNAILS_PATH + "/" + id + ".jpg";
 
-        if (bufferedImage.isEmpty()) throw new IOException();
-
-        var thumbnail = new File(AppProperties.INSTANCE.getThumbnailsFolder().getPath() + "/" + name + ".jpg");
-
-        ImageIO.write(bufferedImage.get(), "jpg", thumbnail);
-
-        return thumbnail;
+        return new Thumbnail.Builder(file, path).buildAndWrite();
     }
 
     @Nullable
-    public static ResponseEntity<byte[]> getThumbnail(String path) {
+    public static ResponseEntity<byte[]> getThumbnail(UUID id) {
         byte[] thumbnail = null;
+        var path = MediaService.THUMBNAILS_PATH + "/" + id.toString() + ".jpg";
 
         try {
             thumbnail = FileUtils.readFileToByteArray(new File(path));
         } catch (IOException e) {
-            e.printStackTrace();
+            if (!(e instanceof FileNotFoundException)) e.printStackTrace();
         }
         return ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).body(thumbnail);
     }

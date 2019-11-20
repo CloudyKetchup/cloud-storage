@@ -26,14 +26,18 @@ class TrashController(
 	@GetMapping("/items")
 	fun getTrashItems() : List<BaseEntity> = trashRecordService.getAllItems()
 
-	@GetMapping("/info")
-	fun getInfo() : HashMap<String, String> = trashRecordService.getInfo()
-
 	@DeleteMapping("/empty-trash")
 	fun emptyTrash() : HttpStatus {
 		return if (trashService.emptyTrash())
 			HttpStatus.OK
 		else HttpStatus.INTERNAL_SERVER_ERROR
+	}
+
+	@PostMapping("/restore-all")
+	fun restoreAll() : HttpStatus {
+		return if (trashService.restoreAll()) {
+			HttpStatus.OK
+		} else HttpStatus.INTERNAL_SERVER_ERROR;
 	}
 
 	@DeleteMapping("/delete/{id}")
@@ -54,7 +58,7 @@ class TrashController(
 
 	@PostMapping("/folder/move-to-trash")
 	fun moveFolderToTrash(@RequestBody request : HashMap<String, String>) : HttpStatus {
-		val folder = folderRecordService.getById(UUID.fromString(request["id"]))
+		val folder = folderRecordService.getById(UUID.fromString(request["id"])) ?: return HttpStatus.INTERNAL_SERVER_ERROR
 
 		return if (trashService.moveToTrash(folder)) {
 			HttpStatus.OK

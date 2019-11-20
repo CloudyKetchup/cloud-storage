@@ -1,9 +1,10 @@
 import React, { Component } from 'react';
 
-import { Entity } 		from '../../model/entity/Entity';
-import App 				from '../../App';
-import ContentContainer from '../ContentContainer/ContentContainer';
-import EntityContextMenu from "../EntityContextMenu/EntityContextMenu";
+import { Entity } 			from '../../model/entity/Entity';
+import App 					from '../../App';
+import ContentContainer 	from '../ContentContainer/ContentContainer';
+import EntityContextMenu 	from "../EntityContextMenu/EntityContextMenu";
+import ReactDOM 			from 'react-dom';
 
 export interface EntityProps {
 	container 	: ContentContainer

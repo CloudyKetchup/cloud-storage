@@ -1,17 +1,23 @@
-import { FolderEntity } 		from './model/entity/FolderEntity';
-import { Entity } 				from './model/entity/Entity';
-import NavNode					from './model/NavNode';
-import { FileEntity } 			from './model/entity/FileEntity';
-import { NotificationType } 	from './model/notification/NotificationType';
-import { NotificationEntity }	from './model/notification/NotificationEntity';
-import { ErrorNotificationEntity, ErrorNotificationType } from './model/notification/ErrorNotificationEntity';
-import App, {AppContentContext, AppNotificationContext, AppProcessingContext} from './App';
+import { Component } from "react";
 
-import { ContentContextInterface }		 from './context/ContentContext';
+import { ContentContextInterface }	from './context/ContentContext';
+import { Entity }					from './model/entity/Entity';
+import { FileEntity } 				from './model/entity/FileEntity';
+import { FileExtension } 			from './model/entity/FileExtension';
+import { FolderEntity } 			from './model/entity/FolderEntity';
+import { NotificationEntity }		from './model/notification/NotificationEntity';
+import { NotificationType } 		from './model/notification/NotificationType';
+import { ProcessingContext } 		from "./context/ProcessingContext";
+import { UploadItem } 				from './model/UploadItem';
+import NavNode						from './model/NavNode';
+import { UploadingContextInterface }from './context/UploadingContext';
+import { UploadingContextImpl }		from './components/UploadingPane/UploadingPaneComponent';
+import UploadQueue 					from './utils/UploadQueue';
+import { ErrorNotificationEntity, ErrorNotificationType } 	from './model/notification/ErrorNotificationEntity';
+import App, {AppContentContext, AppNotificationContext } 	from './App';
 import { NotificationsContextInterface } from './context/NotificationContext';
 
-import axios from 'axios';
-import {ProcessingContext} from "./context/ProcessingContext";
+import axios, { CancelToken } from 'axios';
 
 export const API_URL = 'http://localhost:8080';
 
@@ -112,13 +118,19 @@ export class APIHelpers {
 			.catch(() => APIHelpers.errorNotification(`Error moving to trash ${target.name}`))
 	);
 
-	static restoreFromTrash = (target: Entity) : Promise<string> => (
+	static restoreFromTrash = (id : string) : Promise<string> => (
 		axios.post(`${API_URL}/trash/restore-from-trash`,
 			{
-				id : target.id
+				id : id
 			})
 			.then(response => response.data)
-			.catch(() => APIHelpers.errorNotification(`Error restoring from trash ${target.name}`))
+			.catch(() => APIHelpers.errorNotification("Error restoring from trash"))
+	);
+
+	static restoreAllFromTrash = () : Promise<string> => (
+		axios.post(`${API_URL}/trash/restore-all`)
+			.then(response => response.data)
+			.catch(() => APIHelpers.errorNotification("Error restoring all trash items"))
 	);
 
 	static deleteFromTrash = (target: Entity) : Promise<string> => (
@@ -149,46 +161,54 @@ export class APIHelpers {
 			.catch(() => APIHelpers.errorNotification(`Error deleting ${target.name}`))
 	);
 
-	static deleteFolderContent = (path: string) : Promise<string> => (
-		axios.post(`${API_URL}/folder/delete-all`,
-			{
-				path: path
-			})
+	static deleteFolderContent = (id : string) : Promise<string> => (
+		axios.delete(`${API_URL}/folder/${id}/delete-all`)
 			.then(response => response.data)
 			.catch(() => APIHelpers.errorNotification("Error deleting all folder content"))
 	);
 
-	private static uploadFile = async (file: File, appContext: App) => {
+	static uploadFile = async (file : File, folder : FolderEntity, uploadItem? : UploadItem, cancelToken? : CancelToken) => {
 		const URL = `${API_URL}/file/upload/one`;
-
 		const formData = new FormData();
 
 		formData.append('file', file);
-		formData.append('path', appContext.state.currentFolder.path);
+		formData.append('path', folder.path);
 
-		const uploadingFiles = appContext.state.uploadingFiles;
-
-		uploadingFiles.push(file);
-
-		appContext.setState({ uploadingFiles : uploadingFiles });
-
-		axios.request({
+		await axios({
 				url     : URL,
+				cancelToken : cancelToken,
 				method  : 'POST',
 				data    : formData,
-				onUploadProgress : p => appContext.setState({
-						[`uploadingFile${file.name}progress`] : (p.total - (p.total - p.loaded)) / p.total * 100
-				})
+				onUploadProgress : p => {
+					if (uploadItem) uploadItem.progress = `${(p.total - (p.total - p.loaded)) / p.total * 100}`;
+				}
 			})
-			.then(async response => {
-				AppContentContext.setFiles(await APIHelpers.getFolderFiles(appContext.state.currentFolder.id));
+			.then(response => {
+				console.log(response.data)
+				response.data !== "OK" && APIHelpers.errorNotification("Error uploading");
 
-				if (response.data !== "OK") APIHelpers.errorNotification("Error uploading");
+				AppContentContext.currentFolder.id === folder.id
+				&&
+				uploadItem
+				&&
+				!UploadQueue.getInstance().jobCanceled(uploadItem.id)
+				&&
+				ContentHelpers.updateFiles(folder.id);
 			})
-			.catch(() => APIHelpers.errorNotification("Error starting upload"));
+			.catch(e => !axios.isCancel(e) && APIHelpers.errorNotification("Error starting upload"));
 	};
 
-	static uploadFiles = async (files: Array<File>, app: App) => files.forEach(file => APIHelpers.uploadFile(file, app));
+	static uploadFiles = (folder : FolderEntity, files : File[]) => {
+		files.forEach(file => {
+			const uploadItem = UploadingContextImpl.addUpload(UploadHelpers.createUploadItem(file, folder));
+
+			if (uploadItem !== undefined) {
+				const queue = UploadQueue.getInstance();
+
+				queue.add(queue.createJob(uploadItem));
+			}
+		});
+	};
 
 	static downloadFile = async (path: string, name: string) => {
 		const link = document.createElement("a");
@@ -213,11 +233,9 @@ export class APIHelpers {
 	static errorNotification = (message? : string) => {
 		const text = message || "API call error :(";
 
-		const notifications = AppNotificationContext.notifications;
-
-		notifications.push(NotificationHelpers.createErrorNotification(text, ErrorNotificationType.ERROR));
-
-		AppNotificationContext.setNotifications(notifications);
+		AppNotificationContext
+		&&
+		AppNotificationContext.add(NotificationHelpers.createErrorNotification(text, ErrorNotificationType.ERROR));
 	};
 }
 
@@ -262,20 +280,12 @@ export class NavigationNodesHelpers {
 export class EntityHelpers {
 
 	static uuidv4 = () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-		const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+		const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r ? 0x3 : 0x8);
 		return v.toString(16);
 	});
 }
 
 export class NotificationHelpers {
-
-	static createNotification = (text : string) : NotificationEntity => {
-		return {
-			id 		: EntityHelpers.uuidv4(),
-			text	: text,
-			type	: NotificationType.BASIC
-		};
-	};
 
 	static createErrorNotification = (text : string, errorType: ErrorNotificationType) : ErrorNotificationEntity => {
 		return {
@@ -289,71 +299,139 @@ export class NotificationHelpers {
 
 export class ContextHelpers {
 
-	static createContentContext = (app : App) : ContentContextInterface => {
-		return {
-			files		: [],
-			folders		: [],
-			trashItems	: [],
-			setFiles: (newFiles: FileEntity[] = []) => {
-				AppContentContext.files = newFiles;
+	static createContentContext = (currentFolder : FolderEntity, component? : Component) : ContentContextInterface => {
+		return new class {
+			files 		: FileEntity[]	 = [];
+			folders 	: FolderEntity[] = [];
+			trashItems 	: Entity[]		 = [];
+			currentFolder : FolderEntity = currentFolder;
 
-				app.forceUpdate();
+			setFiles = (files : FileEntity[] = []) => {
+				this.files = files;
 
-				return AppContentContext.files;
-			},
-			setFolders: (newFolders: FolderEntity[] = []) => {
-				AppContentContext.folders = newFolders;
+				component && component.forceUpdate();
 
-				app.forceUpdate();
+				return this.files;
+			};
 
-				return AppContentContext.folders;
-			},
-			setTrashItems: (newTrashItems: Entity[] = []) => {
-				AppContentContext.trashItems = newTrashItems;
+			setFolders = (folders : FolderEntity[] = []) => {
+				this.folders = folders;
 
-				app.forceUpdate();
+				component && component.forceUpdate();
 
-				return AppContentContext.trashItems;
+				return this.folders;
+			};
+
+			setTrashItems = (items : Entity[] = []) => {
+				this.trashItems = items;
+
+				component && component.forceUpdate();
+
+				return this.trashItems;
+			};
+
+			setCurrentFolder = (folder : FolderEntity) => {
+				this.currentFolder = folder;
+
+				component && component.forceUpdate();
 			}
-		};
+		}();
 	};
 
-	static createNotificationContext = (app : App) : NotificationsContextInterface => {
-		return {
-			notifications : [],
-			setNotifications : (notifications : NotificationEntity[]) => {
-				AppNotificationContext.notifications = notifications;
+	static createNotificationContext = (component? : Component) : NotificationsContextInterface => {
+		return new class implements NotificationsContextInterface {
+			notifications : NotificationEntity[] = [];
 
-				app.forceUpdate();
+			add = (notification : NotificationEntity) => {
+				this.notifications.push(notification);
 
-				return AppNotificationContext.notifications;
-			},
-			deleteNotification : (id : string) => {
-				const notifications = AppNotificationContext.notifications;
+				component && component.forceUpdate();
 
-				notifications.splice(notifications.findIndex(n => n.id === id + 1), 1);
+				return this.notifications;
+			};
 
-				AppNotificationContext.setNotifications(notifications);
-			}
-		};
+			delete = (id : string) => {
+				const index = this.notifications.findIndex(n => n.id === id);
+
+				this.notifications.splice(index, 1);
+
+				component && component.forceUpdate();
+			};
+		}();
 	};
 
-	static createProcessingContext = (app : App) : ProcessingContext => {
+	static createProcessingContext = (component? : Component) : ProcessingContext => {
+		return new class implements ProcessingContext {
+			entities : Entity[] = [];
+
+			add = (entity : Entity) => {
+				this.entities.push(entity);
+
+				component && component.forceUpdate();
+			};
+
+			get = (id : string) : Entity | null => this.entities.filter(i => i.id === id)[0];
+
+			delete = (id : string) => this.entities.splice(this.entities.findIndex(i => i.id === id), 1);
+		}();
+	};
+
+	static createUploadContext = (component? : Component) : UploadingContextInterface => {
+		return new class implements UploadingContextInterface {
+			uploads : UploadItem[] = [];
+
+			addUpload = (item : UploadItem) : UploadItem => {
+				this.uploads.push(item);
+
+				component && component.setState({ items : this.uploads });
+
+				return item;
+			};
+
+			deleteUpload = (id : string) => {
+				this.uploads.splice(this.uploads.findIndex(i => i.id === id), 1);
+
+				component && component.setState({ items : this.uploads });
+			};
+
+			clearAllUploads = async () => {
+				await UploadQueue.getInstance().selfDestroy();
+
+				this.uploads = [];
+
+				component && component.setState({ items : this.uploads });
+			};
+
+			updateComponent = () => component && component.forceUpdate();
+		}();
+	};
+}
+
+export class UploadHelpers {
+	
+	static createUploadItem = (file : File, folder : FolderEntity) : UploadItem => {
 		return {
-			entities : [],
-			add : (entity : Entity) : Entity | null => {
-				AppProcessingContext.entities.push(entity);
-
-				app.forceUpdate();
-
-				return AppProcessingContext.get(entity.id);
-			},
-            get	: (id : string) : Entity | null => AppProcessingContext.entities.filter(e => e.id === id)[0],
-			delete : (id : string) => {
-				const index = AppProcessingContext.entities.findIndex(e => e.id === id);
-
-				AppProcessingContext.entities.splice(index, 1);
-			}
+			id : EntityHelpers.uuidv4(),
+			file : file,
+			folder : folder,
+			progress : "0"
 		};
+	};
+}
+
+export class FileHelpers {
+
+	static imageAssign = (data : FileEntity) : boolean => {
+	    const ext = FileExtension;
+
+		switch (data.extension) {
+			case ext.IMAGE_JPEG:
+			case ext.IMAGE_JPG:
+			case ext.IMAGE_GIF:
+			case ext.IMAGE_PNG:
+			case ext.IMAGE_RAW:
+				return true;
+			default: return false;
+		}
 	};
 }

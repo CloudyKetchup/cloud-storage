@@ -8,7 +8,6 @@ import util.file.FileTools;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.OneToOne;
 import java.time.LocalDateTime;
 
 @Entity
@@ -18,8 +17,8 @@ public class File extends BaseEntity {
 	@Column
 	private FileType extension;
 
-	@OneToOne(orphanRemoval = true)
-	private Image image = null;
+	@Column
+	private Boolean isMedia = false;
 
 	public File() {}
 
@@ -32,20 +31,15 @@ public class File extends BaseEntity {
 		setTimeCreated(time.getDayOfMonth() + "-" + time.getMonthValue() + "-" + time.getYear());
 		setLocation(file.getParentFile().getName());
 		setSize(FileTools.INSTANCE.getFileSize(FileUtils.sizeOf(file)));
-
 		setExtension(FileTools.INSTANCE.getFileExtension(file));
+		setIsMedia(FileTools.INSTANCE.isMediaFile(file));
 	}
 
-	public FileType getExtension() {
-		return extension;
-	}
+	public FileType getExtension() { return extension; }
 
-	public void setExtension(FileType extension) {
-		this.extension = extension;
-	}
+	public void setExtension(FileType extension) { this.extension = extension; }
 
-	public Image getImage() { return image; }
+	public Boolean getIsMedia() { return isMedia; }
 
-	public void setImage(Image image) { this.image = image; }
-
+	public void setIsMedia(Boolean isMedia) { this.isMedia = isMedia; }
 }

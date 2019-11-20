@@ -4,7 +4,7 @@ import { Link }											from 'react-router-dom';
 import { FileEntity }									from '../../model/entity/FileEntity';
 import EntityComponent, { EntityProps, EntityState }	from '../EntityComponent/EntityComponent';
 import { FileExtensionIcons }							from './FileExtensionIcons';
-import { API_URL } 										from '../../helpers';
+import { API_URL, FileHelpers } 										from '../../helpers';
 import EntityContextMenu, { ContextMenuItem } 			from '../EntityContextMenu/EntityContextMenu';
 import CircularProgress 								from '@material-ui/core/CircularProgress';
 
@@ -84,13 +84,17 @@ export default class File extends EntityComponent<FileProps> {
 			onStart={() => this.props.mainParent.setState({ elementSelected : this.props.data })}
 			style={this.state.contextMenuStyle}
 		>
-			<Link to={`/file/image/${this.props.data.id}/view`}>
-				<ContextMenuItem
-					key={`context-menu-item-${this.props.data.id}`}
-					icon={<i className="fas fa-eye"/>}
-					text="View"
-				/>
-			</Link>
+			{
+				this.props.data.isMedia
+				&&
+				<Link to={`/file/image/${this.props.data.id}/view`}>
+					<ContextMenuItem
+						key={`context-menu-item-${this.props.data.id}`}
+						icon={<i className="fas fa-eye"/>}
+						text="View"
+					/>
+				</Link>
+			}
 		</EntityContextMenu>
 	);
 
@@ -103,7 +107,8 @@ export default class File extends EntityComponent<FileProps> {
 		>
 			{this.contextMenu()}
 			<div className="file-icon">
-				{this.props.data.extension === "IMAGE_JPG"
+				{
+					FileHelpers.imageAssign(this.props.data)
 					? [
 						!this.state.imageLoaded
 						&&

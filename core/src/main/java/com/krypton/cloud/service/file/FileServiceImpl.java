@@ -1,5 +1,6 @@
 package com.krypton.cloud.service.file;
 
+import com.krypton.medialayer.service.MediaService;
 import com.krypton.storagelayer.service.filesystem.FileSystemLayer;
 import com.krypton.databaselayer.service.file.FileRecordServiceImpl;
 import com.krypton.databaselayer.service.file.updater.FileRecordUpdaterImpl;
@@ -31,8 +32,14 @@ public class FileServiceImpl implements FileService {
 		var file = filesystemLayer.writeFilePart(filePart, path);
 
 		if (file != null) {
-			return file.flatMap(recordService::createAndSave)
-						.map(result -> result ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
+			return file.map(f -> {
+			    var entity = recordService.save(f);
+
+				if (entity != null && entity.getIsMedia() && withThumbnail(entity)) {
+					return MediaService.createThumbnail(f, entity.getId().toString()).isPresent();
+				}
+				return false;
+			}).map(result -> result ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		return Mono.just(HttpStatus.INTERNAL_SERVER_ERROR);
 	}
@@ -43,10 +50,11 @@ public class FileServiceImpl implements FileService {
 		var newPath  = location + "/" + file.getName();
 		// move file to new location
 		if (filesystemLayer.move(file, newPath)) {
+			var fileEntity = recordService.getByPath(oldPath);
 			// remove file with old path from database
-			if (recordService.delete(oldPath)) {
+			if (recordService.delete(fileEntity.getId())) {
 				// add file with new path to database
-				recordService.createAndSave(new File(newPath)).subscribe();
+				recordService.save(new File(newPath));
 
 				return HttpStatus.OK;
 			}
@@ -62,7 +70,7 @@ public class FileServiceImpl implements FileService {
 		try {
 			filesystemLayer.copy(file, copy);
 			// check if file was copied successful
-			if (copy.exists() && recordService.createAndSave(copy).block())
+			if (copy.exists() && recordService.save(copy) != null)
 				return HttpStatus.OK;
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -93,10 +101,23 @@ public class FileServiceImpl implements FileService {
 		var path = file.getPath();
 
 		if (filesystemLayer.delete(path)) {
+			filesystemLayer.delete(MediaService.THUMBNAILS_PATH + "/" + file.getId().toString() + ".jpg");
 			return recordService.delete(path)
 					? HttpStatus.OK
 					: HttpStatus.INTERNAL_SERVER_ERROR;
 		}
 		return HttpStatus.INTERNAL_SERVER_ERROR;
+	}
+
+	private boolean withThumbnail(com.krypton.databaselayer.model.File file) {
+		switch (file.getExtension()) {
+			case IMAGE_JPG:
+			case IMAGE_JPEG:
+			case IMAGE_PNG:
+			case IMAGE_RAW:
+			case IMAGE_GIF:
+				return true;
+			default: return false;
+		}
 	}
 }
