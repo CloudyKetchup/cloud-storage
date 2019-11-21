@@ -184,7 +184,6 @@ export class APIHelpers {
 				}
 			})
 			.then(response => {
-				console.log(response.data)
 				response.data !== "OK" && APIHelpers.errorNotification("Error uploading");
 
 				AppContentContext.currentFolder.id === folder.id
@@ -193,20 +192,22 @@ export class APIHelpers {
 				&&
 				!UploadQueue.getInstance().jobCanceled(uploadItem.id)
 				&&
+				response.data === "OK"
+				&&
 				ContentHelpers.updateFiles(folder.id);
 			})
 			.catch(e => !axios.isCancel(e) && APIHelpers.errorNotification("Error starting upload"));
 	};
 
 	static uploadFiles = (folder : FolderEntity, files : File[]) => {
-		files.forEach(file => {
-			const uploadItem = UploadingContextImpl.addUpload(UploadHelpers.createUploadItem(file, folder));
+		files.forEach(async file => {
+			const uploadItem = UploadHelpers.createUploadItem(file, folder);;
 
-			if (uploadItem !== undefined) {
-				const queue = UploadQueue.getInstance();
+			UploadingContextImpl.addUpload(uploadItem);
+			
+			const queue = UploadQueue.getInstance();
 
-				queue.add(queue.createJob(uploadItem));
-			}
+			queue.add(queue.createJob(uploadItem));
 		});
 	};
 
