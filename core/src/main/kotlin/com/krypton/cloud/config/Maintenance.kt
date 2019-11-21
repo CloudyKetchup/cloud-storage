@@ -17,15 +17,15 @@ class Maintenance(private val fileRecordService : IOEntityRecordService<File>) {
     /**
      * Every 10 days at 19:30 logs folder will be cleared
      */
-    @Scheduled(cron = " 30 19 */10 * 6 * ")
-    suspend fun clearLogsFolder() = LoggingService.clearLogsFolder()
+    @Scheduled(cron = "30 19 */10 * 6 *")
+    fun clearLogsFolder() = LoggingService.clearLogsFolder()
 
 	/**
 	 * Delete thumbnails witch file was removed from database
 	 * Runs every day at 12:00
 	 * */
-    @Scheduled(cron = " 0 12 1/1 * ? * ")
-    suspend fun deleteOrphanThumbnails() {
+    @Scheduled(cron = "59 0 12 * * *")
+    fun deleteOrphanThumbnails() {
 		val thumbnailsFolder = AppProperties.thumbnailsFolder
         val files = fileRecordService.findAll()
         val thumbnails = listOf<java.io.File>(*thumbnailsFolder.listFiles())

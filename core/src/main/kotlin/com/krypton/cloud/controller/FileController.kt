@@ -28,7 +28,7 @@ class FileController(
      * @return http status
      */
     @PostMapping("/upload/one")
-    fun uploadFile(
+    suspend fun uploadFile(
             @RequestPart("file") filePart : Mono<FilePart>,
             @RequestPart("path") path : FormFieldPart
     ) : Mono<HttpStatus> = filePart.flatMap { fileService.saveFile(it, path.value() + "/" + it.filename()) }
