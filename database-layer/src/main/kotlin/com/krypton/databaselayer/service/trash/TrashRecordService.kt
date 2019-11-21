@@ -17,6 +17,8 @@ class TrashRecordService(
 	private val fileRepository	: FileRepository
 ) : IOEntityRecordService<TrashEntity> {
 
+	override fun findAll() : List<TrashEntity> = trashRepository.findAll();
+
 	override fun getById(id : UUID) : TrashEntity? = trashRepository.findById(id).orElse(null)
 
 	override fun getByPath(path : String) : TrashEntity? = trashRepository.findByPath(path).orElse(null)
