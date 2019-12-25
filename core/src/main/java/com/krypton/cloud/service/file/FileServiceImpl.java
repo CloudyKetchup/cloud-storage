@@ -35,8 +35,11 @@ public class FileServiceImpl implements FileService {
 			return file.map(f -> {
 			    var entity = recordService.save(f);
 
-				if (entity != null && entity.getIsMedia() && withThumbnail(entity)) {
-					return MediaService.createThumbnail(f, entity.getId().toString()).isPresent();
+			    if (entity != null) {
+					if (entity.getIsMedia() && withThumbnail(entity)) {
+						MediaService.createThumbnail(f, entity.getId().toString());
+					}
+					return true;
 				}
 				return false;
 			}).map(result -> result ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
