@@ -87,7 +87,7 @@ export default class File extends EntityComponent<FileProps> {
 			{
 				this.props.data.isMedia
 				&&
-				<Link to={`/file/image/${this.props.data.id}/view`}>
+				<Link to={`/image/view?id=${this.props.data.id}`}>
 					<ContextMenuItem
 						key={`context-menu-item-${this.props.data.id}`}
 						icon={<i className="fas fa-eye"/>}
@@ -132,7 +132,7 @@ export default class File extends EntityComponent<FileProps> {
 					<div style={{width: '2px', height: '60%', background: "gray", marginTop: "7%"}}/>
 					<Link 
 						onClick={() => this.props.mainParent.setState({ elementSelected : this.props.data })}
-						to={`/file/${this.props.data.id}/info`}
+						to={`/info?type=file&id=${this.props.data.id}`}
 						style={{ lineHeight : "25px", color : "#181818", textAlign : "center"}}>
 						<i className="fas fa-info-circle"/>
 					</Link>

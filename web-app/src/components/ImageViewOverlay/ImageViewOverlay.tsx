@@ -1,35 +1,51 @@
 import React, { Component, FC }     from 'react';
-import {APIHelpers as API, API_URL, ContentHelpers, EntityHelpers} from '../../helpers';
+
+import queryString                  from "query-string";
+import { Link, useHistory }         from 'react-router-dom';
 import { FileEntity }               from '../../model/entity/FileEntity';
 import CircularProgress             from '@material-ui/core/CircularProgress/CircularProgress';
-import { Link, Route, useHistory }  from 'react-router-dom';
 import { ElementInfoContainer }     from '../ElementInfoContainer/ElementInfoContainer';
 
-interface ImageViewInterface { id : string }
+import {
+	APIHelpers as API,
+	API_URL,
+	ContentHelpers,
+	EntityHelpers
+} from '../../helpers';
 
 type IState = {
-	data : FileEntity | null,
-	loaded : boolean
+	id      : string | null
+	data    : FileEntity | null
+	loaded  : boolean
+	info    : boolean
 };
 
-export default class ImageViewOverlay extends Component<ImageViewInterface> {
+export default class ImageViewOverlay extends Component {
 	state : IState = {
-		data : null,
-		loaded : false
+		id      : null,
+		data    : null,
+		loaded  : false,
+		info    : false
 	};
 
     imageView    : HTMLElement  | null = null;
     imageDiv     : HTMLElement  | null = null;
 
-	UNSAFE_componentWillMount = async () => this.setState({ data : await API.getFileData(this.props.id) });
+    componentDidMount = async () => {
+    	const query = queryString.parse(window.location.search);
 
-    componentDidMount = async () => window.addEventListener("resize", () => this.resizeImageView());
+		this.setState({
+			id   : query.id as string,
+			data : await API.getFileData(query.id as string)
+		});
+    	window.addEventListener("resize", () => this.resizeImageView());
+    };
 
     componentWillUnmount = () => window.removeEventListener("resize", () => this.resizeImageView());
 
     componentDidUpdate = async () => {
-        if (this.imageDiv == null) this.imageDiv = document.getElementById(`image-view-div-${this.props.id}`);
-        if (this.imageView == null) this.imageView = document.getElementById(`image-view-${this.props.id}`);
+        if (this.imageDiv == null) this.imageDiv = document.getElementById(`image-view-div-${this.state.id}`);
+        if (this.imageView == null) this.imageView = document.getElementById(`image-view-${this.state.id}`);
 
         this.resizeImageView();
     };
@@ -45,7 +61,7 @@ export default class ImageViewOverlay extends Component<ImageViewInterface> {
     };
 	
     hoverEvent = () => {
-        const div = document.getElementById(`image-view-${this.props.id}`);
+        const div = document.getElementById(`image-view-${this.state.id}`);
 
         if (div !== null) {
             const display = async (value : string) => {
@@ -55,7 +71,6 @@ export default class ImageViewOverlay extends Component<ImageViewInterface> {
                     Array.prototype.slice.call(controlButtons).forEach(t => (t as HTMLElement).style.display = value);
                 }
             };
-
             div.addEventListener("mouseover", async () => display("unset"));
             div.addEventListener("mouseout", async () => display("none"));
         }
@@ -99,7 +114,7 @@ export default class ImageViewOverlay extends Component<ImageViewInterface> {
                     redirect("/")
                 }
             >
-                <i className="far fa-times-circle" />
+                <i className="far fa-times-circle"/>
             </button>
         );
     };
@@ -145,8 +160,8 @@ export default class ImageViewOverlay extends Component<ImageViewInterface> {
                         this.imagePreloader(),
                         <div
                             className="image-view"
-                            key={`image-view-${this.props.id}`}
-                            id={`image-view-${this.props.id}`}
+                            key={`image-view-${this.state.id}`}
+                            id={`image-view-${this.state.id}`}
                             style={{
                                 display     : this.state.loaded ? "" : "none",
                                 maxHeight   : 80 / 100 * window.innerHeight + 50,
@@ -157,7 +172,7 @@ export default class ImageViewOverlay extends Component<ImageViewInterface> {
                             </div>
                             <div>
                                 <img
-                                    id={`image-view-div-${this.props.id}`}
+                                    id={`image-view-div-${this.state.id}`}
                                     key={this.state.data.path}
                                     style={{
                                         display: this.state.loaded ? "unset" : "none",
@@ -174,17 +189,24 @@ export default class ImageViewOverlay extends Component<ImageViewInterface> {
                                 <div className="media-view-control">
                                     <this.TrashButton/>
                                     <this.DeleteButton/>
-                                    <Link to={`/file/image/${this.props.id}/view/info`}>
-                                        <button className="media-view-control-button">
-                                            <i className="fas fa-info-circle" />
-                                        </button>
-                                    </Link>
+                                    <button className="media-view-control-button" onClick={() => this.setState({ info : true })}>
+                                        <i className="fas fa-info-circle" />
+                                    </button>
                                 </div>
                             }
                         </div>
 					]
 				}
-				<Route path="/:type/image/:id/view/info" render={props => <ElementInfoContainer key={`media-view-info-${this.props.id}`} prevLink={`/file/image/${this.props.id}/view`} {...props}/>}/>
+				{
+					this.state.info
+					&&
+					<ElementInfoContainer
+						type="file"
+						key={`media-view-info-${this.state.id}`}
+						prevLink={`/image/view?id=${this.state.id}`}
+						onClose={() => this.setState({ info : false })}
+					/>
+				}
 			</div>
             <Link to="/">
                 <button className="close-button">

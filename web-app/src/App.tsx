@@ -214,9 +214,9 @@ export default class App extends Component<{ data : FolderEntity }> {
 								{...props} />}
 							/>
 							<Route exact path="/folder/create" render={() => <CreateFolderDialog parent={this} sendFolder={this.createNewFolder}/>}/>
-							<Route path="/:type/:id/info" render={props => <ElementInfoContainer key={props.match.params.id} {...props}/>}/>
+							<Route exact path="/info" render={props => <ElementInfoContainer key={props.match.params.id} {...props}/>}/>
 							<Route path="/trash" render={() => <TrashViewContainer/>}/>
-							<Route path="/file/image/:id/view" render={props => <ImageViewOverlay key={EntityHelpers.uuidv4()} id={props.match.params.id}/>}/>
+							<Route path="/image/view" render={() => <ImageViewOverlay key={EntityHelpers.uuidv4()}/>}/>
 						</Switch>
 						<ContentContext.Provider value={AppContentContext}>
 							<ContentContainer

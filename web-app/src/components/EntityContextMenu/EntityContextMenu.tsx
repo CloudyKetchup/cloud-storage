@@ -72,7 +72,7 @@ export default class EntityContextMenu extends Component<ContextMenuProps> {
 				</div>
 				<span>Move to trash</span>
 			</div>
-			<Link to={`/${this.props.parent.type.toLowerCase()}/${this.props.parent.id}/info`}>
+			<Link to={`/info?type=${this.props.parent.type.toLowerCase()}&id=${this.props.parent.id}`}>
 				<div className="context-menu-icon">
 					<i className="fas fa-info" />
 				</div>

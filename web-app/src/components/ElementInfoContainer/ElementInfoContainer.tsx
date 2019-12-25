@@ -1,33 +1,41 @@
 import React, { Component } from 'react';
 
-import { Link, match } 		from "react-router-dom";
+import queryString          from "query-string";
+import { Link } 		    from "react-router-dom";
 import { FileEntity } 		from '../../model/entity/FileEntity';
 import { FolderEntity } 	from '../../model/entity/FolderEntity';
 import { APIHelpers as API}	from '../../helpers';
 import { Entity } 			from '../../model/entity/Entity';
 
 interface IProps {
-	prevLink? 	: string,
-	match 		: match<{ id : string, type : string }>
+	id?         : string
+	type?       : string
+	prevLink?   : string
+	onClose?    : () => void
 }
 
-interface IState {  data : FileEntity | FolderEntity | null}
+interface IState {  data : Entity | null}
 
 export class ElementInfoContainer extends Component<IProps, IState> {
 	state : IState = { data : null };
 
 	componentDidMount() {
-		const entityType = this.props.match.params.type;
-		const functionName = `get${entityType[0].toUpperCase() + entityType.slice(1)}Data`;
+		const query = queryString.parse(window.location.search);
+		const id = query.id as string || this.props.id;
+		const entityType = query.type || this.props.type;
 
-		if (functionName === "getFileData" || functionName === "getFolderData")
-			(API[functionName](this.props.match.params.id) as Promise<Entity>)
-				.then(result => {
-					if ((result as FileEntity) !== undefined)
-						this.setState({  data : result as FileEntity });
-					else if ((result as FolderEntity) !== undefined)
-						this.setState({  data : result as FolderEntity });
-				});
+		if (entityType && id) {
+			const functionName = `get${entityType[0].toUpperCase() + entityType.slice(1)}Data`;
+
+			if (functionName === "getFileData" || functionName === "getFolderData")
+				(API[functionName](id) as Promise<Entity>)
+					.then(result => {
+						if ((result as FileEntity) !== undefined)
+							this.setState({data: result as FileEntity});
+						else if ((result as FolderEntity) !== undefined)
+							this.setState({data: result as FolderEntity});
+					});
+		}
 	}
 	
 	render = () => (
@@ -39,15 +47,18 @@ export class ElementInfoContainer extends Component<IProps, IState> {
 				right: 0,
 				left: 0
 			}}>
-				<Link 
-					style={{ float : "left" }}
-					to={ this.props.prevLink != null ? this.props.prevLink : "/" }>
-					<button
-						className="prev-button"
-					>
-						<i className="fas fa-chevron-left"/>
-					</button>
-				</Link>
+				{
+					<Link
+						style={{float: "left"}}
+						to={this.props.prevLink ? this.props.prevLink : "/"}>
+						<button
+							onClick={this.props.onClose}
+							className="prev-button"
+						>
+							<i className="fas fa-chevron-left"/>
+						</button>
+					</Link>
+				}
 				<span>{this.state.data && this.state.data.type.toLowerCase()} info</span>
 			</div>
 			<div className="element-info" style={{
